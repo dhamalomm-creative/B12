@@ -2,15 +2,13 @@
  * logger.js — Winston structured logger with security audit support
  *
  * Security features:
- *  - Masks sensitive fields (passwords, tokens) before writing to disk
+ *  - Masks sensitive fields (passwords, tokens) before logging
  *  - Strips control characters (\n, \r, null bytes) to prevent log injection
  *  - Structured JSON format (no string interpolation — prevents log injection)
- *  - Daily rotation with 30-day (error/exception) and 90-day (security) retention
- *  - Console output in development only
+ *  - Supports both Serverless (Vercel/Lambda stdout) and Server (Daily file rotation)
  */
 
 const { createLogger, format, transports } = require('winston');
-const DailyRotateFile = require('winston-daily-rotate-file');
 const path = require('path');
 
 // Fields whose values must NEVER appear in logs
@@ -42,7 +40,6 @@ const maskSensitive = format((info) => {
     return result;
   };
 
-  // Sanitize top-level metadata spread into the log entry
   Object.keys(info).forEach((key) => {
     if (!['level', 'message', 'timestamp', 'stack'].includes(key)) {
       info[key] = sanitizeObj(info[key]);
@@ -55,13 +52,69 @@ const maskSensitive = format((info) => {
 // ── Custom format: strip newlines and control chars to prevent log injection ──
 const sanitizeMessage = format((info) => {
   if (typeof info.message === 'string') {
-    // Replace newlines, carriage returns, and null bytes with a space
     info.message = info.message.replace(/[\r\n\x00-\x1f\x7f]/g, ' ').trim();
   }
   return info;
 });
 
-const logDir = path.join(__dirname, '../../logs');
+// Detect serverless environment (Vercel, AWS Lambda, etc.) where filesystem is read-only
+const isServerless = !!process.env.VERCEL || !!process.env.AWS_LAMBDA_FUNCTION_NAME;
+
+const logTransports = [];
+const exceptionHandlers = [];
+
+if (isServerless) {
+  // In serverless environments, write to console/stdout so Vercel captures it in real-time
+  logTransports.push(
+    new transports.Console({
+      format: format.combine(
+        format.colorize(),
+        format.printf(({ level, message, timestamp, ...meta }) => {
+          const metaStr = Object.keys(meta).length ? JSON.stringify(meta) : '';
+          return `${timestamp || ''} [${level}]: ${message} ${metaStr}`.trim();
+        }),
+      ),
+    }),
+  );
+  exceptionHandlers.push(new transports.Console());
+} else {
+  // Dedicated server with persistent filesystem: use daily rotated files
+  const DailyRotateFile = require('winston-daily-rotate-file');
+  const logDir = path.join(__dirname, '../../logs');
+
+  logTransports.push(
+    new DailyRotateFile({
+      filename: path.join(logDir, 'error-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      level: 'error',
+      maxFiles: '30d',
+      zippedArchive: true,
+    }),
+    new DailyRotateFile({
+      filename: path.join(logDir, 'security-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '90d',
+      zippedArchive: true,
+    }),
+  );
+
+  exceptionHandlers.push(
+    new DailyRotateFile({
+      filename: path.join(logDir, 'exceptions-%DATE%.log'),
+      datePattern: 'YYYY-MM-DD',
+      maxFiles: '30d',
+      zippedArchive: true,
+    }),
+  );
+
+  if (process.env.NODE_ENV !== 'production') {
+    logTransports.push(
+      new transports.Console({
+        format: format.combine(format.colorize(), format.simple()),
+      }),
+    );
+  }
+}
 
 const logger = createLogger({
   level: process.env.LOG_LEVEL || 'info',
@@ -70,44 +123,11 @@ const logger = createLogger({
     sanitizeMessage(),
     format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     format.errors({ stack: true }),
-    format.json(), // Structured JSON — no string interpolation
+    format.json(),
   ),
-  transports: [
-    // Error log (30 days)
-    new DailyRotateFile({
-      filename: path.join(logDir, 'error-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      level: 'error',
-      maxFiles: '30d',
-      zippedArchive: true,
-    }),
-    // Security / general log (90 days — for audit trail)
-    new DailyRotateFile({
-      filename: path.join(logDir, 'security-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      maxFiles: '90d',
-      zippedArchive: true,
-    }),
-  ],
-  // Uncaught exception log
-  exceptionHandlers: [
-    new DailyRotateFile({
-      filename: path.join(logDir, 'exceptions-%DATE%.log'),
-      datePattern: 'YYYY-MM-DD',
-      maxFiles: '30d',
-      zippedArchive: true,
-    }),
-  ],
+  transports: logTransports,
+  exceptionHandlers: exceptionHandlers,
   exitOnError: false,
 });
-
-// Console output in development only
-if (process.env.NODE_ENV !== 'production') {
-  logger.add(
-    new transports.Console({
-      format: format.combine(format.colorize(), format.simple()),
-    }),
-  );
-}
 
 module.exports = logger;
