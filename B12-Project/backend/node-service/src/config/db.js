@@ -25,7 +25,9 @@ const connectDB = async () => {
     console.log('✅ PostgreSQL connected successfully (Supabase/PostgreSQL)');
   } catch (err) {
     console.error('❌ Unable to connect to PostgreSQL:', err.message);
-    process.exit(1);
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
   }
 };
 

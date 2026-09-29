@@ -1,0 +1,21 @@
+/* AppShell — content area sits beside the fixed sidebar on desktop */
+.shell {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.content {
+  margin-left: var(--sidebar-w, 240px);
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  min-height: 100vh;
+}
+
+@media (max-width: 768px) {
+  .content {
+    margin-left: 0;
+    padding-bottom: 72px; /* space for mobile bottom bar */
+  }
+}

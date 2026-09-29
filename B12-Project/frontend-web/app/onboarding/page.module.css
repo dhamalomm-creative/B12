@@ -1,0 +1,222 @@
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 700px 500px at 30% 20%, rgba(88,245,209,0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 500px 400px at 70% 75%, rgba(58,223,250,0.04) 0%, transparent 60%);
+  display: flex;
+  flex-direction: column;
+  max-width: 640px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.topBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+}
+.brand {
+  font-family: var(--font-headline);
+  font-size: var(--fs-base);
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: -0.2px;
+}
+.stepCount { font-size: var(--fs-xs); color: var(--text-muted); font-weight: 600; }
+
+.progressWrap { padding: 0 32px 20px; }
+.progressOuter {
+  height: 4px;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.progressFill {
+  height: 100%;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.45s ease;
+  box-shadow: 0 0 8px rgba(88,245,209,0.30);
+}
+
+.slideWrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 40px;
+  text-align: center;
+  animation: fadeInUp 0.4s ease;
+}
+.kicker {
+  font-family: var(--font-body);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  margin-bottom: 24px;
+}
+.emojiRing {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 2px solid rgba(88,245,209,0.20);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 28px;
+  box-shadow: 0 0 32px rgba(88,245,209,0.10), var(--shadow-subtle);
+}
+.emoji { font-size: 52px; }
+.slideTitle {
+  font-family: var(--font-headline);
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+  margin-bottom: 18px;
+  letter-spacing: -0.4px;
+  max-width: 480px;
+}
+.slideSubtitle {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+  line-height: 1.7;
+  max-width: 380px;
+}
+
+.bottomBar {
+  padding: 0 32px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+.loginLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: var(--fs-sm);
+  font-family: var(--font-body);
+  padding: 8px;
+  text-align: center;
+  transition: color 0.2s;
+}
+.loginLink:hover { color: var(--text-secondary); }
+.loginHighlight { color: var(--primary); font-weight: 700; }
+
+/* ── Form flow ── */
+.formTopBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 32px;
+}
+.backBtn {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-ghost);
+  cursor: pointer;
+  font-size: 20px;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.backBtn:hover { background: var(--bg-elevated); }
+.formScroll  { flex: 1; overflow-y: auto; padding: 0 32px 80px; }
+.stepPill {
+  display: inline-block;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: var(--tint-primary-strong);
+  border: 1px solid var(--border-teal);
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  margin-bottom: 18px;
+}
+.formTitle {
+  font-family: var(--font-headline);
+  font-size: var(--fs-xxl);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+  line-height: 1.2;
+  letter-spacing: -0.4px;
+}
+.formSubtitle {
+  font-size: var(--fs-base);
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 28px;
+}
+.card {
+  background: var(--bg-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  box-shadow: var(--shadow-subtle);
+}
+.cardTitle { font-family: var(--font-headline); font-size: var(--fs-md); font-weight: 700; color: var(--text-primary); margin-bottom: 18px; }
+.cardHint  { font-size: var(--fs-xs); color: var(--text-muted); line-height: 1.65; margin-top: -6px; margin-bottom: 16px; }
+.fieldLabel { display: block; font-size: var(--fs-sm); font-weight: 600; color: var(--text-primary); margin-bottom: 8px; margin-top: 6px; }
+.optional   { font-size: var(--fs-xs); font-weight: 500; color: var(--text-muted); }
+.required   { color: var(--primary); font-weight: 700; }
+.divider    { height: 1px; background: var(--border-ghost); margin: 22px 0; }
+.pillRow    { display: flex; flex-wrap: wrap; gap: 8px; }
+.pillWide   { width: 100%; border-radius: var(--radius-md) !important; }
+.genderCol  { display: flex; flex-direction: column; gap: 8px; }
+
+.dietCard {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-ghost);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  text-align: left;
+  font-family: var(--font-body);
+}
+.dietCard:hover { background: var(--tint-primary); border-color: var(--border-teal); }
+.dietCardActive { background: var(--tint-primary-strong); border-color: var(--primary); }
+.dietEmoji {
+  font-size: 24px;
+  min-width: 48px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-surface);
+  border-radius: 50%;
+  border: 1px solid var(--border-ghost);
+}
+.dietText    { flex: 1; }
+.dietLabel   { display: block; font-family: var(--font-headline); font-size: var(--fs-base); font-weight: 500; color: var(--text-primary); line-height: 1.4; }
+.dietHint    { display: block; font-size: var(--fs-xs); color: var(--text-muted); margin-top: 3px; line-height: 1.5; }
+.dietRadio   { width: 26px; height: 26px; border-radius: 50%; border: 2px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 13px; color: var(--on-primary); font-weight: 700; flex-shrink: 0; }
+.dietRadioActive { background: var(--gradient-primary); border-color: var(--primary); }
+
+@media (max-width: 768px) {
+  .slideWrap  { padding: 24px 20px; }
+  .bottomBar  { padding: 0 20px 32px; }
+  .formScroll { padding: 0 20px 80px; }
+  .formTopBar { padding: 14px 16px; }
+  .topBar     { padding: 14px 16px; }
+  .progressWrap { padding: 0 16px 14px; }
+}

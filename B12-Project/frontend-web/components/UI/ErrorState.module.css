@@ -1,0 +1,58 @@
+.container {
+  background: var(--tint-danger);
+  border: 1px solid var(--tint-danger-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+}
+
+.compact {
+  padding: var(--space-md);
+}
+
+.iconRow {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+
+.icon {
+  font-size: 24px;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.title {
+  font-family: var(--font-headline);
+  font-size: var(--fs-md);
+  color: var(--error);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.message {
+  font-size: var(--fs-sm);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.retryBtn {
+  margin-top: var(--space-md);
+  background: transparent;
+  color: var(--error);
+  border: 1px solid var(--tint-danger-border);
+  padding: 8px 20px;
+  border-radius: var(--radius-full);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.retryBtn:hover {
+  background: var(--tint-danger);
+  border-color: var(--error);
+}
+
+.retryBtn:active {
+  transform: scale(0.97);
+}

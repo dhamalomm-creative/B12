@@ -1,0 +1,171 @@
+.page {
+  background: transparent;
+  min-height: 100vh;
+  animation: fadeInUp 0.4s ease;
+}
+
+/* ── Top Header ── */
+.header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  padding: 32px 40px 24px;
+  border-bottom: 1px solid var(--border-ghost);
+}
+.headerLeft {}
+.topLabel {
+  font-size: 10px; font-weight: 700; color: var(--primary);
+  letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px;
+}
+.title {
+  font-family: var(--font-headline);
+  font-size: var(--fs-hero);
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+.headerRight { display: flex; gap: 10px; }
+.filterBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-ghost);
+  border-radius: var(--radius-md);
+  padding: 8px 16px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  text-transform: uppercase;
+}
+.filterBtn:hover { background: var(--tint-primary); color: var(--primary); border-color: var(--border-teal); }
+.filterActive { background: var(--tint-primary-strong) !important; color: var(--primary) !important; border-color: var(--primary) !important; }
+
+/* ── Stats Row ── */
+.statsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  border-bottom: 1px solid var(--border-ghost);
+}
+.statBox {
+  padding: 24px 32px;
+  border-right: 1px solid var(--border-ghost);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.statBox:last-child { border-right: none; }
+.statEmoji { font-size: 28px; }
+.statInfo {}
+.statNum {
+  font-family: var(--font-headline);
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+  display: block;
+}
+.statLbl {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  margin-top: 4px;
+  display: block;
+}
+
+/* ── Loading / Empty ── */
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 32px;
+  text-align: center;
+  gap: 16px;
+}
+.emptyEmoji { font-size: 56px; }
+.emptyTitle {
+  font-family: var(--font-headline);
+  font-size: var(--fs-xl);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.emptySub { font-size: var(--fs-base); color: var(--text-muted); max-width: 360px; line-height: 1.65; }
+
+/* ── Charts Grid ── */
+.charts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: var(--border-ghost);
+  border-top: none;
+}
+
+.chartCard {
+  background: var(--bg);
+  padding: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Data bracket corners for chart cards */
+.chartCard::before {
+  content: '';
+  position: absolute;
+  top: 12px; left: 12px;
+  width: 14px; height: 14px;
+  border-top: 1px solid rgba(88,245,209,0.30);
+  border-left: 1px solid rgba(88,245,209,0.30);
+}
+.chartCard::after {
+  content: '';
+  position: absolute;
+  bottom: 12px; right: 12px;
+  width: 14px; height: 14px;
+  border-bottom: 1px solid rgba(88,245,209,0.30);
+  border-right: 1px solid rgba(88,245,209,0.30);
+}
+
+.chartLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1.6px;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+.chartTitle {
+  font-family: var(--font-headline);
+  font-size: var(--fs-md);
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+.chartAccent {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  margin-left: 6px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .charts { grid-template-columns: 1fr; }
+  .statsRow { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .header { padding: 20px 16px 16px; flex-direction: column; align-items: flex-start; gap: 12px; }
+  .title { font-size: 26px; }
+  .statBox { padding: 16px; }
+  .statNum { font-size: 28px; }
+  .chartCard { padding: 20px 16px; }
+  .statsRow { grid-template-columns: repeat(3, 1fr); }
+}

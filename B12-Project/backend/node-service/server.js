@@ -168,9 +168,6 @@ const startServer = async () => {
   const server = http.createServer(app);
 
   // ── [15] Slowloris DDoS defence ──
-  // Slowloris attack: attacker holds connections open by sending partial HTTP headers.
-  // keepAliveTimeout must be > any upstream load balancer's timeout.
-  // headersTimeout must be > keepAliveTimeout.
   server.keepAliveTimeout = 65000;  // 65 seconds
   server.headersTimeout   = 66000;  // 66 seconds (must be > keepAliveTimeout)
 
@@ -185,6 +182,10 @@ const startServer = async () => {
   });
 };
 
-startServer();
+if (process.env.VERCEL) {
+  connectDB().catch((err) => console.error('Database connection error in Vercel:', err.message));
+} else {
+  startServer();
+}
 
-module.exports = app; // For Jest/supertest
+module.exports = app;

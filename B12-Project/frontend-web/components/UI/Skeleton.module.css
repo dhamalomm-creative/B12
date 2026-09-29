@@ -1,0 +1,104 @@
+/* ─── Skeleton Base ─────────────────────────────────────────────────────── */
+.skeleton {
+  background: linear-gradient(
+    110deg,
+    var(--bg-mid) 0%,
+    var(--bg-surface) 40%,
+    var(--bg-elevated) 50%,
+    var(--bg-surface) 60%,
+    var(--bg-mid) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Stat Card Row ─────────────────────────────────────────────────────── */
+.cardRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-md);
+}
+
+@media (max-width: 900px) {
+  .cardRow { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 500px) {
+  .cardRow { grid-template-columns: 1fr; }
+}
+
+.card {
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-ghost);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+/* ─── Chart ─────────────────────────────────────────────────────────────── */
+.chart {
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-ghost);
+  padding: var(--space-lg);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.chartBars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  flex: 1;
+  margin-bottom: var(--space-sm);
+}
+
+/* ─── Grid ──────────────────────────────────────────────────────────────── */
+.grid {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.gridItem {
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-ghost);
+}
+
+/* ─── Text Block ────────────────────────────────────────────────────────── */
+.textBlock {
+  padding: var(--space-lg);
+}
+
+/* ─── Profile ───────────────────────────────────────────────────────────── */
+.profile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: var(--space-xxl) var(--space-lg);
+}
+
+.profileStats {
+  display: flex;
+  gap: var(--space-xl);
+  margin-top: var(--space-lg);
+}
+
+.profileStat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}

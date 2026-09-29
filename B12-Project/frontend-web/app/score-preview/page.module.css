@@ -1,0 +1,17 @@
+.page { min-height: 100vh; background: var(--bg); max-width: 480px; margin: 0 auto; }
+.hero { display: flex; flex-direction: column; align-items: center; padding: 48px 24px 32px; text-align: center; }
+.kicker { font-size: var(--fs-xs); font-weight: 700; color: var(--primary-dark); letter-spacing: 1.2px; text-transform: uppercase; margin-bottom: 28px; }
+.scoreRing { width: 160px; height: 160px; border-radius: 50%; border: 4px solid; background: var(--bg-card); display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 20px; transition: box-shadow 0.4s; }
+.scoreNum { font-size: 48px; font-weight: 800; line-height: 1; }
+.scoreLabel { font-size: var(--fs-xs); color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 4px; }
+.desc { font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.65; max-width: 320px; margin-top: 16px; }
+
+.body { padding: 0 20px 40px; }
+.guestCard { background: var(--bg-card); border: 1px solid var(--border-teal); border-radius: var(--radius-xl); padding: 28px 20px; text-align: center; margin-bottom: 16px; box-shadow: var(--shadow-card); }
+.guestEmoji { font-size: 36px; margin-bottom: 12px; display: block; }
+.guestTitle { font-size: var(--fs-xl); font-weight: 700; color: var(--text-primary); margin-bottom: 10px; line-height: 1.2; }
+.guestSub { font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.65; margin-bottom: 24px; }
+.loginBtn { background: none; border: none; cursor: pointer; color: var(--text-muted); font-size: var(--fs-sm); font-family: var(--font); margin-top: 12px; padding: 8px; }
+.tipsCard { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; margin-bottom: 16px; }
+.tipHead { font-size: var(--fs-sm); font-weight: 700; color: var(--primary); margin-bottom: 10px; }
+.tip { font-size: var(--fs-sm); color: var(--text-secondary); line-height: 1.6; margin-bottom: 6px; }

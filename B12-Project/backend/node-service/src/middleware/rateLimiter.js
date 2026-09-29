@@ -21,6 +21,7 @@ const authLimiter = rateLimit({
   max: parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5'),
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   skipSuccessfulRequests: false, // Count ALL requests (including successful logins)
   message: {
     success: false,
@@ -42,6 +43,7 @@ const apiLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX || '100'),
   standardHeaders: true,
   legacyHeaders: false,
+  validate: false,
   message: {
     success: false,
     error: 'Too many requests. Please try again later.',
@@ -58,6 +60,7 @@ const authSlowDown = slowDown({
   delayAfter: 3,             // Start adding delay after 3 requests
   delayMs: (hits) => (hits - 3) * 500, // +500ms per request after the 3rd
   maxDelayMs: 10000,         // Cap at 10 seconds
+  validate: false,
   keyGenerator: (req) => {
     const email = (req.body?.email || '').toLowerCase().substring(0, 100);
     const ip = req.ip || 'unknown';
