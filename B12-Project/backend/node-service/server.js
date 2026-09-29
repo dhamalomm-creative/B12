@@ -143,6 +143,17 @@ app.use('/api/checkin',       checkinRoutes);
 app.use('/api/insights',      insightsRoutes);
 app.use('/api/notifications', notificationsRoutes);
 
+// ── Root endpoint & favicon handler ──
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    message: '🩺 B12 Health Tracker API is live and running!',
+    health: '/health',
+  });
+});
+
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // ── Health check — minimal info (no version, no internal details) ──
 app.get('/health', (req, res) => {
   res.json({
