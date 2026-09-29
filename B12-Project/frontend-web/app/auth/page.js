@@ -20,10 +20,16 @@ export default function AuthPage() {
   const toggle = () => { setMode(m => m==='login'?'register':'login'); setLocalError(''); setDupEmail(false); setNoAccount(false); clearError(); };
 
   const validate = () => {
-    if (!email.trim())               return 'Email is required';
+    if (!email.trim()) return 'Email is required';
     if (!/\S+@\S+\.\S+/.test(email)) return 'Enter a valid email';
-    if (password.length < 6)         return 'Password must be at least 6 characters';
-    if (mode==='register' && password!==confirmPw) return 'Passwords do not match';
+    if (mode === 'register') {
+      if (password.length < 8) return 'Password must be at least 8 characters';
+      if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter (A-Z)';
+      if (!/[0-9]/.test(password)) return 'Password must contain at least one number (0-9)';
+      if (password !== confirmPw) return 'Passwords do not match';
+    } else {
+      if (!password) return 'Password is required';
+    }
     return null;
   };
 

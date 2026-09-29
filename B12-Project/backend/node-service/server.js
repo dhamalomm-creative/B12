@@ -85,25 +85,29 @@ app.use(helmet({
   hidePoweredBy:  true,   // Remove X-Powered-By: Express header
 }));
 
-// ── [4] CORS — strict origin whitelist (NOT open to all) ──
-// In production: set ALLOWED_ORIGINS=https://yourapp.com,exp://192.168.x.x:8081
-// For mobile clients (no Origin header): still allowed (Expo, React Native)
-const rawOrigins = process.env.ALLOWED_ORIGINS || '';
+// ── [4] CORS — origin whitelist with automatic Vercel & localhost support ──
+const rawOrigins = process.env.ALLOWED_ORIGINS || '*';
 const allowedOrigins = rawOrigins.split(',').map((o) => o.trim()).filter(Boolean);
 
 app.use(cors({
   origin: (origin, callback) => {
     // Requests with no Origin (mobile apps, Postman, curl) are always allowed
     if (!origin) return callback(null, true);
-    // In development with no origins configured: allow all (for convenience)
-    if (allowedOrigins.length === 0) return callback(null, true);
+    // Allow if wildcard '*' is configured or origins list is empty
+    if (allowedOrigins.length === 0 || allowedOrigins.includes('*')) return callback(null, true);
+    // Automatically allow all Vercel deployments (production, branch, preview)
+    if (origin.endsWith('.vercel.app')) return callback(null, true);
+    // Automatically allow local development
+    if (origin.includes('localhost') || origin.includes('127.0.0.1')) return callback(null, true);
+    // Check explicit domain whitelist
     if (allowedOrigins.includes(origin)) return callback(null, true);
+
     logger.warn('CORS blocked request from unknown origin', { origin });
     return callback(new Error('Not allowed by CORS'));
   },
-  methods:      ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials:  true,
+  methods:        ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  credentials:    true,
 }));
 
 // ── [5] Content-Type enforcement (reject non-JSON mutations) ──
