@@ -1,0 +1,5 @@
+so this is my andriod application i need to convert in to web application keep all the thinsg same floe data abse and all just make web application form it 
+initially give me the plan and thne i will check it thne you can satrt 
+as per i know the backend ia same of rboth andriod and web so keep backnd same just make another one in which make it as the web keep the andriod same as it it dont delet it make a web application form it 
+in proepr form 
+everthinsg as same in the app like flow authenstaion adn questions security and all teh thinsg 

@@ -1,0 +1,47 @@
+version: "3.9"
+
+services:
+  # ── Node.js Express API Gateway ─────────────────────────────
+  api:
+    build:
+      context: ./backend/node-service
+      dockerfile: Dockerfile
+    container_name: b12_node_api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV:           ${NODE_ENV:-production}
+      NODE_PORT:          3000
+      DATABASE_URL:       ${DATABASE_URL:?DATABASE_URL must be set in .env}
+      DATABASE_SSL:       ${DATABASE_SSL:-true}
+      JWT_SECRET:         ${JWT_SECRET:?JWT_SECRET must be set in .env}
+      JWT_EXPIRES_IN:     ${JWT_EXPIRES_IN:-7d}
+      JWT_ISSUER:         ${JWT_ISSUER:-b12-health}
+      JWT_AUDIENCE:       ${JWT_AUDIENCE:-b12-app}
+      RATE_LIMIT_WINDOW_MS: ${RATE_LIMIT_WINDOW_MS:-900000}
+      RATE_LIMIT_MAX:     ${RATE_LIMIT_MAX:-100}
+      ALLOWED_ORIGINS:    ${ALLOWED_ORIGINS:-http://localhost:3001}
+      MAX_LOGIN_ATTEMPTS: ${MAX_LOGIN_ATTEMPTS:-5}
+      ACCOUNT_LOCKOUT_MINUTES: ${ACCOUNT_LOCKOUT_MINUTES:-15}
+      LOG_LEVEL:          ${LOG_LEVEL:-info}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+
+  # ── Next.js Web App ─────────────────────────────────────────
+  web:
+    build:
+      context: ./frontend-web
+      dockerfile: Dockerfile
+    container_name: b12_web_app
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3000}
+    depends_on:
+      api:
+        condition: service_healthy

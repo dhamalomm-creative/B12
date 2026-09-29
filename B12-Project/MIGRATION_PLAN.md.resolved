@@ -1,0 +1,319 @@
+# B12 Health — Android → Web Migration Plan
+
+> **Key Rule:** The backend (`/backend/node-service` & `/backend/python-service`) stays **100% untouched**.
+> We create a brand-new `/web-app` directory alongside the existing Android app.
+> Both share the exact same REST API.
+
+---
+
+## 1. Technology Stack
+
+| Layer | Choice | Reason |
+|---|---|---|
+| Framework | **Next.js 14** (App Router) | SSR, file-based routing, best-in-class DX |
+| Language | **JavaScript** | Consistency with existing codebase |
+| Styling | **Vanilla CSS** + CSS Variables | 1:1 port of the dark teal theme tokens |
+| State | **React Context** | Direct port of AppContext + AuthContext from Android |
+| HTTP | **Fetch API** | Same API endpoints as Android |
+| Storage | **localStorage** | Mirrors AsyncStorage used in Android |
+| Animations | **CSS transitions + Framer Motion** | Replaces React Native Animated API |
+| Font | **Inter** (Google Fonts) | Professional, modern — replaces System font |
+| Routing | **Next.js App Router** | Replaces React Navigation |
+| Charts | **Recharts** | Replaces React Native SVG charts |
+
+---
+
+## 2. Folder Structure
+
+```
+d:\B12\
+├── B12-health-app-main/          ← UNTOUCHED (Android app)
+│   ├── backend/                  ← UNTOUCHED (shared backend)
+│   └── src/
+└── web-app/                      ← NEW (Web application)
+    ├── package.json
+    ├── next.config.js
+    ├── public/
+    └── src/
+        ├── app/                  ← Next.js App Router pages
+        │   ├── layout.js         ← Root layout (fonts, meta)
+        │   ├── page.js           ← Redirect guard
+        │   ├── onboarding/page.js
+        │   ├── questionnaire/page.js
+        │   ├── score-preview/page.js
+        │   ├── auth/page.js
+        │   ├── dashboard/page.js
+        │   ├── checkin/page.js
+        │   ├── progress/page.js
+        │   ├── foods/page.js
+        │   ├── profile/page.js
+        │   ├── bmi/page.js
+        │   └── results/page.js
+        ├── components/
+        │   ├── UI/               ← PrimaryButton, ProgressBar, RiskBadge, etc.
+        │   ├── layout/
+        │   │   ├── TabBar.js     ← Bottom nav bar
+        │   │   └── AppShell.js   ← Authenticated layout wrapper
+        │   └── DisclaimerStrip.js
+        ├── context/
+        │   ├── AppContext.js     ← Direct port from Android
+        │   └── AuthContext.js    ← Direct port from Android
+        ├── data/
+        │   ├── questions.js      ← COPIED from Android src/data/
+        │   └── questionnaireInterstitials.js
+        ├── services/
+        │   └── api.js            ← Ported from Android src/services/api.js
+        ├── utils/
+        │   └── riskCalculator.js ← COPIED from Android src/utils/
+        └── styles/
+            ├── globals.css       ← All CSS variables (from theme/index.js)
+            └── pages/            ← Per-page stylesheets
+```
+
+---
+
+## 3. Design System Porting (theme/index.js → CSS Variables)
+
+The entire Android `theme/index.js` becomes CSS Custom Properties:
+
+```css
+:root {
+  /* Backgrounds */
+  --bg:          #060F1A;
+  --bg-mid:      #091520;
+  --bg-card:     #0F2236;
+  --bg-elevated: #142D46;
+  --bg-glass:    rgba(14, 33, 55, 0.72);
+
+  /* Primary palette */
+  --primary:       #00C9A7;
+  --primary-light: #2DDCBC;
+  --primary-dark:  #00A98D;
+  --cyan:          #22D3EE;
+  --accent:        #06B6D4;
+  --mint:          #34D399;
+  --violet:        #818CF8;
+  --amber:         #FBBF24;
+  --rose:          #FB7185;
+
+  /* Risk */
+  --risk-low:    #00C9A7;
+  --risk-medium: #FBBF24;
+  --risk-high:   #FB7185;
+
+  /* Text */
+  --text-primary:   #EFF8FF;
+  --text-secondary: rgba(220, 240, 255, 0.58);
+  --text-muted:     rgba(180, 215, 240, 0.32);
+
+  /* Borders */
+  --border:       rgba(56, 130, 180, 0.12);
+  --border-light: rgba(100, 180, 220, 0.10);
+
+  /* Typography */
+  --font:    'Inter', system-ui, sans-serif;
+  --fs-xs:   11px;  --fs-sm: 13px;  --fs-base: 15px;
+  --fs-md:   17px;  --fs-lg: 20px;  --fs-xl:   24px;
+  --fs-xxl:  30px;  --fs-hero: 34px;
+
+  /* Spacing */
+  --space-xs: 4px;  --space-sm: 8px;  --space-md: 16px;
+  --space-lg: 24px; --space-xl: 32px; --space-xxl: 48px;
+
+  /* Radius */
+  --radius-sm: 10px; --radius-md: 16px; --radius-lg: 22px;
+  --radius-xl: 28px; --radius-xxl: 36px; --radius-full: 9999px;
+}
+```
+
+---
+
+## 4. Navigation Flow (Identical to Android)
+
+```
+App starts at /
+  │
+  ├─ isAuthenticated?   → /dashboard  (Main Tabs)
+  ├─ riskResult exists? → /score-preview
+  ├─ onboardingDone?    → /questionnaire
+  └─ default            → /onboarding
+
+/onboarding   (slides + profile form) → /questionnaire
+/questionnaire → /results (auth) | /score-preview (guest)
+/score-preview → /auth?mode=register
+/auth          → /dashboard (on success)
+
+Bottom Tab Bar (authenticated only):
+  🏠 Home      → /dashboard
+  📝 Check-in  → /checkin
+  📊 Progress  → /progress
+  🥗 Foods     → /foods
+```
+
+---
+
+## 5. Screen-by-Screen Port Plan
+
+### `/onboarding` ← OnboardingScreen.js
+- **7 intro/feature slides** → CSS carousel with progress bar at top
+- **Profile form** → Name (optional), Age range pills, Gender pills, Diet type cards
+- State saved to `localStorage` via AppContext
+- "Already have account?" → `/auth`
+
+### `/auth` ← AuthScreen.js
+- Login mode: Email + Password → `POST /api/auth/login`
+- Register mode: Email + Password + Confirm → `POST /api/auth/register`
+- Toggle between modes, contextual errors (duplicate email, wrong password, no account)
+- Google Login button with "Coming Soon" badge
+- JWT stored in `localStorage`
+
+### `/questionnaire` ← QuestionnaireScreen.js
+- One question at a time, animated fade/slide transition (CSS)
+- Progress bar, category badge, options with emoji
+- Interstitial insight cards every 3 questions
+- Submit to `POST /api/questionnaire/submit`
+
+### `/score-preview` ← ScorePreviewScreen.js
+- Shows B12 risk level + percentage for guest users
+- CTA → `/auth?mode=register`
+
+### `/dashboard` ← DashboardScreen.js  *(Tab: Home)*
+- Hero gradient header + greeting + streak pill + profile avatar
+- Stat cards: Energy avg, Total Check-ins, B12 Score
+- Today's check-in CTA (or "done" card)
+- AI Insight card (server or fallback motivational)
+- Risk result card → `/results`
+- Quick access: BMI Calculator, History (coming soon)
+
+### `/checkin` ← DailyCheckInScreen.js  *(Tab: Check-in)*
+- 5 daily questions: Energy, Fatigue, Mood, Sleep, Dizziness
+- Animated one-question-at-a-time flow
+- Submit → `POST /api/checkin`
+- Completion screen with streak display
+
+### `/progress` ← WeeklyProgressScreen.js  *(Tab: Progress)*
+- Weekly charts of energy, mood, fatigue (Recharts)
+- Streak display, data from `GET /api/checkin/history`
+
+### `/foods` ← B12FoodsScreen.js  *(Tab: Foods)*
+- B12-rich foods list with category filter tabs
+- Static data + filtering UI
+
+### `/results` ← ResultsScreen.js
+- Full B12 report: risk level + percentage + category breakdown
+- Suggestions list, disclaimer
+
+### `/profile` ← ProfileScreen.js
+- User info (name, email, age, gender, diet type)
+- Streak + total check-ins
+- Logout → `POST /api/auth/logout` → redirect to `/auth`
+
+### `/bmi` ← BMIScreen.js
+- Height + Weight inputs, real-time BMI calculation
+- BMI history from `GET /api/users/bmi`
+
+---
+
+## 6. API Integration (Unchanged Endpoints)
+
+The web app calls the **exact same API routes** as Android:
+
+```
+POST /api/auth/register        POST /api/auth/login
+POST /api/auth/logout
+
+GET  /api/users/profile        PUT /api/users/profile
+GET  /api/users/bmi            POST /api/users/bmi
+
+GET  /api/questionnaire/questions
+POST /api/questionnaire/submit
+
+POST /api/checkin
+GET  /api/checkin/history      GET /api/checkin/streak
+
+GET  /api/insights
+GET  /api/notifications
+```
+
+---
+
+## 7. Android → Web Adaptation Table
+
+| Android | Web |
+|---|---|
+| `React Navigation` | Next.js App Router |
+| `Animated` API | CSS transitions + Framer Motion |
+| `LinearGradient` | CSS `linear-gradient()` |
+| `AsyncStorage` | `localStorage` |
+| `SafeAreaView` | CSS `env(safe-area-inset-*)` |
+| `Alert.alert()` | Custom Toast component |
+| Bottom Tab Navigator | Fixed bottom nav bar (CSS) |
+| React Native SVG charts | Recharts |
+| `TouchableOpacity` | `<button>` with hover/active CSS |
+| `ScrollView` | `overflow-y: auto` |
+
+---
+
+## 8. Files to Copy Directly (No Native Imports)
+
+| Android Path | Web Path |
+|---|---|
+| `src/data/questions.js` | `src/data/questions.js` |
+| `src/data/questionnaireInterstitials.js` | `src/data/questionnaireInterstitials.js` |
+| `src/utils/riskCalculator.js` | `src/utils/riskCalculator.js` |
+
+---
+
+## 9. Implementation Phases
+
+### Phase 1 — Foundation
+1. Initialize Next.js 14 in `d:\B12\web-app\`
+2. `globals.css` with all CSS variables (dark teal theme)
+3. Reusable UI components (Button, ProgressBar, RiskBadge, InsightCard)
+4. Port AppContext + AuthContext (localStorage persistence)
+5. Port `api.js` service layer
+6. Copy data + utils files
+
+### Phase 2 — Auth Flow
+7. `/onboarding` page (slides + profile form)
+8. `/auth` page (login/register toggle)
+9. Root route guard (redirect based on state)
+
+### Phase 3 — Assessment Flow
+10. `/questionnaire` page (animated Q&A + interstitials)
+11. `/score-preview` page
+12. `/results` page
+
+### Phase 4 — Main App (Authenticated)
+13. AppShell + bottom TabBar
+14. `/dashboard` page
+15. `/checkin` page
+16. `/progress` page (Recharts)
+17. `/foods` page
+
+### Phase 5 — Profile, BMI & Polish
+18. `/profile` page
+19. `/bmi` page
+20. Mobile-responsive CSS, micro-animations
+21. Add web origin to backend `ALLOWED_ORIGINS`
+22. End-to-end API testing
+
+---
+
+## 10. One Backend Change Needed
+
+In `d:\B12\B12-health-app-main\backend\node-service\.env`, add:
+
+```env
+ALLOWED_ORIGINS=http://localhost:3001,https://your-web-domain.com
+```
+
+> This is the **only** backend change. Everything else stays untouched.
+
+---
+
+## ✅ Ready to Build?
+
+Please review and approve this plan.
+Once confirmed, I will execute all 5 phases — creating `d:\B12\web-app\` with Next.js,
+porting all 11 screens with the exact dark teal design, and keeping the Android app completely untouched.
