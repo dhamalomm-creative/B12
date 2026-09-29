@@ -10,6 +10,13 @@
  */
 
 const validateEnv = () => {
+  // Trim accidental leading/trailing whitespace & tabs from copy-pasting
+  ['NODE_ENV', 'JWT_SECRET', 'DATABASE_URL', 'ALLOWED_ORIGINS', 'JWT_EXPIRES_IN'].forEach((key) => {
+    if (process.env[key]) {
+      process.env[key] = process.env[key].trim();
+    }
+  });
+
   const errors = [];
 
   // ── JWT_SECRET: required, min 32 chars, not a default value ──
