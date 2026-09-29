@@ -120,14 +120,14 @@ B12/
 
 1. Create a free project on [Supabase](https://supabase.com).
 2. Open the **SQL Editor** in Supabase dashboard.
-3. Open [`B12-Project/backend/database/supabase_setup.sql`](./B12-Project/backend/database/supabase_setup.sql), copy its contents, paste into the SQL editor, and click **Run**.
+3. Open [`backend/database/supabase_setup.sql`](./backend/database/supabase_setup.sql), copy its contents, paste into the SQL editor, and click **Run**.
 4. Copy your database connection string from **Project Settings ➔ Database ➔ URI**.
 
 ---
 
 ### 2. Configure Environment Variables
 
-#### Backend (`B12-Project/backend/node-service/.env`):
+#### Backend (`backend/node-service/.env`):
 ```env
 PORT=3000
 NODE_ENV=development
@@ -138,7 +138,7 @@ JWT_EXPIRES_IN=7d
 ALLOWED_ORIGINS=http://localhost:3001
 ```
 
-#### Frontend (`B12-Project/frontend-web/.env.local`):
+#### Frontend (`frontend-web/.env.local`):
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
@@ -151,7 +151,7 @@ Open two terminal windows:
 
 #### Terminal 1 — Backend:
 ```bash
-cd B12-Project/backend/node-service
+cd backend/node-service
 npm install
 npm run dev
 ```
@@ -159,7 +159,7 @@ npm run dev
 
 #### Terminal 2 — Frontend:
 ```bash
-cd B12-Project/frontend-web
+cd frontend-web
 npm install
 npm run dev -- -p 3001
 ```
@@ -173,7 +173,7 @@ To run both frontend and backend in isolated production containers:
 
 1. Copy `.env.docker.example` to `.env` at root:
    ```bash
-   cp B12-Project/.env.docker.example .env
+   cp .env.docker.example .env
    ```
 2. Fill in your `DATABASE_URL` and `JWT_SECRET`.
 3. Launch with Docker Compose:
@@ -188,7 +188,7 @@ To run both frontend and backend in isolated production containers:
 
 ## ☁️ Cloud Production Deployment
 
-Follow our detailed [**Deployment Guide**](./B12-Project/DEPLOYMENT_GUIDE.md) for step-by-step instructions:
+Follow our detailed [**Deployment Guide**](./DEPLOYMENT_GUIDE.md) for step-by-step instructions:
 
 | Component | Platform | Configuration |
 |---|---|---|
