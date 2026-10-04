@@ -8,6 +8,7 @@ import { buildInterstitialContent } from '@/data/questionnaireInterstitials';
 import { calculateRisk } from '@/utils/riskCalculator';
 import { questionnaireAPI } from '@/services/api';
 import { ProgressBar, CategoryBadge, InsightCard, PrimaryButton, SecondaryButton } from '@/components/UI';
+import QuestionExplainer from '@/components/QuestionExplainer';
 import styles from './page.module.css';
 
 export default function QuestionnairePage() {
@@ -65,6 +66,7 @@ export default function QuestionnairePage() {
   };
 
   const advanceToNext = async (chosen) => {
+    if (!chosen) return;
     const updated = { ...answers, [q.id]: chosen };
     setAnswers(updated);
 
@@ -82,30 +84,65 @@ export default function QuestionnairePage() {
     const needsInter = done % 3 === 0 && done < questions.length && !interShownRef.current.has(done);
     if (needsInter) {
       interShownRef.current.add(done);
-      transition(() => { setInterEnd(done); setShowInter(true); setSelected(null); setShowInsight(false); });
+      transition(() => {
+        setInterEnd(done);
+        setShowInter(true);
+        setSelected(null);
+        setShowInsight(false);
+      });
       return;
     }
-    transition(() => { setCurrentIdx(i => i + 1); setSelected(null); setShowInsight(false); });
+
+    transition(() => {
+      const nextIdx = currentIdx + 1;
+      const nextQId = questions[nextIdx]?.id;
+      setCurrentIdx(nextIdx);
+      setSelected(nextQId ? updated[nextQId] || null : null);
+      setShowInsight(!!(nextQId && updated[nextQId]));
+    });
   };
 
   const selectOption = (opt) => {
     setSelected(opt);
     setShowInsight(true);
-    setTimeout(() => advanceToNext(opt), 750);
+  };
+
+  const handleNext = () => {
+    if (!selected) return;
+    advanceToNext(selected);
   };
 
   const continueInter = () => {
-    transition(() => { setShowInter(false); setCurrentIdx(interEnd); setSelected(null); setShowInsight(false); });
+    transition(() => {
+      setShowInter(false);
+      setCurrentIdx(interEnd);
+      const nextQId = questions[interEnd]?.id;
+      setSelected(nextQId ? answers[nextQId] || null : null);
+      setShowInsight(!!(nextQId && answers[nextQId]));
+    });
   };
 
   const goBack = () => {
     if (showInter) {
       interShownRef.current.delete(interEnd);
-      transition(() => { setShowInter(false); const bi = interEnd - 1; setCurrentIdx(bi); const pid = questions[bi]?.id; setSelected(pid ? answers[pid] || null : null); setShowInsight(!!(pid && answers[pid])); });
+      transition(() => {
+        setShowInter(false);
+        const bi = interEnd - 1;
+        setCurrentIdx(bi);
+        const pid = questions[bi]?.id;
+        setSelected(pid ? answers[pid] || null : null);
+        setShowInsight(!!(pid && answers[pid]));
+      });
       return;
     }
     if (currentIdx === 0) { router.back(); return; }
-    transition(() => { const pid = questions[currentIdx - 1].id; setCurrentIdx(i => i - 1); setSelected(answers[pid] || null); setShowInsight(!!answers[pid]); });
+    transition(() => {
+      const prevIdx = currentIdx - 1;
+      const pid = questions[prevIdx]?.id;
+      setCurrentIdx(prevIdx);
+      setSelected(pid ? answers[pid] || null : null);
+      setShowInsight(!!(pid && answers[pid]));
+    });
   };
 
   const skipQuestion = async () => {
@@ -118,7 +155,13 @@ export default function QuestionnairePage() {
       setSubmitting(false);
       router.replace(isAuthenticated ? '/results' : '/score-preview');
     } else {
-      transition(() => { setCurrentIdx(i => i + 1); setSelected(null); setShowInsight(false); });
+      transition(() => {
+        const nextIdx = currentIdx + 1;
+        const nextQId = questions[nextIdx]?.id;
+        setCurrentIdx(nextIdx);
+        setSelected(nextQId ? answers[nextQId] || null : null);
+        setShowInsight(!!(nextQId && answers[nextQId]));
+      });
     }
   };
 
@@ -136,7 +179,7 @@ export default function QuestionnairePage() {
     return (
       <div className={styles.page}>
         <div className={styles.header}>
-          <button className={styles.backBtn} onClick={goBack}>←</button>
+          <button className={styles.backBtn} onClick={goBack} aria-label="Go back">←</button>
           <div className={styles.progressWrap}><ProgressBar progress={interEnd} total={questions.length} /></div>
         </div>
         <div className={styles.scroll}>
@@ -165,7 +208,7 @@ export default function QuestionnairePage() {
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <button className={styles.backBtn} onClick={goBack}>←</button>
+        <button className={styles.backBtn} onClick={goBack} aria-label="Go back">←</button>
         <div className={styles.progressWrap}><ProgressBar progress={currentIdx + 1} total={questions.length} /></div>
       </div>
       <div className={styles.scroll}>
@@ -174,11 +217,22 @@ export default function QuestionnairePage() {
           <p className={styles.qNum}>Question {currentIdx + 1} of {questions.length}</p>
           <p className={styles.qMeta}>{questions.length - currentIdx - 1 === 0 ? 'Last question' : `${questions.length - currentIdx - 1} questions left`} · ~{Math.max(1, Math.ceil((questions.length - currentIdx) / 12))} min</p>
           <h2 className={styles.qText}>{q.question}</h2>
+
+          {/* Visual and Plain English Explainer */}
+          {q.explanation && (
+            <QuestionExplainer explanation={q.explanation} category={q.category} />
+          )}
+
           <div className={styles.options}>
             {q.options.map(opt => {
               const sel = selected?.id === opt.id;
               return (
-                <button key={opt.id} className={`${styles.optCard} ${sel ? styles.optSelected : ''}`} onClick={() => selectOption(opt)}>
+                <button
+                  key={opt.id}
+                  type="button"
+                  className={`${styles.optCard} ${sel ? styles.optSelected : ''}`}
+                  onClick={() => selectOption(opt)}
+                >
                   {opt.emoji && <span className={styles.optEmoji}>{opt.emoji}</span>}
                   <span className={styles.optLabel}>{opt.label}</span>
                   {sel && <span className={styles.checkCircle}>✓</span>}
@@ -186,13 +240,29 @@ export default function QuestionnairePage() {
               );
             })}
           </div>
+
           {showInsight && q.insight && <InsightCard text={q.insight} />}
+
           {currentIdx > 0 && currentIdx < questions.length - 1 && (
             <p className={styles.motiv}>{currentIdx < questions.length / 2 ? "You're doing great — steady progress." : 'Almost there — a few more to go.'}</p>
           )}
         </div>
       </div>
-      <div className={styles.bottomBar}><SecondaryButton label={isLast ? 'Skip and see results' : 'Skip question'} onClick={skipQuestion} /></div>
+      <div className={styles.bottomBar}>
+        <div className={styles.bottomActions}>
+          <SecondaryButton
+            label={isLast ? 'Skip to results' : 'Skip question'}
+            onClick={skipQuestion}
+            className={styles.skipBtn}
+          />
+          <PrimaryButton
+            label={isLast ? 'Submit & see results →' : 'Next question →'}
+            onClick={handleNext}
+            disabled={!selected}
+            className={styles.nextBtn}
+          />
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,0 +1,229 @@
+.explainerCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-teal);
+  border-radius: var(--radius-lg);
+  margin-bottom: 24px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.toggleBtn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: rgba(88, 245, 209, 0.04);
+  border: none;
+  cursor: pointer;
+  color: var(--text-primary);
+  font-family: var(--font-headline);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  transition: background 0.2s, color 0.2s;
+  text-align: left;
+}
+
+.toggleBtn:hover {
+  background: rgba(88, 245, 209, 0.09);
+}
+
+.toggleLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.badgeIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: rgba(88, 245, 209, 0.15);
+  color: var(--primary);
+  font-size: 14px;
+}
+
+.toggleTitle {
+  color: var(--primary);
+  letter-spacing: 0.2px;
+}
+
+.toggleHint {
+  font-size: var(--fs-xs);
+  color: var(--text-secondary);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+.toggleRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.chevron {
+  display: inline-block;
+  transition: transform 0.25s ease;
+  font-size: 11px;
+}
+
+.chevronExpanded {
+  transform: rotate(180deg);
+}
+
+.contentWrapper {
+  padding: 18px 20px;
+  border-top: 1px solid rgba(88, 245, 209, 0.12);
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 20px;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.visualContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-mid);
+  border: 1px solid var(--border-ghost);
+  border-radius: var(--radius-md);
+  padding: 12px;
+  height: 100%;
+  min-height: 125px;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.visualSvgWrap {
+  width: 100%;
+  max-width: 110px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visualSvg {
+  width: 100%;
+  height: auto;
+  max-height: 90px;
+}
+
+.visualTag {
+  margin-top: 8px;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: var(--primary);
+  letter-spacing: 0.6px;
+  text-align: center;
+}
+
+.textSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.simpleSection {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.labelHeading {
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--primary);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.simpleText {
+  font-size: var(--fs-sm);
+  color: var(--text-primary);
+  line-height: 1.55;
+  margin: 0;
+  font-weight: 500;
+}
+
+.whySection {
+  background: rgba(88, 245, 209, 0.05);
+  border-left: 2px solid var(--primary);
+  padding: 8px 12px;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.whyText {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.keySignsList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.keySignItem {
+  font-size: 12px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+.signBullet {
+  color: var(--secondary);
+  font-size: 14px;
+  line-height: 1;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 640px) {
+  .contentWrapper {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    padding: 14px 16px;
+  }
+
+  .visualContainer {
+    min-height: 100px;
+    padding: 10px;
+  }
+
+  .visualSvgWrap {
+    max-width: 90px;
+  }
+
+  .toggleHint {
+    display: none;
+  }
+}
