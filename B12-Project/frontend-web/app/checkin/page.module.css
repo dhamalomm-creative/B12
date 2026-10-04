@@ -4,9 +4,10 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  max-width: 760px;
+  max-width: 960px;
   margin: 0 auto;
   padding: 0;
+  width: 100%;
 }
 
 /* ── Header ── */
@@ -57,7 +58,7 @@
 
 .qAnim {
   width: 100%;
-  max-width: 560px;
+  max-width: 680px;
   animation: fadeInUp 0.3s ease;
   display: flex;
   flex-direction: column;

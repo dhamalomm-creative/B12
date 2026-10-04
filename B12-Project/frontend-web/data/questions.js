@@ -21,6 +21,13 @@ export const YES_NO_OPTIONS = [
   { id: 'no',  label: 'No',  score: 0 },
 ];
 
+export const GRADIENT_OPTIONS = [
+  { id: 'never',     label: 'Never',      score: 0 },
+  { id: 'rarely',    label: 'Rarely',     score: 1 },
+  { id: 'sometimes', label: 'Sometimes',  score: 2 },
+  { id: 'often',     label: 'Often',      score: 3 },
+];
+
 export const SLEEP_OPTIONS = [
   { id: 'great',  label: '😴 Great',   score: 0 },
   { id: 'good',   label: '🙂 Good',    score: 1 },
@@ -41,6 +48,86 @@ export const B12_FOOD_OPTIONS = [
   { id: 'monthly', label: 'A few/month',   score: 2 },
   { id: 'rarely',  label: 'Rarely/Never',  score: 3 },
 ];
+
+// ─── Diet-Specific B12 Food Intake Questions ──────────────────────────────────
+export const DIET_B12_QUESTIONS = {
+  vegan: {
+    id: 'b12_food_intake',
+    category: 'Diet',
+    categoryIcon: '🌱',
+    question: 'How often do you consume B12-fortified foods or supplements? (plant milks, nutritional yeast, cereals, or B12 tablets)',
+    insight: 'Plant foods do not naturally produce B12. Fortified foods and regular supplements are the essential sources for vegans.',
+    explanation: {
+      simpleText: 'How regularly you consume fortified items (plant milks, breakfast cereals, nutritional yeast) or B12 supplements/drops to maintain healthy levels.',
+      whyItMatters: 'Vitamin B12 is synthesized by micro-organisms and is absent in unfortified plant foods. Vegan diets require fortified foods or supplements to protect nerves and red blood cells.',
+      visualType: 'b12_sources',
+      keySigns: [
+        'Pure plant-based diets supply zero natural B12 without fortified foods or vitamins',
+        'Irregular intake of fortified items or supplements leads to progressive depletion',
+      ],
+    },
+    type: 'custom',
+    options: B12_FOOD_OPTIONS,
+    weight: 4,
+  },
+  vegetarian: {
+    id: 'b12_food_intake',
+    category: 'Diet',
+    categoryIcon: '🥦',
+    question: 'How often do you eat vegetarian B12 sources? (milk, curd/yogurt, cheese, paneer, eggs, or fortified foods)',
+    insight: 'Dairy products and eggs contain B12, but intake levels depend heavily on consistent daily portions.',
+    explanation: {
+      simpleText: 'How regularly your diet contains dairy foods (milk, curd, yogurt, paneer, cheese), eggs, or B12-fortified breakfast cereals.',
+      whyItMatters: 'Vegetarians obtain B12 almost exclusively from dairy and eggs. Small or irregular portions frequently fall below daily metabolic requirements.',
+      visualType: 'b12_sources',
+      keySigns: [
+        'Eating low or sporadic amounts of dairy leaves daily B12 requirements unmet',
+        'Egg and dairy intake that skips days in a row raises deficiency risk',
+      ],
+    },
+    type: 'custom',
+    options: B12_FOOD_OPTIONS,
+    weight: 4,
+  },
+  pescatarian: {
+    id: 'b12_food_intake',
+    category: 'Diet',
+    categoryIcon: '🐟',
+    question: 'How often do you eat B12-rich foods? (fish, seafood, eggs, dairy, fortified cereals)',
+    insight: 'Fish, shellfish, eggs, and dairy are excellent natural sources of highly bioavailable B12.',
+    explanation: {
+      simpleText: 'How frequently you eat seafood (salmon, tuna, mackerel, sardines, prawns), shellfish, eggs, and dairy products.',
+      whyItMatters: 'Fish and seafood provide very high concentrations of bioavailable Vitamin B12 that are readily absorbed by the digestive tract.',
+      visualType: 'b12_sources',
+      keySigns: [
+        'Infrequent seafood meals (less than twice a week) reduce overall dietary B12 reserve',
+        'Combining fish with dairy products ensures steady cellular nutrition',
+      ],
+    },
+    type: 'custom',
+    options: B12_FOOD_OPTIONS,
+    weight: 4,
+  },
+  omnivore: {
+    id: 'b12_food_intake',
+    category: 'Diet',
+    categoryIcon: '🍖',
+    question: 'How often do you eat B12-rich foods? (meat, fish, eggs, dairy, fortified cereals)',
+    insight: 'Low dietary B12 intake is the most preventable cause of deficiency, especially in plant-based diets.',
+    explanation: {
+      simpleText: 'How regularly your diet contains foods naturally high in Vitamin B12: red meat, poultry, fish, eggs, milk, curd/yogurt, cheese, or B12-fortified foods.',
+      whyItMatters: 'The human body cannot manufacture B12. It must come from animal products, fortified items, or supplements.',
+      visualType: 'b12_sources',
+      keySigns: [
+        'Strict vegetarian or vegan diets provide virtually no B12 without supplementation',
+        'Infrequent intake of eggs, meat, or dairy raises deficiency risk',
+      ],
+    },
+    type: 'custom',
+    options: B12_FOOD_OPTIONS,
+    weight: 4,
+  },
+};
 
 // ─── COMMON QUESTIONS (all users see these) ──────────────────────────────────
 export const COMMON_QUESTIONS = [
@@ -243,7 +330,7 @@ export const AGE_QUESTIONS = {
       id: 'skip_meals_young',
       category: 'Diet Habits',
       categoryIcon: '🍔',
-      question: 'Do you skip meals frequently during the day?',
+      question: 'How often do you skip meals during the day?',
       insight: 'Skipping meals disrupts nutrient absorption patterns, increasing deficiency risk.',
       explanation: {
         simpleText: 'Going long stretches without eating meals, such as skipping breakfast or lunch due to classes, studying, or busy routines.',
@@ -254,15 +341,15 @@ export const AGE_QUESTIONS = {
           'Only eating one heavy meal late in the evening',
         ],
       },
-      type: 'yesno',
-      options: YES_NO_OPTIONS,
+      type: 'gradient',
+      options: GRADIENT_OPTIONS,
       weight: 2,
     },
     {
       id: 'junk_food',
       category: 'Diet Habits',
       categoryIcon: '🍟',
-      question: 'Do you rely heavily on junk or processed food?',
+      question: 'How often do you rely on junk or processed food?',
       insight: 'Processed foods contain little to no B12 and deplete essential nutrients.',
       explanation: {
         simpleText: 'Frequently having ultra-processed items, instant noodles, deep-fried snacks, or fast food instead of fresh, nutrient-rich meals.',
@@ -273,15 +360,15 @@ export const AGE_QUESTIONS = {
           'Very rare intake of fresh fruits, leafy greens, dairy, or clean protein',
         ],
       },
-      type: 'yesno',
-      options: YES_NO_OPTIONS,
+      type: 'gradient',
+      options: GRADIENT_OPTIONS,
       weight: 2,
     },
     {
       id: 'irregular_sleep_young',
       category: 'Sleep',
       categoryIcon: '🌙',
-      question: 'Do you have irregular sleep patterns? (sleeping at different times each night)',
+      question: 'How often do you have irregular sleep patterns? (sleeping at different times each night)',
       insight: 'Irregular sleep cycles disrupt the body\'s recovery, worsening nutritional deficiencies.',
       explanation: {
         simpleText: 'Going to bed and waking up at completely different times every day (for example, sleeping at 11 PM one night, then 3 AM the next).',
@@ -292,8 +379,8 @@ export const AGE_QUESTIONS = {
           'Excessive weekend oversleeping to compensate for weekday deficits',
         ],
       },
-      type: 'yesno',
-      options: YES_NO_OPTIONS,
+      type: 'gradient',
+      options: GRADIENT_OPTIONS,
       weight: 2,
     },
   ],
@@ -445,7 +532,7 @@ export const GENDER_QUESTIONS = {
       id: 'heavy_bleeding',
       category: 'Female Health',
       categoryIcon: '🩸',
-      question: 'Do you experience heavy menstrual bleeding?',
+      question: 'How often do you experience heavy menstrual bleeding?',
       insight: 'Heavy bleeding leads to significant iron and B12 loss, increasing deficiency risk.',
       explanation: {
         simpleText: 'Periods with unusually heavy flow, such as having to change pads/tampons every 1–2 hours, passing clots, or bleeding longer than 7 days.',
@@ -456,15 +543,15 @@ export const GENDER_QUESTIONS = {
           'Feeling faint, pale, or completely worn out during peak flow days',
         ],
       },
-      type: 'yesno',
-      options: YES_NO_OPTIONS,
+      type: 'gradient',
+      options: GRADIENT_OPTIONS,
       weight: 3,
     },
     {
       id: 'period_fatigue',
       category: 'Female Health',
       categoryIcon: '🔋',
-      question: 'Do you feel significantly more fatigued during your periods?',
+      question: 'How often do you feel significantly more fatigued during your periods?',
       insight: 'Cycle-related fatigue can be both a symptom and amplifier of nutritional deficiencies.',
       explanation: {
         simpleText: 'Experiencing intense fatigue, heavy limbs, or deep sluggishness right before or during your menstrual period.',
@@ -475,15 +562,15 @@ export const GENDER_QUESTIONS = {
           'Feeling physically weaker compared to the rest of the month',
         ],
       },
-      type: 'yesno',
-      options: YES_NO_OPTIONS,
+      type: 'gradient',
+      options: GRADIENT_OPTIONS,
       weight: 2,
     },
     {
       id: 'irregular_periods',
       category: 'Female Health',
       categoryIcon: '📅',
-      question: 'Are your periods irregular?',
+      question: 'How often are your periods irregular?',
       insight: 'Irregular cycles can be connected to hormonal imbalances influenced by nutritional status.',
       explanation: {
         simpleText: 'Menstrual cycles that vary unpredictably in timing, arrive very early or late, or skip months entirely.',
@@ -494,15 +581,15 @@ export const GENDER_QUESTIONS = {
           'Skipping cycles without pregnancy or medical explanation',
         ],
       },
-      type: 'yesno',
-      options: YES_NO_OPTIONS,
+      type: 'gradient',
+      options: GRADIENT_OPTIONS,
       weight: 2,
     },
     {
       id: 'period_dizziness',
       category: 'Female Health',
       categoryIcon: '💫',
-      question: 'Do you feel dizzy during or after your period?',
+      question: 'How often do you feel dizzy during or after your period?',
       insight: 'Dizziness around the cycle can signal anemia linked to blood-loss and low B12.',
       explanation: {
         simpleText: 'Feeling lightheaded, woozy, or seeing dark spots when standing up during or immediately after your period.',
@@ -513,8 +600,8 @@ export const GENDER_QUESTIONS = {
           'Feeling unsteady or having to sit down to catch your balance',
         ],
       },
-      type: 'yesno',
-      options: YES_NO_OPTIONS,
+      type: 'gradient',
+      options: GRADIENT_OPTIONS,
       weight: 3,
     },
     {
@@ -656,9 +743,20 @@ export const getAgeGroup = (age) => {
 };
 
 // ─── Build personalised question set ────────────────────────────────────────
-export const buildQuestionSet = (age, gender) => {
+export const buildQuestionSet = (age, gender, dietType = 'omnivore') => {
   const ageGroup  = getAgeGroup(age);
   const ageQs     = AGE_QUESTIONS[ageGroup]    || [];
   const genderQs  = GENDER_QUESTIONS[gender]   || [];
-  return [...COMMON_QUESTIONS, ...ageQs, ...genderQs];
+
+  const dietKey   = (dietType || 'omnivore').toLowerCase();
+  const dietFoodQ = DIET_B12_QUESTIONS[dietKey] || DIET_B12_QUESTIONS.omnivore;
+
+  const customizedCommon = COMMON_QUESTIONS.map((q) => {
+    if (q.id === 'b12_food_intake') {
+      return dietFoodQ;
+    }
+    return q;
+  });
+
+  return [...customizedCommon, ...ageQs, ...genderQs];
 };

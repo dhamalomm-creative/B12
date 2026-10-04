@@ -61,44 +61,46 @@ export default function OnboardingPage() {
           <h1 className={styles.formTitle}>A few details to personalize your plan</h1>
           <p className={styles.formSubtitle}>We ask for age, gender, and diet so questions and tips match your situation.</p>
 
-          <div className={styles.card}>
-            <h3 className={styles.cardTitle}>About you</h3>
+          <div className={styles.formGrid}>
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>About you</h3>
 
-            <label className={styles.fieldLabel}>Name <span className={styles.optional}>(optional)</span></label>
-            <input className="input" placeholder="e.g. Alex" value={name} onChange={e => setName(e.target.value)} />
+              <label className={styles.fieldLabel}>Name <span className={styles.optional}>(optional)</span></label>
+              <input className="input" placeholder="e.g. Alex" value={name} onChange={e => setName(e.target.value)} />
 
-            <div className={styles.divider} />
+              <div className={styles.divider} />
 
-            <label className={styles.fieldLabel}>Age range <span className={styles.required}>*</span></label>
-            <div className={styles.pillRow}>
-              {['15-24','25-40','41-60','60+'].map(a => (
-                <button key={a} className={`pill ${age===a?'active':''}`} onClick={() => setAge(a)}>{a}</button>
-              ))}
+              <label className={styles.fieldLabel}>Age range <span className={styles.required}>*</span></label>
+              <div className={styles.pillRow}>
+                {['15-24','25-40','41-60','60+'].map(a => (
+                  <button key={a} className={`pill ${age===a?'active':''}`} onClick={() => setAge(a)}>{a}</button>
+                ))}
+              </div>
+
+              <div className={styles.divider} />
+
+              <label className={styles.fieldLabel}>Gender <span className={styles.required}>*</span></label>
+              <div className={styles.genderCol}>
+                {[{id:'female',label:'Female'},{id:'male',label:'Male'},{id:'other',label:'Other / Prefer not to say'}].map(g => (
+                  <button key={g.id} className={`pill ${styles.pillWide} ${gender===g.id?'active':''}`} onClick={() => setGender(g.id)}>{g.label}</button>
+                ))}
+              </div>
             </div>
 
-            <div className={styles.divider} />
-
-            <label className={styles.fieldLabel}>Gender <span className={styles.required}>*</span></label>
-            <div className={styles.genderCol}>
-              {[{id:'female',label:'Female'},{id:'male',label:'Male'},{id:'other',label:'Other / Prefer not to say'}].map(g => (
-                <button key={g.id} className={`pill ${styles.pillWide} ${gender===g.id?'active':''}`} onClick={() => setGender(g.id)}>{g.label}</button>
+            <div className={styles.card}>
+              <h3 className={styles.cardTitle}>Typical eating pattern</h3>
+              <p className={styles.cardHint}>This helps estimate B12 intake from food. Choose what fits best most days.</p>
+              {(DIET_TYPES||[]).map(d => (
+                <button key={d.id} className={`${styles.dietCard} ${dietType===d.id?styles.dietCardActive:''}`} onClick={() => setDietType(d.id)}>
+                  <span className={styles.dietEmoji}>{d.icon}</span>
+                  <div className={styles.dietText}>
+                    <span className={styles.dietLabel}>{d.label}</span>
+                    {d.weight > 0 && <span className={styles.dietHint}>{d.weight>=3?'Often higher need for B12 awareness':d.weight===2?'Moderate attention to B12 sources':'Generally more B12 from diet'}</span>}
+                  </div>
+                  <span className={`${styles.dietRadio} ${dietType===d.id?styles.dietRadioActive:''}`}>{dietType===d.id?'✓':''}</span>
+                </button>
               ))}
             </div>
-          </div>
-
-          <div className={styles.card}>
-            <h3 className={styles.cardTitle}>Typical eating pattern</h3>
-            <p className={styles.cardHint}>This helps estimate B12 intake from food. Choose what fits best most days.</p>
-            {(DIET_TYPES||[]).map(d => (
-              <button key={d.id} className={`${styles.dietCard} ${dietType===d.id?styles.dietCardActive:''}`} onClick={() => setDietType(d.id)}>
-                <span className={styles.dietEmoji}>{d.icon}</span>
-                <div className={styles.dietText}>
-                  <span className={styles.dietLabel}>{d.label}</span>
-                  {d.weight > 0 && <span className={styles.dietHint}>{d.weight>=3?'Often higher need for B12 awareness':d.weight===2?'Moderate attention to B12 sources':'Generally more B12 from diet'}</span>}
-                </div>
-                <span className={`${styles.dietRadio} ${dietType===d.id?styles.dietRadioActive:''}`}>{dietType===d.id?'✓':''}</span>
-              </button>
-            ))}
           </div>
 
           <PrimaryButton label={saving ? 'Saving…' : 'Continue to assessment'} onClick={handleStart} disabled={!canSubmit} loading={saving} />

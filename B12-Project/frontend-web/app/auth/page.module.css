@@ -322,7 +322,103 @@
   transition: color 0.2s;
 }
 .footerLink:hover { color: var(--primary); }
-.footerDot { color: var(--border-ghost); font-size: 14px; }
+/* Criteria checklist & strength meter */
+.criteriaBox {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-ghost);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  margin-top: -8px;
+  margin-bottom: 20px;
+}
+.criteriaHeaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.criteriaTitle {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+.criteriaStrengthLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+}
+.labelWeak   { color: var(--error); }
+.labelFair   { color: #FBBF24; }
+.labelStrong { color: var(--primary); }
+
+.meterTrack {
+  height: 4px;
+  width: 100%;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.meterFill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease, background 0.3s ease;
+}
+.meterWeak   { background: var(--error); box-shadow: 0 0 8px rgba(255, 113, 108, 0.4); }
+.meterFair   { background: #FBBF24; box-shadow: 0 0 8px rgba(251, 191, 36, 0.4); }
+.meterStrong { background: var(--primary); box-shadow: 0 0 8px rgba(88, 245, 209, 0.5); }
+
+.criteriaGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px 12px;
+}
+.criteriaItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  transition: color 0.2s;
+}
+.criteriaItem.met {
+  color: var(--primary);
+  font-weight: 600;
+}
+.criteriaIcon {
+  font-size: 11px;
+  font-weight: 800;
+  width: 14px;
+  display: inline-block;
+  text-align: center;
+}
+.criteriaItem.met .criteriaIcon {
+  color: var(--primary);
+}
+
+.matchHint {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.matchSuccess {
+  color: var(--primary);
+}
+.matchFail {
+  color: var(--error);
+}
+
+@media (max-width: 480px) {
+  .criteriaGrid {
+    grid-template-columns: 1fr;
+  }
+}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {

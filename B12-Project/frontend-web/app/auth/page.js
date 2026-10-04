@@ -19,12 +19,20 @@ export default function AuthPage() {
 
   const toggle = () => { setMode(m => m==='login'?'register':'login'); setLocalError(''); setDupEmail(false); setNoAccount(false); clearError(); };
 
+  const hasMinLen = password.length >= 8;
+  const hasUpper  = /[A-Z]/.test(password);
+  const hasLower  = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasMatch  = Boolean(confirmPw && password === confirmPw);
+  const criteriaScore = [hasMinLen, hasUpper, hasLower, hasNumber].filter(Boolean).length;
+
   const validate = () => {
     if (!email.trim()) return 'Email is required';
     if (!/\S+@\S+\.\S+/.test(email)) return 'Enter a valid email';
     if (mode === 'register') {
       if (password.length < 8) return 'Password must be at least 8 characters';
       if (!/[A-Z]/.test(password)) return 'Password must contain at least one uppercase letter (A-Z)';
+      if (!/[a-z]/.test(password)) return 'Password must contain at least one lowercase letter (a-z)';
       if (!/[0-9]/.test(password)) return 'Password must contain at least one number (0-9)';
       if (password !== confirmPw) return 'Passwords do not match';
     } else {
@@ -183,6 +191,43 @@ export default function AuthPage() {
             </div>
 
             {mode === 'register' && (
+              <div className={styles.criteriaBox}>
+                <div className={styles.criteriaHeaderRow}>
+                  <span className={styles.criteriaTitle}>ACCESS KEY CRITERIA</span>
+                  <span className={`${styles.criteriaStrengthLabel} ${criteriaScore >= 4 ? styles.labelStrong : criteriaScore >= 2 ? styles.labelFair : styles.labelWeak}`}>
+                    {password.length === 0 ? 'Requirements' : criteriaScore < 2 ? 'Weak' : criteriaScore < 4 ? 'Good' : 'Strong'}
+                  </span>
+                </div>
+                <div className={styles.meterTrack}>
+                  <div
+                    className={`${styles.meterFill} ${
+                      criteriaScore >= 4 ? styles.meterStrong : criteriaScore >= 2 ? styles.meterFair : styles.meterWeak
+                    }`}
+                    style={{ width: password.length === 0 ? '0%' : `${(criteriaScore / 4) * 100}%` }}
+                  />
+                </div>
+                <div className={styles.criteriaGrid}>
+                  <div className={`${styles.criteriaItem} ${hasMinLen ? styles.met : ''}`}>
+                    <span className={styles.criteriaIcon}>{hasMinLen ? '✓' : '•'}</span>
+                    <span>At least 8 characters</span>
+                  </div>
+                  <div className={`${styles.criteriaItem} ${hasUpper ? styles.met : ''}`}>
+                    <span className={styles.criteriaIcon}>{hasUpper ? '✓' : '•'}</span>
+                    <span>One uppercase letter (A–Z)</span>
+                  </div>
+                  <div className={`${styles.criteriaItem} ${hasLower ? styles.met : ''}`}>
+                    <span className={styles.criteriaIcon}>{hasLower ? '✓' : '•'}</span>
+                    <span>One lowercase letter (a–z)</span>
+                  </div>
+                  <div className={`${styles.criteriaItem} ${hasNumber ? styles.met : ''}`}>
+                    <span className={styles.criteriaIcon}>{hasNumber ? '✓' : '•'}</span>
+                    <span>One number (0–9)</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {mode === 'register' && (
               <div className={styles.fieldGroup}>
                 <label className={styles.fieldLabel}>CONFIRM KEY</label>
                 <input
@@ -194,6 +239,11 @@ export default function AuthPage() {
                   onChange={e => setConfirmPw(e.target.value)}
                   autoComplete="new-password"
                 />
+                {confirmPw.length > 0 && (
+                  <div className={`${styles.matchHint} ${hasMatch ? styles.matchSuccess : styles.matchFail}`}>
+                    <span>{hasMatch ? '✓ Keys match' : '✕ Keys do not match yet'}</span>
+                  </div>
+                )}
               </div>
             )}
 

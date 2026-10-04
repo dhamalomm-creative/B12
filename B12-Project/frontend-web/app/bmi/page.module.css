@@ -2,9 +2,10 @@
   background: transparent;
   min-height: 100vh;
   padding: var(--space-xl) var(--space-xl) var(--space-xxl);
-  max-width: 840px;
+  max-width: 1040px;
   margin: 0 auto;
   animation: fadeInUp 0.4s ease;
+  width: 100%;
 }
 
 /* ── Header ── */

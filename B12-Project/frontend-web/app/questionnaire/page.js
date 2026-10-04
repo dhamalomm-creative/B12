@@ -17,7 +17,13 @@ export default function QuestionnairePage() {
   const router = useRouter();
   const { user } = state;
 
-  const questions = buildQuestionSet(user?.age || '25-40', user?.gender || 'male');
+  const questions = useMemo(() => {
+    return buildQuestionSet(
+      user?.age || '25-40',
+      user?.gender || 'male',
+      user?.dietType || 'omnivore'
+    );
+  }, [user?.age, user?.gender, user?.dietType]);
 
   const [currentIdx,      setCurrentIdx]      = useState(0);
   const [answers,         setAnswers]         = useState({});
