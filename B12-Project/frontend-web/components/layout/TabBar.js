@@ -67,7 +67,7 @@ export default function TabBar() {
               <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
             </svg>
           </div>
-          <span className={styles.brandName}>Clinical Luminary</span>
+          <span className={styles.brandName}>B12 Vitality</span>
         </div>
 
         {/* Nav label */}
@@ -98,14 +98,14 @@ export default function TabBar() {
           <ThemeToggle />
           <div className={styles.sidebarFooterStatus}>
             <div className={styles.statusDot} />
-            <span className={styles.statusText}>Clinical Mode</span>
+            <span className={styles.statusText}>Health Active</span>
           </div>
         </div>
       </aside>
 
       {/* ── Mobile Bottom Tab Bar ── */}
       <nav className={styles.mobileBar}>
-        {NAV_ITEMS.filter(i => i.path !== '/profile').map((item) => {
+        {NAV_ITEMS.map((item) => {
           const active = pathname === item.path || pathname.startsWith(item.path + '/');
           return (
             <button

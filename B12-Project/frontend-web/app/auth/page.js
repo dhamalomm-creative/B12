@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { PrimaryButton } from '@/components/UI';
+import ThemeToggle from '@/components/UI/ThemeToggle';
 import styles from './page.module.css';
 
 export default function AuthPage() {
@@ -83,7 +84,7 @@ export default function AuthPage() {
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
               </svg>
             </div>
-            <span className={styles.logoName}>Clinical Luminary</span>
+            <span className={styles.logoName}>B12 Health</span>
           </div>
 
           {/* Main hero text */}
@@ -144,6 +145,9 @@ export default function AuthPage() {
 
       {/* ── Right Panel — Auth Form ── */}
       <div className={styles.rightPanel}>
+        <div className={styles.authTopBar}>
+          <ThemeToggle />
+        </div>
         <div className={styles.formWrap}>
           <p className={styles.portalLabel}>PORTAL ACCESS</p>
           <h2 className={styles.formTitle}>

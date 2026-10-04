@@ -111,10 +111,14 @@
 }
 
 .chartCard {
-  background: var(--bg);
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
   padding: 32px;
   position: relative;
   overflow: hidden;
+  margin-top: 24px;
 }
 
 /* Data bracket corners for chart cards */

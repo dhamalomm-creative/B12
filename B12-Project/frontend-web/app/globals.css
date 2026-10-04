@@ -1,106 +1,106 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ─── "Clinical Precision" Design Tokens — Professional Health SaaS ──────── */
+/* ─── "Modern Bio-Clinical" Design Tokens — High-End Health & Diagnostic SaaS ─── */
 :root {
   --font-headline: 'Space Grotesk', system-ui, sans-serif;
   --font-body:     'Inter', system-ui, sans-serif;
   --font:          'Inter', system-ui, sans-serif;
 
-  /* ── Surface Hierarchy (refined tonal layering) ── */
-  --bg:                   #0B1121;   /* deep navy — main app background    */
-  --bg-deep:              #060D19;   /* deepest layer                      */
-  --bg-low:               #0E1629;   /* sidebars, nav background           */
-  --bg-mid:               #131D30;   /* containers                         */
-  --bg-surface:           #182338;   /* cards — slight warmth              */
-  --bg-elevated:          #1E2B42;   /* overlays, hover states             */
-  --bg-bright:            #253549;   /* active hover                       */
-  --bg-glass:             rgba(24, 35, 56, 0.72);   /* glassmorphism base  */
-  --bg-glass-nav:         rgba(11, 17, 33, 0.90);   /* nav glassmorphism   */
+  /* ── Surface Hierarchy — Clean, Airy Modern Slate & Pure White ── */
+  --bg:                   #F8FAFC;   /* Slate-50: Crisp, luminous medical canvas */
+  --bg-deep:              #F1F5F9;   /* Slate-100: Soft contrast backdrop */
+  --bg-low:               #FFFFFF;   /* Sidebar / nav backdrop (crisp white) */
+  --bg-mid:               #F1F5F9;   /* Muted containers / progress tracks */
+  --bg-surface:           #FFFFFF;   /* Pure crisp white cards */
+  --bg-elevated:          #FFFFFF;   /* Elevated cards / dropdowns */
+  --bg-bright:            #F8FAFC;   /* Hover highlight */
+  --bg-glass:             rgba(255, 255, 255, 0.88);
+  --bg-glass-nav:         rgba(255, 255, 255, 0.94);
 
-  /* ── Primary — Refined Teal (softer, professional) ── */
-  --primary:              #4DD9B4;
-  --primary-container:    #29B893;
-  --primary-dim:          #3ECBA5;
-  --on-primary:           #003D2E;
-  --on-primary-container: #002A20;
+  /* ── Primary — Vibrant Bio-Emerald (Vitality, Cellular Energy & B12) ── */
+  --primary:              #0D9488;   /* Rich Teal-Emerald: high authority & freshness */
+  --primary-container:    #0F766E;   /* Deep emerald */
+  --primary-dim:          #14B8A6;   /* Lighter vibrant mint */
+  --on-primary:           #FFFFFF;
+  --on-primary-container: #FFFFFF;
 
-  /* ── Secondary — Refined Blue accent ── */
-  --secondary:            #5CB8E6;
-  --secondary-dim:        #3DA8D9;
-  --secondary-container:  #0A5A7A;
-  --on-secondary:         #003B52;
+  /* ── Secondary — Trust Sapphire (Medical Diagnosis & Clinical Precision) ── */
+  --secondary:            #2563EB;   /* Royal Sapphire Blue */
+  --secondary-dim:        #3B82F6;
+  --secondary-container:  #EFF6FF;
+  --on-secondary:         #FFFFFF;
 
-  /* ── Tertiary — warm near-white for reading ── */
-  --tertiary:             #F0F4FA;
-  --tertiary-container:   #DEE4ED;
-  --tertiary-dim:         #D6DCE5;
+  /* ── Tertiary — Slate Accent ── */
+  --tertiary:             #0F172A;
+  --tertiary-container:   #334155;
+  --tertiary-dim:         #64748B;
 
-  /* ── Semantic colours ── */
-  --error:                #F06B6B;
-  --error-container:      #8A1A1A;
-  --on-error:             #3D0808;
+  /* ── Semantic Colors ── */
+  --error:                #EF4444;   /* Coral Red */
+  --error-container:      #FEE2E2;
+  --on-error:             #FFFFFF;
 
   /* ── Outline variants ── */
-  --outline:              #6B7A8D;
-  --outline-variant:      #3D4D60;
+  --outline:              #94A3B8;
+  --outline-variant:      #CBD5E1;
 
   /* ── Alias tokens for existing components ── */
   --bg-card:              var(--bg-surface);
-  --bg-muted:             var(--bg-mid);
+  --bg-muted:             #F1F5F9;
   --cyan:                 var(--secondary);
   --primary-light:        var(--primary-dim);
   --primary-dark:         var(--primary-container);
 
-  /* ── Text (higher contrast, easier to read) ── */
-  --text-primary:         #EDF2F7;   /* crisp white — max readability      */
-  --text-secondary:       #9AABBD;   /* softer, warmer secondary           */
-  --text-muted:           #637388;   /* refined muted                      */
+  /* ── Text (High contrast, razor-sharp legibility) ── */
+  --text-primary:         #0F172A;   /* Deep Slate 900 — 14:1 contrast ratio */
+  --text-secondary:       #475569;   /* Slate 600 — clean clinical readability */
+  --text-muted:           #94A3B8;   /* Slate 400 — metadata */
 
-  /* ── Borders (subtle, professional) ── */
-  --border:               rgba(59, 77, 96, 0.45);
-  --border-light:         rgba(77, 217, 180, 0.08);
-  --border-teal:          rgba(77, 217, 180, 0.18);
-  --border-cyan:          rgba(92, 184, 230, 0.15);
-  --border-ghost:         rgba(59, 77, 96, 0.18);
+  /* ── Borders (Subtle, clean, non-intrusive) ── */
+  --border:               rgba(226, 232, 240, 0.95);
+  --border-light:         rgba(13, 148, 136, 0.12);
+  --border-teal:          rgba(13, 148, 136, 0.25);
+  --border-cyan:          rgba(37, 99, 235, 0.20);
+  --border-ghost:         rgba(226, 232, 240, 0.85);
 
-  /* ── Tints (softer, more refined) ── */
-  --tint-primary:            rgba(77, 217, 180, 0.07);
-  --tint-primary-strong:     rgba(77, 217, 180, 0.14);
-  --tint-accent:             rgba(77, 217, 180, 0.08);
-  --tint-accent-border:      rgba(77, 217, 180, 0.22);
-  --tint-warning:            rgba(234, 179, 8, 0.10);
-  --tint-warning-border:     rgba(234, 179, 8, 0.20);
-  --tint-danger:             rgba(240, 107, 107, 0.08);
-  --tint-danger-border:      rgba(240, 107, 107, 0.20);
-  --tint-streak:             rgba(234, 179, 8, 0.12);
-  --tint-violet:             rgba(130, 160, 200, 0.07);
-  --tint-violet-border:      rgba(130, 160, 200, 0.15);
+  /* ── Tints ── */
+  --tint-primary:            rgba(13, 148, 136, 0.08);
+  --tint-primary-strong:     rgba(13, 148, 136, 0.15);
+  --tint-accent:             rgba(37, 99, 235, 0.08);
+  --tint-accent-border:      rgba(37, 99, 235, 0.22);
+  --tint-warning:            rgba(245, 158, 11, 0.10);
+  --tint-warning-border:     rgba(245, 158, 11, 0.25);
+  --tint-danger:             rgba(239, 68, 68, 0.08);
+  --tint-danger-border:      rgba(239, 68, 68, 0.20);
+  --tint-streak:             rgba(245, 158, 11, 0.12);
+  --tint-violet:             rgba(99, 102, 241, 0.08);
+  --tint-violet-border:      rgba(99, 102, 241, 0.18);
 
   /* ── Semantic risk aliases ── */
-  --risk-low:              var(--primary);
-  --risk-medium:           #EAB308;
-  --risk-high:             var(--error);
-  --risk-bg-low:           rgba(77, 217, 180, 0.12);
-  --risk-bg-medium:        rgba(234, 179, 8, 0.12);
-  --risk-bg-high:          rgba(240, 107, 107, 0.12);
+  --risk-low:              #0D9488;
+  --risk-medium:           #F59E0B;
+  --risk-high:             #EF4444;
+  --risk-bg-low:           rgba(13, 148, 136, 0.10);
+  --risk-bg-medium:        rgba(245, 158, 11, 0.12);
+  --risk-bg-high:          rgba(239, 68, 68, 0.10);
 
   /* ── Accent aliases ── */
   --accent:                var(--secondary);
-  --accent-soft:           rgba(77, 217, 180, 0.08);
-  --accent-warm:           #EAB308;
+  --accent-soft:           rgba(13, 148, 136, 0.08);
+  --accent-warm:           #F59E0B;
   --mint:                  var(--primary);
-  --mint-glow:             rgba(77, 217, 180, 0.12);
-  --violet:                #9AABBD;
-  --violet-glow:           rgba(154, 171, 189, 0.12);
-  --amber:                 #EAB308;
-  --amber-glow:            rgba(234, 179, 8, 0.12);
+  --mint-glow:             rgba(13, 148, 136, 0.12);
+  --violet:                #6366F1;
+  --violet-glow:           rgba(99, 102, 241, 0.12);
+  --amber:                 #F59E0B;
+  --amber-glow:            rgba(245, 158, 11, 0.14);
   --rose:                  var(--error);
-  --rose-glow:             rgba(240, 107, 107, 0.12);
+  --rose-glow:             rgba(239, 68, 68, 0.14);
   --sky:                   var(--secondary);
 
-  /* ── Signature gradient (professional, less neon) ── */
-  --gradient-primary:    linear-gradient(135deg, #4DD9B4 0%, #29B893 100%);
-  --gradient-glow:       linear-gradient(135deg, rgba(77,217,180,0.15) 0%, rgba(92,184,230,0.15) 100%);
+  /* ── Signature gradient (clean, vibrant medical gradient) ── */
+  --gradient-primary:    linear-gradient(135deg, #0D9488 0%, #0F766E 100%);
+  --gradient-glow:       linear-gradient(135deg, rgba(13,148,136,0.12) 0%, rgba(37,99,235,0.12) 100%);
 
   /* ── Typography scale ── */
   --fs-xs:    11px;
@@ -121,59 +121,59 @@
   --space-xl:  32px;
   --space-xxl: 48px;
 
-  /* ── Radius (md = 0.375rem key radius) ── */
-  --radius-sm:   6px;
-  --radius-md:   10px;
-  --radius-lg:   14px;
-  --radius-xl:   20px;
-  --radius-xxl:  28px;
+  /* ── Radius ── */
+  --radius-sm:   8px;
+  --radius-md:   12px;
+  --radius-lg:   16px;
+  --radius-xl:   22px;
+  --radius-xxl:  30px;
   --radius-full: 9999px;
 
-  /* ── Elevation / ambient shadows (professional, subtler) ── */
-  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.25);
-  --shadow-card:   0 4px 20px rgba(0, 0, 0, 0.35);
-  --shadow-float:  0px 16px 40px rgba(0, 0, 0, 0.35);
-  --shadow-button: 0 4px 16px rgba(77, 217, 180, 0.22);
-  --shadow-glow:   0 0 20px rgba(77, 217, 180, 0.12);
-  --shadow-nav:    0 0 0 1px rgba(77, 217, 180, 0.08);
+  /* ── Elevation / Ambient Shadows (Clean, natural, airy) ── */
+  --shadow-subtle: 0 1px 3px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(15, 23, 42, 0.03);
+  --shadow-card:   0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.02);
+  --shadow-float:  0 16px 36px -4px rgba(15, 23, 42, 0.10), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
+  --shadow-button: 0 4px 14px rgba(13, 148, 136, 0.28);
+  --shadow-glow:   0 0 20px rgba(13, 148, 136, 0.10);
+  --shadow-nav:    0 1px 3px rgba(15, 23, 42, 0.05);
 
   /* ── Sidebar width ── */
   --sidebar-w: 240px;
 }
 
-/* ─── Light Mode Variant — Professional Clinical ─────────────────────────── */
-[data-theme="light"] {
-  --bg:                   #F7F8FC;
-  --bg-deep:              #FFFFFF;
-  --bg-low:               #EFF1F6;
-  --bg-mid:               #E9ECF2;
-  --bg-surface:           #FFFFFF;
-  --bg-elevated:          #F2F4F8;
-  --bg-bright:            #E4E8EE;
-  --bg-glass:             rgba(255, 255, 255, 0.85);
-  --bg-glass-nav:         rgba(247, 248, 252, 0.95);
+/* ─── Midnight Vitality Variant — Deep Obsidian Dark Mode ────────────────── */
+[data-theme="dark"] {
+  --bg:                   #090D16;   /* Obsidian Midnight — deep, pure, not muddy */
+  --bg-deep:              #05080E;
+  --bg-low:               #0E1424;   /* Sidebar / nav */
+  --bg-mid:               #131B2E;   /* Muted containers */
+  --bg-surface:           #141D33;   /* Rich surface cards */
+  --bg-elevated:          #1A243F;   /* Overlays / popovers */
+  --bg-bright:            #222F50;   /* Hover */
+  --bg-glass:             rgba(20, 29, 51, 0.75);
+  --bg-glass-nav:         rgba(9, 13, 22, 0.90);
 
-  --primary:              #0E9E82;
-  --primary-container:    #0B8A70;
-  --primary-dim:          #11B494;
-  --on-primary:           #FFFFFF;
-  --on-primary-container: #FFFFFF;
+  --primary:              #10B981;   /* Electric Emerald */
+  --primary-container:    #059669;
+  --primary-dim:          #34D399;
+  --on-primary:           #022C22;
+  --on-primary-container: #022C22;
 
-  --secondary:            #0C7BB3;
-  --secondary-dim:        #0E8FCF;
-  --secondary-container:  #E1F3FB;
-  --on-secondary:         #FFFFFF;
+  --secondary:            #38BDF8;   /* Sky Sapphire */
+  --secondary-dim:        #0EA5E9;
+  --secondary-container:  #0369A1;
+  --on-secondary:         #082F49;
 
-  --tertiary:             #1A2332;
-  --tertiary-container:   #2D3A4B;
-  --tertiary-dim:         #384858;
+  --tertiary:             #F8FAFC;
+  --tertiary-container:   #E2E8F0;
+  --tertiary-dim:         #CBD5E1;
 
-  --error:                #DC2626;
-  --error-container:      #FEE2E2;
-  --on-error:             #FFFFFF;
+  --error:                #F87171;
+  --error-container:      #7F1D1D;
+  --on-error:             #450A0A;
 
-  --outline:              #8D9AAD;
-  --outline-variant:      #C5CEDB;
+  --outline:              #64748B;
+  --outline-variant:      #334155;
 
   --bg-card:              var(--bg-surface);
   --bg-muted:             var(--bg-mid);
@@ -181,57 +181,57 @@
   --primary-light:        var(--primary-dim);
   --primary-dark:         var(--primary-container);
 
-  --text-primary:         #0F172A;
-  --text-secondary:       #475569;
-  --text-muted:           #8D9AAD;
+  --text-primary:         #F8FAFC;
+  --text-secondary:       #94A3B8;
+  --text-muted:           #64748B;
 
-  --border:               rgba(141, 154, 173, 0.20);
-  --border-light:         rgba(14, 158, 130, 0.08);
-  --border-teal:          rgba(14, 158, 130, 0.20);
-  --border-cyan:          rgba(12, 123, 179, 0.15);
-  --border-ghost:         rgba(141, 154, 173, 0.10);
+  --border:               rgba(51, 65, 85, 0.55);
+  --border-light:         rgba(16, 185, 129, 0.12);
+  --border-teal:          rgba(16, 185, 129, 0.22);
+  --border-cyan:          rgba(56, 189, 248, 0.18);
+  --border-ghost:         rgba(51, 65, 85, 0.25);
 
-  --tint-primary:            rgba(14, 158, 130, 0.06);
-  --tint-primary-strong:     rgba(14, 158, 130, 0.12);
-  --tint-accent:             rgba(14, 158, 130, 0.05);
-  --tint-accent-border:      rgba(14, 158, 130, 0.18);
-  --tint-warning:            rgba(202, 138, 4, 0.06);
-  --tint-warning-border:     rgba(202, 138, 4, 0.15);
-  --tint-danger:             rgba(220, 38, 38, 0.05);
-  --tint-danger-border:      rgba(220, 38, 38, 0.12);
-  --tint-streak:             rgba(202, 138, 4, 0.08);
-  --tint-violet:             rgba(99, 102, 241, 0.05);
-  --tint-violet-border:      rgba(99, 102, 241, 0.12);
+  --tint-primary:            rgba(16, 185, 129, 0.08);
+  --tint-primary-strong:     rgba(16, 185, 129, 0.16);
+  --tint-accent:             rgba(56, 189, 248, 0.08);
+  --tint-accent-border:      rgba(56, 189, 248, 0.22);
+  --tint-warning:            rgba(245, 158, 11, 0.12);
+  --tint-warning-border:     rgba(245, 158, 11, 0.25);
+  --tint-danger:             rgba(248, 113, 113, 0.10);
+  --tint-danger-border:      rgba(248, 113, 113, 0.22);
+  --tint-streak:             rgba(245, 158, 11, 0.15);
+  --tint-violet:             rgba(129, 140, 248, 0.08);
+  --tint-violet-border:      rgba(129, 140, 248, 0.18);
 
-  --risk-low:              #0E9E82;
-  --risk-medium:           #CA8A04;
-  --risk-high:             #DC2626;
-  --risk-bg-low:           rgba(14, 158, 130, 0.08);
-  --risk-bg-medium:        rgba(202, 138, 4, 0.08);
-  --risk-bg-high:          rgba(220, 38, 38, 0.08);
+  --risk-low:              #10B981;
+  --risk-medium:           #F59E0B;
+  --risk-high:             #F87171;
+  --risk-bg-low:           rgba(16, 185, 129, 0.12);
+  --risk-bg-medium:        rgba(245, 158, 11, 0.14);
+  --risk-bg-high:          rgba(248, 113, 113, 0.12);
 
   --accent:                var(--secondary);
-  --accent-soft:           rgba(14, 158, 130, 0.05);
-  --accent-warm:           #CA8A04;
+  --accent-soft:           rgba(16, 185, 129, 0.08);
+  --accent-warm:           #F59E0B;
   --mint:                  var(--primary);
-  --mint-glow:             rgba(14, 158, 130, 0.08);
-  --violet:                #6366F1;
-  --violet-glow:           rgba(99, 102, 241, 0.08);
-  --amber:                 #CA8A04;
-  --amber-glow:            rgba(202, 138, 4, 0.08);
+  --mint-glow:             rgba(16, 185, 129, 0.15);
+  --violet:                #818CF8;
+  --violet-glow:           rgba(129, 140, 248, 0.15);
+  --amber:                 #F59E0B;
+  --amber-glow:            rgba(245, 158, 11, 0.15);
   --rose:                  var(--error);
-  --rose-glow:             rgba(220, 38, 38, 0.08);
+  --rose-glow:             rgba(248, 113, 113, 0.15);
   --sky:                   var(--secondary);
 
-  --gradient-primary:    linear-gradient(135deg, #0E9E82 0%, #0B8A70 100%);
-  --gradient-glow:       linear-gradient(135deg, rgba(14,158,130,0.10) 0%, rgba(12,123,179,0.10) 100%);
+  --gradient-primary:    linear-gradient(135deg, #10B981 0%, #059669 100%);
+  --gradient-glow:       linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(56,189,248,0.15) 100%);
 
-  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-card:   0 2px 12px rgba(0, 0, 0, 0.05);
-  --shadow-float:  0px 8px 24px rgba(0, 0, 0, 0.07);
-  --shadow-button: 0 3px 12px rgba(14, 158, 130, 0.18);
-  --shadow-glow:   0 0 16px rgba(14, 158, 130, 0.08);
-  --shadow-nav:    0 -1px 0 rgba(0, 0, 0, 0.04);
+  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.30);
+  --shadow-card:   0 4px 24px rgba(0, 0, 0, 0.45);
+  --shadow-float:  0 16px 40px rgba(0, 0, 0, 0.50);
+  --shadow-button: 0 4px 16px rgba(16, 185, 129, 0.28);
+  --shadow-glow:   0 0 20px rgba(16, 185, 129, 0.14);
+  --shadow-nav:    0 0 0 1px rgba(16, 185, 129, 0.08);
 }
 
 /* ─── Reset ──────────────────────────────────────────────────────────────── */
@@ -255,10 +255,16 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
-  /* subtle molecular background pattern */
+  /* subtle modern clean ambient lighting */
   background-image:
-    radial-gradient(ellipse 800px 600px at 20% 10%, rgba(77,217,180,0.03) 0%, transparent 60%),
-    radial-gradient(ellipse 600px 500px at 80% 80%, rgba(92,184,230,0.02) 0%, transparent 60%);
+    radial-gradient(ellipse 900px 600px at 15% 10%, rgba(13, 148, 136, 0.04) 0%, transparent 60%),
+    radial-gradient(ellipse 700px 500px at 85% 85%, rgba(37, 99, 235, 0.03) 0%, transparent 60%);
+}
+
+[data-theme="dark"] body {
+  background-image:
+    radial-gradient(ellipse 800px 600px at 20% 10%, rgba(16, 185, 129, 0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 600px 500px at 80% 80%, rgba(56, 189, 248, 0.04) 0%, transparent 60%);
 }
 
 /* ─── App Shell — Desktop sidebar layout ──────────────────────────────────── */

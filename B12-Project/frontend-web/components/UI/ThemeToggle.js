@@ -1,35 +1,27 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useTheme } from '@/context/ThemeContext';
 import styles from './ThemeToggle.module.css';
 
-const STORAGE_KEY = 'b12_theme';
+export default function ThemeToggle({ className = '' }) {
+  const { theme, toggleTheme, mounted } = useTheme();
 
-export default function ThemeToggle() {
-  const [theme, setTheme] = useState('dark');
+  if (!mounted) {
+    return <div className={`${styles.toggle} ${className}`} style={{ width: 52, height: 28 }} />;
+  }
 
-  useEffect(() => {
-    const saved = localStorage.getItem(STORAGE_KEY) || 'dark';
-    setTheme(saved);
-    document.documentElement.setAttribute('data-theme', saved);
-  }, []);
-
-  const toggle = () => {
-    const next = theme === 'dark' ? 'light' : 'dark';
-    setTheme(next);
-    localStorage.setItem(STORAGE_KEY, next);
-    document.documentElement.setAttribute('data-theme', next);
-  };
+  const isLight = theme === 'light';
 
   return (
     <button
-      className={styles.toggle}
-      onClick={toggle}
-      aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-      title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+      type="button"
+      className={`${styles.toggle} ${className}`}
+      onClick={toggleTheme}
+      aria-label={`Switch to ${isLight ? 'dark' : 'light'} mode`}
+      title={`Switch to ${isLight ? 'dark' : 'light'} mode`}
     >
       <span className={styles.track}>
-        <span className={`${styles.thumb} ${theme === 'light' ? styles.thumbLight : ''}`}>
-          {theme === 'dark' ? '🌙' : '☀️'}
+        <span className={`${styles.thumb} ${isLight ? styles.thumbLight : ''}`}>
+          {isLight ? '☀️' : '🌙'}
         </span>
       </span>
     </button>

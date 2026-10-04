@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { useApp, setUser, setGuestName, completeOnboarding } from '@/context/AppContext';
 import { DIET_TYPES } from '@/data/questions';
 import { PrimaryButton } from '@/components/UI';
+import ThemeToggle from '@/components/UI/ThemeToggle';
 import styles from './page.module.css';
 
 const INTRO_SLIDES = [
@@ -53,7 +54,7 @@ export default function OnboardingPage() {
         <div className={styles.formTopBar}>
           <button className={styles.backBtn} onClick={() => setShowForm(false)}>←</button>
           <span className={styles.brand}>B12 Health</span>
-          <div style={{ width: 44 }} />
+          <ThemeToggle />
         </div>
 
         <div className={styles.formScroll}>
@@ -118,6 +119,7 @@ export default function OnboardingPage() {
       <div className={styles.topBar}>
         <span className={styles.brand}>B12 Health</span>
         <div className={styles.topBarRight}>
+          <ThemeToggle />
           <button className={styles.skipIntroBtn} onClick={() => setShowForm(true)}>Skip to profile →</button>
           <span className={styles.stepCount}>{slide + 1} / {total}</span>
         </div>

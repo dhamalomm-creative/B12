@@ -8,6 +8,7 @@ import { buildInterstitialContent } from '@/data/questionnaireInterstitials';
 import { calculateRisk } from '@/utils/riskCalculator';
 import { questionnaireAPI } from '@/services/api';
 import { ProgressBar, CategoryBadge, InsightCard, PrimaryButton, SecondaryButton } from '@/components/UI';
+import ThemeToggle from '@/components/UI/ThemeToggle';
 import QuestionExplainer from '@/components/QuestionExplainer';
 import styles from './page.module.css';
 
@@ -216,6 +217,7 @@ export default function QuestionnairePage() {
       <div className={styles.header}>
         <button className={styles.backBtn} onClick={goBack} aria-label="Go back">←</button>
         <div className={styles.progressWrap}><ProgressBar progress={currentIdx + 1} total={questions.length} /></div>
+        <ThemeToggle />
       </div>
       <div className={styles.scroll}>
         <div key={animKey} className={styles.qWrap}>
