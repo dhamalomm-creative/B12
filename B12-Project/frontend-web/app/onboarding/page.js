@@ -117,7 +117,10 @@ export default function OnboardingPage() {
     <div className={styles.page}>
       <div className={styles.topBar}>
         <span className={styles.brand}>B12 Health</span>
-        <span className={styles.stepCount}>{slide + 1} / {total}</span>
+        <div className={styles.topBarRight}>
+          <button className={styles.skipIntroBtn} onClick={() => setShowForm(true)}>Skip to profile →</button>
+          <span className={styles.stepCount}>{slide + 1} / {total}</span>
+        </div>
       </div>
       <div className={styles.progressWrap}>
         <div className={styles.progressOuter}><div className={styles.progressFill} style={{ width: `${pct}%` }} /></div>

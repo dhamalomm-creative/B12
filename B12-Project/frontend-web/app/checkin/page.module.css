@@ -74,7 +74,7 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 24px;
-  box-shadow: 0 0 24px rgba(88,245,209,0.10), var(--shadow-subtle);
+  box-shadow: 0 0 16px rgba(77,217,180,0.08), var(--shadow-subtle);
 }
 .qIcon { font-size: 40px; }
 
@@ -121,9 +121,9 @@
   box-shadow: var(--shadow-glow);
 }
 .optSelected {
-  background: rgba(88,245,209,0.10) !important;
+  background: var(--tint-primary-strong) !important;
   border-color: var(--primary) !important;
-  box-shadow: 0 0 16px rgba(88,245,209,0.18) !important;
+  box-shadow: 0 0 16px rgba(77,217,180,0.14) !important;
 }
 .optEmoji  { width: 52px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
 .optLabel  { flex: 1; font-family: var(--font-headline); font-size: var(--fs-md); color: var(--text-primary); font-weight: 500; line-height: 1.35; }
@@ -152,8 +152,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: rgba(88,245,209,0.08);
-  border: 1px solid rgba(88,245,209,0.22);
+  background: var(--tint-primary);
+  border: 1px solid var(--border-teal);
   border-radius: var(--radius-xl);
   padding: 32px 56px;
   margin-bottom: 28px;

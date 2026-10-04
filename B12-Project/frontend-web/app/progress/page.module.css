@@ -123,16 +123,16 @@
   position: absolute;
   top: 12px; left: 12px;
   width: 14px; height: 14px;
-  border-top: 1px solid rgba(88,245,209,0.30);
-  border-left: 1px solid rgba(88,245,209,0.30);
+  border-top: 1px solid var(--border-teal);
+  border-left: 1px solid var(--border-teal);
 }
 .chartCard::after {
   content: '';
   position: absolute;
   bottom: 12px; right: 12px;
   width: 14px; height: 14px;
-  border-bottom: 1px solid rgba(88,245,209,0.30);
-  border-right: 1px solid rgba(88,245,209,0.30);
+  border-bottom: 1px solid var(--border-teal);
+  border-right: 1px solid var(--border-teal);
 }
 
 .chartLabel {

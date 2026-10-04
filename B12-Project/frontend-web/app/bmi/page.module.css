@@ -76,7 +76,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  box-shadow: 0 0 28px rgba(88,245,209,0.12);
+  box-shadow: 0 0 16px rgba(77,217,180,0.10);
 }
 .resultEmoji { font-size: 24px; }
 .resultBmi   { font-family: var(--font-headline); font-size: 28px; font-weight: 700; line-height: 1; }
@@ -121,3 +121,63 @@
   .resultCard { flex-direction: column; text-align: center; }
   .resultRing { margin: 0 auto; }
 }
+
+@media (min-width: 900px) {
+  .body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+    align-items: start;
+  }
+
+  /* Reset inline margin-top on cards inside desktop grid */
+  .card {
+    margin-top: 0 !important;
+  }
+
+  /* Left column: Measurements card */
+  .card:first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* Right column: Result card sits side-by-side with Measurements */
+  .resultCard {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  /* Save to profile button sits in right column directly below result */
+  .body > :global(.btn-primary) {
+    grid-column: 2;
+    width: 100%;
+    margin-top: -4px;
+  }
+
+  /* When result is NOT active: scale reference card fills right column */
+  .body:not(:has(.resultCard)) .card:has(.scaleRow) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  /* When result IS active: scale reference card moves to left column beneath measurements */
+  .body:has(.resultCard) .card:has(.scaleRow) {
+    grid-column: 1;
+  }
+
+  /* History card placement */
+  .body:not(:has(.resultCard)) .card:has(.histRow) {
+    grid-column: 1;
+  }
+
+  .body:has(.resultCard) .card:has(.histRow) {
+    grid-column: 2;
+  }
+
+  /* Disclaimer spans both columns */
+  .disclaimer {
+    grid-column: 1 / -1;
+    margin-top: var(--space-md);
+  }
+}
+

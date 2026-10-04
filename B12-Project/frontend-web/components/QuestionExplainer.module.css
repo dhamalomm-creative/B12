@@ -14,7 +14,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 12px 18px;
-  background: rgba(88, 245, 209, 0.04);
+  background: var(--tint-primary);
   border: none;
   cursor: pointer;
   color: var(--text-primary);
@@ -26,7 +26,7 @@
 }
 
 .toggleBtn:hover {
-  background: rgba(88, 245, 209, 0.09);
+  background: var(--tint-primary-strong);
 }
 
 .toggleLeft {
@@ -42,7 +42,7 @@
   width: 26px;
   height: 26px;
   border-radius: 50%;
-  background: rgba(88, 245, 209, 0.15);
+  background: var(--tint-primary-strong);
   color: var(--primary);
   font-size: 14px;
 }
@@ -79,7 +79,7 @@
 
 .contentWrapper {
   padding: 18px 20px;
-  border-top: 1px solid rgba(88, 245, 209, 0.12);
+  border-top: 1px solid var(--border-ghost);
   display: grid;
   grid-template-columns: 140px 1fr;
   gap: 20px;
@@ -159,7 +159,7 @@
 }
 
 .whySection {
-  background: rgba(88, 245, 209, 0.05);
+  background: var(--tint-primary);
   border-left: 2px solid var(--primary);
   padding: 8px 12px;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;

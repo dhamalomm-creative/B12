@@ -108,21 +108,21 @@ export default function AuthPage() {
                 return (
                   <g key={i}>
                     <line x1={160 + offset} y1={y} x2={160 - offset} y2={y}
-                      stroke={i % 2 === 0 ? '#58F5D1' : '#3ADFFA'}
+                      stroke={i % 2 === 0 ? '#4DD9B4' : '#5CB8E6'}
                       strokeWidth="1.5" strokeOpacity="0.6" />
-                    <circle cx={160 + offset} cy={y} r="5" fill={i % 2 === 0 ? '#58F5D1' : '#3ADFFA'} opacity="0.8" />
-                    <circle cx={160 - offset} cy={y} r="5" fill={i % 2 === 0 ? '#1CD0AD' : '#1AD0EB'} opacity="0.8" />
+                    <circle cx={160 + offset} cy={y} r="5" fill={i % 2 === 0 ? '#4DD9B4' : '#5CB8E6'} opacity="0.8" />
+                    <circle cx={160 - offset} cy={y} r="5" fill={i % 2 === 0 ? '#29B893' : '#3DA8D9'} opacity="0.8" />
                   </g>
                 );
               })}
               {/* Helix curves */}
               <path d="M160 40 Q240 80 160 120 Q80 160 160 200 Q240 240 160 280 Q80 320 160 360"
-                stroke="#58F5D1" strokeWidth="2" strokeOpacity="0.35" fill="none" />
+                stroke="#4DD9B4" strokeWidth="2" strokeOpacity="0.35" fill="none" />
               <path d="M160 40 Q80 80 160 120 Q240 160 160 200 Q80 240 160 280 Q240 320 160 360"
-                stroke="#3ADFFA" strokeWidth="2" strokeOpacity="0.35" fill="none" />
+                stroke="#5CB8E6" strokeWidth="2" strokeOpacity="0.35" fill="none" />
               {/* Glow circles */}
-              <circle cx="160" cy="200" r="60" fill="rgba(88,245,209,0.06)" />
-              <circle cx="160" cy="200" r="100" fill="rgba(88,245,209,0.03)" />
+              <circle cx="160" cy="200" r="60" fill="rgba(77,217,180,0.05)" />
+              <circle cx="160" cy="200" r="100" fill="rgba(77,217,180,0.02)" />
             </svg>
           </div>
 

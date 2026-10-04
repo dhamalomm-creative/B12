@@ -14,7 +14,7 @@
   padding: 28px 16px 24px;
   z-index: 200;
   /* inner glow on right edge — light hitting glass slide */
-  box-shadow: inset -1px 0 0 rgba(88, 245, 209, 0.10), 4px 0 32px rgba(0,0,0,0.20);
+  box-shadow: inset -1px 0 0 rgba(77, 217, 180, 0.06), 4px 0 32px rgba(0,0,0,0.20);
 }
 
 /* ── Brand ── */
@@ -37,7 +37,7 @@
   justify-content: center;
   color: var(--on-primary);
   flex-shrink: 0;
-  box-shadow: 0 0 16px rgba(88, 245, 209, 0.30);
+  box-shadow: 0 0 12px rgba(77, 217, 180, 0.20);
 }
 
 .brandName {
@@ -133,7 +133,7 @@
   height: 60%;
   border-radius: 2px 0 0 2px;
   background: var(--gradient-primary);
-  box-shadow: 0 0 8px rgba(88, 245, 209, 0.40);
+  box-shadow: 0 0 6px rgba(77, 217, 180, 0.25);
 }
 
 /* ── Sidebar footer ── */
@@ -158,7 +158,7 @@
   height: 7px;
   border-radius: 50%;
   background: var(--primary);
-  box-shadow: 0 0 8px rgba(88, 245, 209, 0.60);
+  box-shadow: 0 0 6px rgba(77, 217, 180, 0.30);
   animation: glowPulse 2.5s ease-in-out infinite;
 }
 
@@ -201,7 +201,7 @@
     z-index: 200;
     align-items: center;
     justify-content: space-around;
-    box-shadow: 0 -1px 0 rgba(88, 245, 209, 0.08);
+    box-shadow: 0 -1px 0 rgba(77, 217, 180, 0.05);
   }
 
   .mobileTab {

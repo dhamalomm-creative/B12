@@ -11,9 +11,9 @@ import styles from './page.module.css';
 const SCORE_LABELS = { 0: 'None', 1: 'Mild', 2: 'Moderate', 3: 'Often', 4: 'Severe' };
 
 const METRICS = [
-  { key: 'energy',  label: 'ENERGY INDEX',  color: '#58F5D1', unit: '' },
-  { key: 'mood',    label: 'MOOD SIGNAL',   color: '#3ADFFA', unit: '' },
-  { key: 'fatigue', label: 'FATIGUE LOAD',  color: '#FBBF24', unit: '' },
+  { key: 'energy',  label: 'ENERGY INDEX',  color: '#4DD9B4', unit: '' },
+  { key: 'mood',    label: 'MOOD SIGNAL',   color: '#5CB8E6', unit: '' },
+  { key: 'fatigue', label: 'FATIGUE LOAD',  color: '#EAB308', unit: '' },
 ];
 
 export default function ProgressPage() {

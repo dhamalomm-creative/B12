@@ -219,39 +219,74 @@ export default function QuestionnairePage() {
       </div>
       <div className={styles.scroll}>
         <div key={animKey} className={styles.qWrap}>
-          <CategoryBadge icon={q.categoryIcon} label={q.category} />
-          <p className={styles.qNum}>Question {currentIdx + 1} of {questions.length}</p>
-          <p className={styles.qMeta}>{questions.length - currentIdx - 1 === 0 ? 'Last question' : `${questions.length - currentIdx - 1} questions left`} · ~{Math.max(1, Math.ceil((questions.length - currentIdx) / 12))} min</p>
-          <h2 className={styles.qText}>{q.question}</h2>
+          <div className={styles.qColumns}>
+            <div className={styles.qLeftCol}>
+              <CategoryBadge icon={q.categoryIcon} label={q.category} />
+              <div className={styles.qMetaRow}>
+                <span className={styles.qNum}>Question {currentIdx + 1} of {questions.length}</span>
+                <span className={styles.qMetaDot}>•</span>
+                <span className={styles.qMeta}>
+                  {questions.length - currentIdx - 1 === 0 ? 'Last question' : `${questions.length - currentIdx - 1} left`} · ~{Math.max(1, Math.ceil((questions.length - currentIdx) / 12))} min
+                </span>
+              </div>
+              <h2 className={styles.qText}>{q.question}</h2>
 
-          {/* Visual and Plain English Explainer */}
-          {q.explanation && (
-            <QuestionExplainer explanation={q.explanation} category={q.category} />
-          )}
+              {/* Visual and Plain English Explainer */}
+              {q.explanation && (
+                <QuestionExplainer explanation={q.explanation} category={q.category} />
+              )}
+            </div>
 
-          <div className={styles.options}>
-            {q.options.map(opt => {
-              const sel = selected?.id === opt.id;
-              return (
-                <button
-                  key={opt.id}
-                  type="button"
-                  className={`${styles.optCard} ${sel ? styles.optSelected : ''}`}
-                  onClick={() => selectOption(opt)}
-                >
-                  {opt.emoji && <span className={styles.optEmoji}>{opt.emoji}</span>}
-                  <span className={styles.optLabel}>{opt.label}</span>
-                  {sel && <span className={styles.checkCircle}>✓</span>}
-                </button>
-              );
-            })}
+            <div className={styles.qRightCol}>
+              <div className={styles.optionsHeader}>
+                <span className={styles.optionsPrompt}>SELECT YOUR RESPONSE</span>
+              </div>
+
+              <div className={styles.options}>
+                {q.options.map((opt, idx) => {
+                  const sel = selected?.id === opt.id;
+                  return (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      className={`${styles.optCard} ${sel ? styles.optSelected : ''}`}
+                      onClick={() => selectOption(opt)}
+                    >
+                      <span className={styles.optNumBadge}>{idx + 1}</span>
+                      {opt.emoji && <span className={styles.optEmoji}>{opt.emoji}</span>}
+                      <span className={styles.optLabel}>{opt.label}</span>
+                      {sel ? (
+                        <span className={styles.checkCircle}>✓</span>
+                      ) : (
+                        <span className={styles.radioDot} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {showInsight && q.insight && <InsightCard text={q.insight} />}
+
+              {/* Desktop inline action buttons — directly below the options! */}
+              <div className={styles.desktopActions}>
+                <SecondaryButton
+                  label={isLast ? 'Skip to results' : 'Skip question'}
+                  onClick={skipQuestion}
+                  className={styles.desktopSkipBtn}
+                />
+                <PrimaryButton
+                  label={isLast ? (submitting ? 'Calculating…' : 'Submit & see results →') : 'Next question →'}
+                  onClick={handleNext}
+                  disabled={!selected || submitting}
+                  className={styles.desktopNextBtn}
+                />
+              </div>
+
+              {currentIdx > 0 && currentIdx < questions.length - 1 && (
+                <p className={styles.motiv}>{currentIdx < questions.length / 2 ? "You're doing great — steady progress." : 'Almost there — a few more to go.'}</p>
+              )}
+            </div>
           </div>
-
-          {showInsight && q.insight && <InsightCard text={q.insight} />}
-
-          {currentIdx > 0 && currentIdx < questions.length - 1 && (
-            <p className={styles.motiv}>{currentIdx < questions.length / 2 ? "You're doing great — steady progress." : 'Almost there — a few more to go.'}</p>
-          )}
         </div>
       </div>
       <div className={styles.bottomBar}>

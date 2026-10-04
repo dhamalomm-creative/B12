@@ -1,48 +1,48 @@
 @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap');
 
-/* ─── Stitch "Clinical Luminary" Design Tokens ────────────────────────────── */
+/* ─── "Clinical Precision" Design Tokens — Professional Health SaaS ──────── */
 :root {
   --font-headline: 'Space Grotesk', system-ui, sans-serif;
   --font-body:     'Inter', system-ui, sans-serif;
   --font:          'Inter', system-ui, sans-serif;
 
-  /* ── Surface Hierarchy (tonal layering — NO solid 1px borders) ── */
-  --bg:                   #060F1A;   /* surface — main app background     */
-  --bg-deep:              #000000;   /* surface_container_lowest           */
-  --bg-low:               #091420;   /* surface_container_low — sidebars  */
-  --bg-mid:               #0F1A28;   /* surface_container                  */
-  --bg-surface:           #14202F;   /* surface_container_high — cards    */
-  --bg-elevated:          #192737;   /* surface_container_highest — overlays */
-  --bg-bright:            #1F2D3F;   /* surface_bright — hover states     */
-  --bg-glass:             rgba(25, 39, 55, 0.60);   /* glassmorphism base  */
-  --bg-glass-nav:         rgba(9, 20, 32, 0.85);    /* nav glassmorphism   */
+  /* ── Surface Hierarchy (refined tonal layering) ── */
+  --bg:                   #0B1121;   /* deep navy — main app background    */
+  --bg-deep:              #060D19;   /* deepest layer                      */
+  --bg-low:               #0E1629;   /* sidebars, nav background           */
+  --bg-mid:               #131D30;   /* containers                         */
+  --bg-surface:           #182338;   /* cards — slight warmth              */
+  --bg-elevated:          #1E2B42;   /* overlays, hover states             */
+  --bg-bright:            #253549;   /* active hover                       */
+  --bg-glass:             rgba(24, 35, 56, 0.72);   /* glassmorphism base  */
+  --bg-glass-nav:         rgba(11, 17, 33, 0.90);   /* nav glassmorphism   */
 
-  /* ── Primary — Biological Glow (teal) ── */
-  --primary:              #58F5D1;
-  --primary-container:    #1CD0AD;
-  --primary-dim:          #45E7C3;
-  --on-primary:           #005949;
-  --on-primary-container: #003F33;
+  /* ── Primary — Refined Teal (softer, professional) ── */
+  --primary:              #4DD9B4;
+  --primary-container:    #29B893;
+  --primary-dim:          #3ECBA5;
+  --on-primary:           #003D2E;
+  --on-primary-container: #002A20;
 
-  /* ── Secondary — Cyan accent ── */
-  --secondary:            #3ADFFA;
-  --secondary-dim:        #1AD0EB;
-  --secondary-container:  #006877;
-  --on-secondary:         #004B56;
+  /* ── Secondary — Refined Blue accent ── */
+  --secondary:            #5CB8E6;
+  --secondary-dim:        #3DA8D9;
+  --secondary-container:  #0A5A7A;
+  --on-secondary:         #003B52;
 
-  /* ── Tertiary — near-white for reading ── */
-  --tertiary:             #F4FAFF;
-  --tertiary-container:   #E3ECF3;
-  --tertiary-dim:         #E0E9F0;
+  /* ── Tertiary — warm near-white for reading ── */
+  --tertiary:             #F0F4FA;
+  --tertiary-container:   #DEE4ED;
+  --tertiary-dim:         #D6DCE5;
 
   /* ── Semantic colours ── */
-  --error:                #FF716C;
-  --error-container:      #9F0519;
-  --on-error:             #490006;
+  --error:                #F06B6B;
+  --error-container:      #8A1A1A;
+  --on-error:             #3D0808;
 
   /* ── Outline variants ── */
-  --outline:              #6D7684;
-  --outline-variant:      #3F4955;
+  --outline:              #6B7A8D;
+  --outline-variant:      #3D4D60;
 
   /* ── Alias tokens for existing components ── */
   --bg-card:              var(--bg-surface);
@@ -51,56 +51,56 @@
   --primary-light:        var(--primary-dim);
   --primary-dark:         var(--primary-container);
 
-  /* ── Text ── */
-  --text-primary:         #EFF8FF;   /* tertiary_fixed — max contrast      */
-  --text-secondary:       #A2ACBB;   /* on_surface_variant                 */
-  --text-muted:           #6D7684;   /* outline                            */
+  /* ── Text (higher contrast, easier to read) ── */
+  --text-primary:         #EDF2F7;   /* crisp white — max readability      */
+  --text-secondary:       #9AABBD;   /* softer, warmer secondary           */
+  --text-muted:           #637388;   /* refined muted                      */
 
-  /* ── Borders (ghost — felt, not seen) ── */
-  --border:               rgba(63, 73, 85, 0.40);   /* outline-variant 40% */
-  --border-light:         rgba(88, 245, 209, 0.08);
-  --border-teal:          rgba(88, 245, 209, 0.20);
-  --border-cyan:          rgba(58, 223, 250, 0.18);
-  --border-ghost:         rgba(63, 73, 85, 0.15);   /* ghost border fallback */
+  /* ── Borders (subtle, professional) ── */
+  --border:               rgba(59, 77, 96, 0.45);
+  --border-light:         rgba(77, 217, 180, 0.08);
+  --border-teal:          rgba(77, 217, 180, 0.18);
+  --border-cyan:          rgba(92, 184, 230, 0.15);
+  --border-ghost:         rgba(59, 77, 96, 0.18);
 
-  /* ── Tints ── */
-  --tint-primary:            rgba(88, 245, 209, 0.08);
-  --tint-primary-strong:     rgba(88, 245, 209, 0.16);
-  --tint-accent:             rgba(88, 245, 209, 0.10);
-  --tint-accent-border:      rgba(88, 245, 209, 0.28);
-  --tint-warning:            rgba(251, 191, 36, 0.12);
-  --tint-warning-border:     rgba(251, 191, 36, 0.24);
-  --tint-danger:             rgba(255, 113, 108, 0.10);
-  --tint-danger-border:      rgba(255, 113, 108, 0.25);
-  --tint-streak:             rgba(251, 191, 36, 0.14);
-  --tint-violet:             rgba(149, 180, 220, 0.08);
-  --tint-violet-border:      rgba(149, 180, 220, 0.18);
+  /* ── Tints (softer, more refined) ── */
+  --tint-primary:            rgba(77, 217, 180, 0.07);
+  --tint-primary-strong:     rgba(77, 217, 180, 0.14);
+  --tint-accent:             rgba(77, 217, 180, 0.08);
+  --tint-accent-border:      rgba(77, 217, 180, 0.22);
+  --tint-warning:            rgba(234, 179, 8, 0.10);
+  --tint-warning-border:     rgba(234, 179, 8, 0.20);
+  --tint-danger:             rgba(240, 107, 107, 0.08);
+  --tint-danger-border:      rgba(240, 107, 107, 0.20);
+  --tint-streak:             rgba(234, 179, 8, 0.12);
+  --tint-violet:             rgba(130, 160, 200, 0.07);
+  --tint-violet-border:      rgba(130, 160, 200, 0.15);
 
   /* ── Semantic risk aliases ── */
   --risk-low:              var(--primary);
-  --risk-medium:           #FBBF24;
+  --risk-medium:           #EAB308;
   --risk-high:             var(--error);
-  --risk-bg-low:           rgba(88, 245, 209, 0.14);
-  --risk-bg-medium:        rgba(251, 191, 36, 0.14);
-  --risk-bg-high:          rgba(255, 113, 108, 0.14);
+  --risk-bg-low:           rgba(77, 217, 180, 0.12);
+  --risk-bg-medium:        rgba(234, 179, 8, 0.12);
+  --risk-bg-high:          rgba(240, 107, 107, 0.12);
 
   /* ── Accent aliases ── */
   --accent:                var(--secondary);
-  --accent-soft:           rgba(88, 245, 209, 0.10);
-  --accent-warm:           #FBBF24;
+  --accent-soft:           rgba(77, 217, 180, 0.08);
+  --accent-warm:           #EAB308;
   --mint:                  var(--primary);
-  --mint-glow:             rgba(88, 245, 209, 0.15);
-  --violet:                #A2ACBB;
-  --violet-glow:           rgba(162, 172, 187, 0.14);
-  --amber:                 #FBBF24;
-  --amber-glow:            rgba(251, 191, 36, 0.14);
+  --mint-glow:             rgba(77, 217, 180, 0.12);
+  --violet:                #9AABBD;
+  --violet-glow:           rgba(154, 171, 189, 0.12);
+  --amber:                 #EAB308;
+  --amber-glow:            rgba(234, 179, 8, 0.12);
   --rose:                  var(--error);
-  --rose-glow:             rgba(255, 113, 108, 0.14);
+  --rose-glow:             rgba(240, 107, 107, 0.12);
   --sky:                   var(--secondary);
 
-  /* ── Signature gradient (primary CTA & highlights) ── */
-  --gradient-primary:    linear-gradient(135deg, #58F5D1 0%, #1CD0AD 100%);
-  --gradient-glow:       linear-gradient(135deg, rgba(88,245,209,0.2) 0%, rgba(58,223,250,0.2) 100%);
+  /* ── Signature gradient (professional, less neon) ── */
+  --gradient-primary:    linear-gradient(135deg, #4DD9B4 0%, #29B893 100%);
+  --gradient-glow:       linear-gradient(135deg, rgba(77,217,180,0.15) 0%, rgba(92,184,230,0.15) 100%);
 
   /* ── Typography scale ── */
   --fs-xs:    11px;
@@ -129,39 +129,39 @@
   --radius-xxl:  28px;
   --radius-full: 9999px;
 
-  /* ── Elevation / ambient shadows (no grey) ── */
-  --shadow-subtle: 0 2px 12px rgba(0, 0, 0, 0.30);
-  --shadow-card:   0 8px 32px rgba(0, 0, 0, 0.45);
-  --shadow-float:  0px 24px 48px rgba(0, 0, 0, 0.40);
-  --shadow-button: 0 6px 24px rgba(88, 245, 209, 0.28);
-  --shadow-glow:   0 0 28px rgba(88, 245, 209, 0.16);
-  --shadow-nav:    0 0 0 1px rgba(88, 245, 209, 0.10);   /* inner glow top edge */
+  /* ── Elevation / ambient shadows (professional, subtler) ── */
+  --shadow-subtle: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --shadow-card:   0 4px 20px rgba(0, 0, 0, 0.35);
+  --shadow-float:  0px 16px 40px rgba(0, 0, 0, 0.35);
+  --shadow-button: 0 4px 16px rgba(77, 217, 180, 0.22);
+  --shadow-glow:   0 0 20px rgba(77, 217, 180, 0.12);
+  --shadow-nav:    0 0 0 1px rgba(77, 217, 180, 0.08);
 
   /* ── Sidebar width ── */
   --sidebar-w: 240px;
 }
 
-/* ─── Light Mode Variant ─────────────────────────────────────────────────── */
+/* ─── Light Mode Variant — Professional Clinical ─────────────────────────── */
 [data-theme="light"] {
-  --bg:                   #F5F7FA;
+  --bg:                   #F7F8FC;
   --bg-deep:              #FFFFFF;
-  --bg-low:               #EEF1F5;
-  --bg-mid:               #E8ECF0;
+  --bg-low:               #EFF1F6;
+  --bg-mid:               #E9ECF2;
   --bg-surface:           #FFFFFF;
-  --bg-elevated:          #F0F3F7;
-  --bg-bright:            #E2E6EB;
-  --bg-glass:             rgba(255, 255, 255, 0.80);
-  --bg-glass-nav:         rgba(245, 247, 250, 0.92);
+  --bg-elevated:          #F2F4F8;
+  --bg-bright:            #E4E8EE;
+  --bg-glass:             rgba(255, 255, 255, 0.85);
+  --bg-glass-nav:         rgba(247, 248, 252, 0.95);
 
-  --primary:              #0DAA8C;
-  --primary-container:    #0B9278;
-  --primary-dim:          #10C4A2;
+  --primary:              #0E9E82;
+  --primary-container:    #0B8A70;
+  --primary-dim:          #11B494;
   --on-primary:           #FFFFFF;
   --on-primary-container: #FFFFFF;
 
-  --secondary:            #0891B2;
-  --secondary-dim:        #06B6D4;
-  --secondary-container:  #E0F7FA;
+  --secondary:            #0C7BB3;
+  --secondary-dim:        #0E8FCF;
+  --secondary-container:  #E1F3FB;
   --on-secondary:         #FFFFFF;
 
   --tertiary:             #1A2332;
@@ -172,8 +172,8 @@
   --error-container:      #FEE2E2;
   --on-error:             #FFFFFF;
 
-  --outline:              #94A3B8;
-  --outline-variant:      #CBD5E1;
+  --outline:              #8D9AAD;
+  --outline-variant:      #C5CEDB;
 
   --bg-card:              var(--bg-surface);
   --bg-muted:             var(--bg-mid);
@@ -183,55 +183,55 @@
 
   --text-primary:         #0F172A;
   --text-secondary:       #475569;
-  --text-muted:           #94A3B8;
+  --text-muted:           #8D9AAD;
 
-  --border:               rgba(148, 163, 184, 0.25);
-  --border-light:         rgba(13, 170, 140, 0.10);
-  --border-teal:          rgba(13, 170, 140, 0.25);
-  --border-cyan:          rgba(8, 145, 178, 0.20);
-  --border-ghost:         rgba(148, 163, 184, 0.12);
+  --border:               rgba(141, 154, 173, 0.20);
+  --border-light:         rgba(14, 158, 130, 0.08);
+  --border-teal:          rgba(14, 158, 130, 0.20);
+  --border-cyan:          rgba(12, 123, 179, 0.15);
+  --border-ghost:         rgba(141, 154, 173, 0.10);
 
-  --tint-primary:            rgba(13, 170, 140, 0.08);
-  --tint-primary-strong:     rgba(13, 170, 140, 0.14);
-  --tint-accent:             rgba(13, 170, 140, 0.06);
-  --tint-accent-border:      rgba(13, 170, 140, 0.20);
-  --tint-warning:            rgba(217, 119, 6, 0.08);
-  --tint-warning-border:     rgba(217, 119, 6, 0.18);
-  --tint-danger:             rgba(220, 38, 38, 0.06);
-  --tint-danger-border:      rgba(220, 38, 38, 0.15);
-  --tint-streak:             rgba(217, 119, 6, 0.10);
-  --tint-violet:             rgba(99, 102, 241, 0.06);
-  --tint-violet-border:      rgba(99, 102, 241, 0.14);
+  --tint-primary:            rgba(14, 158, 130, 0.06);
+  --tint-primary-strong:     rgba(14, 158, 130, 0.12);
+  --tint-accent:             rgba(14, 158, 130, 0.05);
+  --tint-accent-border:      rgba(14, 158, 130, 0.18);
+  --tint-warning:            rgba(202, 138, 4, 0.06);
+  --tint-warning-border:     rgba(202, 138, 4, 0.15);
+  --tint-danger:             rgba(220, 38, 38, 0.05);
+  --tint-danger-border:      rgba(220, 38, 38, 0.12);
+  --tint-streak:             rgba(202, 138, 4, 0.08);
+  --tint-violet:             rgba(99, 102, 241, 0.05);
+  --tint-violet-border:      rgba(99, 102, 241, 0.12);
 
-  --risk-low:              #0DAA8C;
-  --risk-medium:           #D97706;
+  --risk-low:              #0E9E82;
+  --risk-medium:           #CA8A04;
   --risk-high:             #DC2626;
-  --risk-bg-low:           rgba(13, 170, 140, 0.10);
-  --risk-bg-medium:        rgba(217, 119, 6, 0.10);
-  --risk-bg-high:          rgba(220, 38, 38, 0.10);
+  --risk-bg-low:           rgba(14, 158, 130, 0.08);
+  --risk-bg-medium:        rgba(202, 138, 4, 0.08);
+  --risk-bg-high:          rgba(220, 38, 38, 0.08);
 
   --accent:                var(--secondary);
-  --accent-soft:           rgba(13, 170, 140, 0.06);
-  --accent-warm:           #D97706;
+  --accent-soft:           rgba(14, 158, 130, 0.05);
+  --accent-warm:           #CA8A04;
   --mint:                  var(--primary);
-  --mint-glow:             rgba(13, 170, 140, 0.10);
+  --mint-glow:             rgba(14, 158, 130, 0.08);
   --violet:                #6366F1;
-  --violet-glow:           rgba(99, 102, 241, 0.10);
-  --amber:                 #D97706;
-  --amber-glow:            rgba(217, 119, 6, 0.10);
+  --violet-glow:           rgba(99, 102, 241, 0.08);
+  --amber:                 #CA8A04;
+  --amber-glow:            rgba(202, 138, 4, 0.08);
   --rose:                  var(--error);
-  --rose-glow:             rgba(220, 38, 38, 0.10);
+  --rose-glow:             rgba(220, 38, 38, 0.08);
   --sky:                   var(--secondary);
 
-  --gradient-primary:    linear-gradient(135deg, #0DAA8C 0%, #0B9278 100%);
-  --gradient-glow:       linear-gradient(135deg, rgba(13,170,140,0.12) 0%, rgba(8,145,178,0.12) 100%);
+  --gradient-primary:    linear-gradient(135deg, #0E9E82 0%, #0B8A70 100%);
+  --gradient-glow:       linear-gradient(135deg, rgba(14,158,130,0.10) 0%, rgba(12,123,179,0.10) 100%);
 
-  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.06);
-  --shadow-card:   0 4px 16px rgba(0, 0, 0, 0.06);
-  --shadow-float:  0px 12px 32px rgba(0, 0, 0, 0.08);
-  --shadow-button: 0 4px 16px rgba(13, 170, 140, 0.20);
-  --shadow-glow:   0 0 20px rgba(13, 170, 140, 0.10);
-  --shadow-nav:    0 -1px 0 rgba(0, 0, 0, 0.06);
+  --shadow-subtle: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-card:   0 2px 12px rgba(0, 0, 0, 0.05);
+  --shadow-float:  0px 8px 24px rgba(0, 0, 0, 0.07);
+  --shadow-button: 0 3px 12px rgba(14, 158, 130, 0.18);
+  --shadow-glow:   0 0 16px rgba(14, 158, 130, 0.08);
+  --shadow-nav:    0 -1px 0 rgba(0, 0, 0, 0.04);
 }
 
 /* ─── Reset ──────────────────────────────────────────────────────────────── */
@@ -257,8 +257,8 @@ body {
   overflow-x: hidden;
   /* subtle molecular background pattern */
   background-image:
-    radial-gradient(ellipse 800px 600px at 20% 10%, rgba(88,245,209,0.04) 0%, transparent 60%),
-    radial-gradient(ellipse 600px 500px at 80% 80%, rgba(58,223,250,0.03) 0%, transparent 60%);
+    radial-gradient(ellipse 800px 600px at 20% 10%, rgba(77,217,180,0.03) 0%, transparent 60%),
+    radial-gradient(ellipse 600px 500px at 80% 80%, rgba(92,184,230,0.02) 0%, transparent 60%);
 }
 
 /* ─── App Shell — Desktop sidebar layout ──────────────────────────────────── */
@@ -300,8 +300,8 @@ body {
   100% { transform: rotate(360deg) translateX(12px) rotate(-360deg); }
 }
 @keyframes glowPulse {
-  0%, 100% { box-shadow: 0 0 20px rgba(88,245,209,0.12); }
-  50%       { box-shadow: 0 0 36px rgba(88,245,209,0.24); }
+  0%, 100% { box-shadow: 0 0 16px rgba(77,217,180,0.08); }
+  50%       { box-shadow: 0 0 24px rgba(77,217,180,0.18); }
 }
 
 .fade-in     { animation: fadeIn 0.3s ease; }
@@ -353,8 +353,8 @@ a:hover { color: var(--primary-dim); }
   background: linear-gradient(135deg, rgba(255,255,255,0.12), transparent);
   border-radius: inherit;
 }
-.btn-primary:hover  { opacity: 0.92; transform: translateY(-1px); box-shadow: 0 10px 32px rgba(88,245,209,0.40); }
-.btn-primary:active { transform: translateY(0); opacity: 0.85; }
+.btn-primary:hover  { opacity: 0.94; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(77,217,180,0.28); }
+.btn-primary:active { transform: translateY(0); opacity: 0.88; }
 .btn-primary:disabled { opacity: 0.38; cursor: not-allowed; transform: none; }
 
 /* full-width variant */
@@ -455,7 +455,7 @@ a:hover { color: var(--primary-dim); }
 .input::placeholder { color: var(--text-muted); }
 .input:focus {
   border-bottom-color: var(--primary);
-  box-shadow: 0 4px 12px rgba(88, 245, 209, 0.10);
+  box-shadow: 0 4px 12px rgba(77, 217, 180, 0.10);
 }
 
 /* ─── Pills & Badges ──────────────────────────────────────────────────────── */
@@ -504,7 +504,7 @@ a:hover { color: var(--primary-dim); }
   background: var(--gradient-primary);
   border-radius: var(--radius-full);
   transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 10px rgba(88,245,209,0.30);
+  box-shadow: 0 0 8px rgba(77,217,180,0.20);
 }
 
 /* Segmented DNA-style progress */
@@ -522,13 +522,13 @@ a:hover { color: var(--primary-dim); }
 }
 .progress-segment.filled {
   background: var(--gradient-primary);
-  box-shadow: 0 0 6px rgba(88,245,209,0.25);
+  box-shadow: 0 0 6px rgba(77,217,180,0.18);
 }
 
 /* ─── Loading — Molecule Loader ───────────────────────────────────────────── */
 .spinner {
   width: 28px; height: 28px;
-  border: 2.5px solid rgba(88, 245, 209, 0.20);
+  border: 2.5px solid rgba(77, 217, 180, 0.18);
   border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
