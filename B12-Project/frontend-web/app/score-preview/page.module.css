@@ -1,4 +1,4 @@
-.scorePreviewPage {
+.scorePage {
   min-height: 100vh;
   background-color: var(--bg, #FAF6F0);
   color: var(--text-primary);
@@ -7,8 +7,11 @@
 }
 
 .header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 32px 48px;
-  max-width: 860px;
+  max-width: 1100px;
   margin: 0 auto;
   width: 100%;
 }
@@ -21,32 +24,77 @@
   text-decoration: none;
 }
 
+.loginBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1.5px solid var(--text-primary);
+  color: var(--text-primary);
+  padding: 8px 24px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.loginBtn:hover {
+  background-color: rgba(30, 58, 43, 0.05);
+}
+
 .container {
-  max-width: 680px;
+  max-width: 1100px;
   margin: 0 auto 64px;
-  padding: 0 24px;
+  padding: 0 48px;
   width: 100%;
+}
+
+.title {
+  font-family: var(--font-headline);
+  font-size: 34px;
+  font-weight: 750;
+  letter-spacing: -0.6px;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+/* ── Left Column ── */
+.leftCol {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.heroCard {
+.riskCard {
   background-color: var(--pastel-peach, #FCECE3);
   border-radius: 22px;
-  padding: 32px 32px;
+  padding: 28px 28px;
   display: flex;
   flex-direction: column;
 }
 
-.heroKicker {
+.cardKicker {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
-.scoreNumber {
+.scoreValue {
   font-size: 52px;
   font-weight: 750;
   letter-spacing: -1.5px;
@@ -62,82 +110,197 @@
   margin-bottom: 10px;
 }
 
-.desc {
+.riskDesc {
   font-size: 14px;
-  line-height: 1.55;
+  line-height: 1.5;
   color: var(--text-secondary);
-  margin-top: 12px;
+  margin-top: 10px;
 }
 
-.accountCard {
+/* Suggestions Card */
+.suggestionsCard {
   background-color: #FFFFFF;
   border: 1px solid var(--border);
   border-radius: 22px;
-  padding: 32px 32px;
+  padding: 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+}
+
+.suggestionsHeading {
+  font-family: var(--font-headline);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.suggestionsList {
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
-.accountTitle {
-  font-family: var(--font-headline);
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--text-primary);
+.suggestionRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
 }
 
-.accountSub {
+.suggNumBadge {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background-color: #E8EFE9;
+  color: #2D583D;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12.5px;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.suggText {
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.55;
   color: var(--text-secondary);
 }
 
-.buttonRow {
+/* ── Right Column ── */
+.rightCol {
   display: flex;
-  align-items: center;
-  gap: 14px;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ctaDarkCard {
+  background-color: var(--primary, #1E3A2B);
+  color: #FFFFFF;
+  border-radius: 22px;
+  padding: 34px 32px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ctaTitle {
+  font-family: var(--font-headline);
+  font-size: 26px;
+  font-weight: 750;
+  letter-spacing: -0.4px;
+  color: #FFFFFF;
+  line-height: 1.25;
+  margin-bottom: 12px;
+}
+
+.ctaSubtitle {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #BED8CC;
+  margin-bottom: 24px;
+}
+
+.featurePillsWrap {
+  display: flex;
   flex-wrap: wrap;
-  margin-top: 8px;
+  gap: 8px;
+  margin-bottom: 28px;
+}
+
+.featurePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #FFFFFF;
+  color: #1E3A2B;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 .createAccountBtn {
-  background-color: var(--primary, #1E3A2B);
-  color: #FFFFFF;
+  background-color: var(--pastel-yellow, #FDF1D8);
+  color: var(--primary, #1E3A2B);
   border: none;
-  padding: 12px 24px;
+  padding: 14px 24px;
   border-radius: var(--radius-full);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.18s ease;
+  transition: opacity 0.15s ease;
+  width: 100%;
+  margin-bottom: 16px;
 }
 
 .createAccountBtn:hover {
-  background-color: var(--primary-container, #162E22);
+  opacity: 0.92;
 }
 
-.loginBtn {
-  background: transparent;
-  border: 1.5px solid var(--text-primary);
-  color: var(--text-primary);
-  padding: 11px 22px;
-  border-radius: var(--radius-full);
+.alreadyLink {
+  text-align: center;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
+  color: #FFFFFF;
+  text-decoration: underline;
   cursor: pointer;
-  transition: background-color 0.15s ease;
 }
 
-.loginBtn:hover {
-  background-color: rgba(30, 58, 43, 0.05);
+.alreadyLink:hover {
+  opacity: 0.85;
 }
 
-.disclaimer {
+.disclaimerBanner {
   background-color: var(--pastel-yellow, #FDF1D8);
   border: 1px solid rgba(217, 155, 38, 0.22);
   border-radius: 16px;
-  padding: 16px 20px;
+  padding: 16px 22px;
   font-size: 13.5px;
   line-height: 1.5;
   color: var(--text-secondary);
+}
+
+/* ── Footer ── */
+.footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding: 28px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1100px;
+  margin: auto auto 0;
+  width: 100%;
+}
+
+.footerBrand {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+}
+
+.footerLinks {
+  display: flex;
+  gap: 20px;
+}
+
+.footerLink {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 860px) {
+  .header, .container, .footer {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
 }

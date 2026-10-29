@@ -1,61 +1,116 @@
+'use client';
+import { useState } from 'react';
 import Link from 'next/link';
+import styles from './page.module.css';
 
-export const metadata = {
-  title: 'Privacy Policy — B12 Health Tracker',
-  description: 'How B12 Health Tracker protects your personal and health information.',
-};
+const SECTIONS = [
+  {
+    id: 'data-privacy',
+    num: 1,
+    title: 'Data privacy',
+    paragraphs: [
+      'Your health information is yours. We use it only to give you your score, tracking and food suggestions.',
+      'We do not sell your data. You can deactivate your account at any time from your profile.',
+    ],
+  },
+  {
+    id: 'encryption',
+    num: 2,
+    title: 'Encryption',
+    paragraphs: [
+      'Passwords are hashed and never stored in plain text. Data travels over encrypted connections, and sign-in sessions can be revoked when you log out.',
+    ],
+  },
+  {
+    id: 'what-we-collect',
+    num: 3,
+    title: 'What we collect',
+    paragraphs: [
+      'Account: your email address.',
+      'Profile: name, age range, gender and diet type.',
+      'Health inputs: assessment answers, daily check-ins and BMI measurements.',
+    ],
+  },
+  {
+    id: 'educational-purpose',
+    num: 4,
+    title: 'Educational purpose',
+    paragraphs: [
+      'Results are for awareness and wellness tracking. They are not medical records and are not shared with healthcare providers unless you choose to.',
+    ],
+  },
+];
 
 export default function PrivacyPage() {
+  const [activeTab, setActiveTab] = useState(SECTIONS[0].id);
+
+  const scrollToSection = (id) => {
+    setActiveTab(id);
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   return (
-    <div style={{
-      maxWidth: '760px',
-      margin: '0 auto',
-      padding: '48px 24px 80px',
-      fontFamily: 'var(--font-body)',
-      color: 'var(--text-primary)',
-      lineHeight: '1.7',
-    }}>
-      <div style={{ marginBottom: '32px' }}>
-        <Link href="/" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>
-          ← Back to B12 Health Tracker
-        </Link>
-      </div>
+    <div className={styles.legalPage}>
+      {/* ── Top Header ── */}
+      <header className={styles.header}>
+        <Link href="/" className={styles.brandTitle}>B12 Health Tracker</Link>
+        <Link href="/" className={styles.backBtn}>Back to home</Link>
+      </header>
 
-      <h1 style={{ fontFamily: 'var(--font-headline)', fontSize: '36px', fontWeight: 700, marginBottom: '12px' }}>
-        Privacy Policy
-      </h1>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '15px', marginBottom: '32px' }}>
-        Last updated: October 2026
-      </p>
+      {/* ── Main Content ── */}
+      <main className={styles.container}>
+        <h1 className={styles.title}>Privacy Policy</h1>
+        <p className={styles.subtitle}>
+          Last updated: October 2026. Plain-language summary of how your data is handled.
+        </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontSize: '15px', color: 'var(--text-secondary)' }}>
-        <section style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-          <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-            🔒 1. Your Health Data Stays Private
-          </h2>
-          <p>
-            B12 Health Tracker was built on a simple foundation: your health habits, questionnaire responses, and daily check-ins belong strictly to you. We never sell, rent, or trade your data to third-party brokers, advertisers, or insurance providers.
-          </p>
-        </section>
+        <div className={styles.layoutGrid}>
+          {/* Left Table of Contents */}
+          <aside className={styles.tocNav}>
+            {SECTIONS.map((sec) => (
+              <button
+                key={sec.id}
+                type="button"
+                className={`${styles.tocItem} ${activeTab === sec.id ? styles.tocActive : ''}`}
+                onClick={() => scrollToSection(sec.id)}
+              >
+                {sec.title}
+              </button>
+            ))}
+          </aside>
 
-        <section style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-          <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-            🛡️ 2. Encryption and Security
-          </h2>
-          <p>
-            All network communication is encrypted using industry-standard TLS. Passwords are cryptographically salted and hashed before ever touching our database.
-          </p>
-        </section>
+          {/* Right Section Cards */}
+          <div className={styles.sectionsList}>
+            {SECTIONS.map((sec) => (
+              <section key={sec.id} id={sec.id} className={styles.sectionCard}>
+                <div className={styles.cardHeader}>
+                  <span className={styles.numBadge}>{sec.num}</span>
+                  <h2 className={styles.sectionTitle}>{sec.title}</h2>
+                </div>
+                <div className={styles.cardBody}>
+                  {sec.paragraphs.map((p, idx) => (
+                    <p key={idx} className={styles.paragraph}>{p}</p>
+                  ))}
+                </div>
+              </section>
+            ))}
+          </div>
+        </div>
+      </main>
 
-        <section style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-          <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-            🗑️ 3. Account Deletion and Data Portability
-          </h2>
-          <p>
-            You have the right to delete your account and all associated records at any moment. Upon account deletion, all questionnaire responses and daily logs are permanently purged from our systems.
-          </p>
-        </section>
-      </div>
+      {/* ── Footer ── */}
+      <footer className={styles.footer}>
+        <span className={styles.footerBrand}>
+          B12 Health Tracker. Educational tool, not a medical diagnosis.
+        </span>
+        <div className={styles.footerLinks}>
+          <Link href="/privacy" className={styles.footerLink}>Privacy</Link>
+          <Link href="/terms" className={styles.footerLink}>Terms</Link>
+        </div>
+      </footer>
     </div>
   );
 }

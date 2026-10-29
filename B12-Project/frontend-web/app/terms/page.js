@@ -1,61 +1,111 @@
+'use client';
+import { useState } from 'react';
 import Link from 'next/link';
+import styles from './page.module.css';
 
-export const metadata = {
-  title: 'Terms of Service — B12 Health Tracker',
-  description: 'Terms and conditions for using B12 Health Tracker.',
-};
+const SECTIONS = [
+  {
+    id: 'educational-use',
+    num: 1,
+    title: 'Educational use',
+    paragraphs: [
+      'B12 Health Tracker is designed for education, awareness and wellness tracking. It does not provide medical diagnoses.',
+      'Always consult a qualified doctor for clinical evaluation and blood tests.',
+    ],
+  },
+  {
+    id: 'scope-of-tool',
+    num: 2,
+    title: 'Scope of the tool',
+    paragraphs: [
+      'The risk score is based on your answers and general guidelines. It estimates risk, not your actual B12 level. It does not replace professional advice.',
+    ],
+  },
+  {
+    id: 'security-account',
+    num: 3,
+    title: 'Security and your account',
+    paragraphs: [
+      'Keep your password private and use a strong one. You are responsible for activity on your account. We may lock an account after repeated failed sign-ins to protect it.',
+    ],
+  },
+];
 
 export default function TermsPage() {
+  const [activeTab, setActiveTab] = useState(SECTIONS[0].id);
+
+  const scrollToSection = (id) => {
+    setActiveTab(id);
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  };
+
   return (
-    <div style={{
-      maxWidth: '760px',
-      margin: '0 auto',
-      padding: '48px 24px 80px',
-      fontFamily: 'var(--font-body)',
-      color: 'var(--text-primary)',
-      lineHeight: '1.7',
-    }}>
-      <div style={{ marginBottom: '32px' }}>
-        <Link href="/" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>
-          ← Back to B12 Health Tracker
-        </Link>
-      </div>
+    <div className={styles.legalPage}>
+      {/* ── Top Header ── */}
+      <header className={styles.header}>
+        <Link href="/" className={styles.brandTitle}>B12 Health Tracker</Link>
+        <Link href="/" className={styles.backBtn}>Back to home</Link>
+      </header>
 
-      <h1 style={{ fontFamily: 'var(--font-headline)', fontSize: '36px', fontWeight: 700, marginBottom: '12px' }}>
-        Terms of Service
-      </h1>
-      <p style={{ color: 'var(--text-secondary)', fontSize: '15px', marginBottom: '32px' }}>
-        Last updated: October 2026
-      </p>
+      {/* ── Main Content ── */}
+      <main className={styles.container}>
+        <h1 className={styles.title}>Terms of Service</h1>
+        <p className={styles.subtitle}>
+          Last updated: October 2026. Please read before using B12 Health Tracker.
+        </p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', fontSize: '15px', color: 'var(--text-secondary)' }}>
-        <section style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-          <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-            1. Informational & Educational Use Only
-          </h2>
-          <p>
-            B12 Health Tracker provides self-assessment tools, educational nutritional insights, and wellness tracking. The content provided is not intended to be a substitute for professional medical advice, diagnosis, or clinical treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
-          </p>
-        </section>
+        <div className={styles.layoutGrid}>
+          {/* Left Table of Contents */}
+          <aside className={styles.tocNav}>
+            {SECTIONS.map((sec) => (
+              <button
+                key={sec.id}
+                type="button"
+                className={`${styles.tocItem} ${activeTab === sec.id ? styles.tocActive : ''}`}
+                onClick={() => scrollToSection(sec.id)}
+              >
+                {sec.title}
+              </button>
+            ))}
+          </aside>
 
-        <section style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-          <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-            2. Account Security
-          </h2>
-          <p>
-            You are responsible for maintaining the confidentiality of your login credentials and for all activities that occur under your account. You agree to notify us immediately of any unauthorized use of your account.
-          </p>
-        </section>
+          {/* Right Section Cards */}
+          <div className={styles.sectionsList}>
+            {SECTIONS.map((sec) => (
+              <section key={sec.id} id={sec.id} className={styles.sectionCard}>
+                <div className={styles.cardHeader}>
+                  <span className={styles.numBadge}>{sec.num}</span>
+                  <h2 className={styles.sectionTitle}>{sec.title}</h2>
+                </div>
+                <div className={styles.cardBody}>
+                  {sec.paragraphs.map((p, idx) => (
+                    <p key={idx} className={styles.paragraph}>{p}</p>
+                  ))}
+                </div>
+              </section>
+            ))}
 
-        <section style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
-          <h2 style={{ color: 'var(--text-primary)', fontSize: '18px', fontWeight: 600, marginBottom: '8px' }}>
-            3. Disclaimer of Warranties
-          </h2>
-          <p>
-            The service is provided on an &quot;AS IS&quot; and &quot;AS AVAILABLE&quot; basis without warranties of any kind, either express or implied, including but not limited to the implied warranties of merchantability, fitness for a particular purpose, or non-infringement.
-          </p>
-        </section>
-      </div>
+            {/* Bottom Yellow Disclaimer */}
+            <div className={styles.disclaimerBanner}>
+              Placeholder legal copy for design review. Have it checked before launch.
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {/* ── Footer ── */}
+      <footer className={styles.footer}>
+        <span className={styles.footerBrand}>
+          B12 Health Tracker. Educational tool, not a medical diagnosis.
+        </span>
+        <div className={styles.footerLinks}>
+          <Link href="/privacy" className={styles.footerLink}>Privacy</Link>
+          <Link href="/terms" className={styles.footerLink}>Terms</Link>
+        </div>
+      </footer>
     </div>
   );
 }
