@@ -1,17 +1,378 @@
-/* Root page — minimal redirect shim, full screen centered */
-.page {
+.landingPage {
+  min-height: 100vh;
+  background-color: var(--bg, #FAF6F0);
+  color: var(--text-primary);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 100vh;
-  background: var(--bg);
 }
 
-.main {
+/* ── Header ── */
+.header {
   display: flex;
-  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 48px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.brandLink {
+  font-family: var(--font-headline);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+
+.navLinks {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+.navLink {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.navLink:hover {
+  opacity: 0.75;
+}
+
+.startBtn {
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: var(--space-md);
+  background-color: var(--primary, #1E3A2B);
+  color: #FFFFFF;
+  padding: 10px 22px;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.18s ease;
+}
+
+.startBtn:hover {
+  background-color: var(--primary-container, #162E22);
+}
+
+/* ── Hero Section ── */
+.heroSection {
+  max-width: 1200px;
+  margin: 40px auto 72px;
+  padding: 0 48px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 56px;
+  align-items: center;
+}
+
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.kickerBadge {
+  display: inline-flex;
+  align-items: center;
+  background-color: var(--pastel-yellow, #FDF1D8);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  margin-bottom: 24px;
+}
+
+.heroHeading {
+  font-family: var(--font-headline);
+  font-size: 46px;
+  font-weight: 750;
+  line-height: 1.12;
+  letter-spacing: -1px;
+  color: var(--text-primary);
+  margin-bottom: 22px;
+}
+
+.heroSubtext {
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  max-width: 480px;
+  margin-bottom: 32px;
+}
+
+.ctaRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.primaryCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary, #1E3A2B);
+  color: #FFFFFF;
+  padding: 13px 26px;
+  border-radius: var(--radius-full);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 2px 6px rgba(30, 58, 43, 0.15);
+  transition: background-color 0.18s ease;
+}
+
+.primaryCta:hover {
+  background-color: var(--primary-container, #162E22);
+}
+
+.secondaryCta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: transparent;
+  color: var(--text-primary);
+  border: 1.5px solid var(--text-primary);
+  padding: 12px 24px;
+  border-radius: var(--radius-full);
+  font-size: 15px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background-color 0.18s ease;
+}
+
+.secondaryCta:hover {
+  background-color: rgba(30, 58, 43, 0.05);
+}
+
+/* ── Hero Right Card ── */
+.heroRight {
+  display: flex;
+  justify-content: center;
+}
+
+.heroCardContainer {
+  background-color: var(--pastel-peach, #FCECE3);
+  border-radius: 24px;
+  padding: 24px;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sampleResultCard {
+  background-color: #FFFFFF;
+  border-radius: 18px;
+  padding: 24px 22px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.sampleCardLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.sampleCardValue {
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 8px;
+}
+
+.sampleCardFoot {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: 10px;
+}
+
+.sampleCheckinCard {
+  background-color: var(--primary, #1E3A2B);
+  color: #FFFFFF;
+  border-radius: 16px;
+  padding: 18px 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.checkinCardLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.checkinCardTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #FFFFFF;
+}
+
+.checkinCardSub {
+  font-size: 13px;
+  color: #A3C7B5;
+}
+
+.dotRow {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.checkDot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+}
+
+/* ── Steps Section ── */
+.stepsSection {
+  max-width: 1200px;
+  margin: 0 auto 56px;
+  padding: 0 48px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.stepCardGreen {
+  background-color: var(--pastel-green, #E5EFE7);
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stepCardYellow {
+  background-color: var(--pastel-yellow, #FDF1D8);
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stepCardBlue {
+  background-color: var(--pastel-blue, #E1EDF7);
+  border-radius: 20px;
+  padding: 28px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.stepNumber {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.stepTitle {
+  font-family: var(--font-headline);
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 12px;
+}
+
+.stepDesc {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+/* ── Callout Card ── */
+.calloutSection {
+  max-width: 1200px;
+  margin: 0 auto 64px;
+  padding: 0 48px;
+  width: 100%;
+}
+
+.calloutCard {
+  background-color: #FFFFFF;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.calloutTitle {
+  font-family: var(--font-headline);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.calloutDesc {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* ── Footer ── */
+.footer {
+  margin-top: auto;
+  border-top: 1px solid var(--border);
+  padding: 28px 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1200px;
+  margin: auto auto 0;
+  width: 100%;
+}
+
+.footerBrand {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+.footerLinks {
+  display: flex;
+  gap: 24px;
+}
+
+.footerLink {
+  font-size: 14px;
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+
+.footerLink:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 900px) {
+  .heroSection {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    margin: 20px auto 48px;
+  }
+  .stepsSection {
+    grid-template-columns: 1fr;
+  }
+  .header {
+    padding: 20px 24px;
+  }
+  .heroSection, .stepsSection, .calloutSection, .footer {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
 }

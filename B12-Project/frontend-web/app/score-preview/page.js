@@ -1,13 +1,14 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
-import { PrimaryButton, RiskBadge, DisclaimerStrip } from '@/components/UI';
+import { RiskGauge } from '@/components/UI';
 import styles from './page.module.css';
 
 export default function ScorePreviewPage() {
   const { state } = useApp();
-  const router    = useRouter();
+  const router = useRouter();
   const { riskResult } = state;
 
   useEffect(() => {
@@ -18,44 +19,60 @@ export default function ScorePreviewPage() {
 
   if (!riskResult) return null;
 
-  const pct = riskResult.percentage;
-  const lvl = riskResult.level;
-  const color = lvl === 'HIGH' ? 'var(--risk-high)' : lvl === 'MEDIUM' ? 'var(--risk-medium)' : 'var(--risk-low)';
+  const pct = riskResult.percentage || 24;
+  const lvl = riskResult.level ? (riskResult.level.toLowerCase() === 'low' ? 'Low risk' : riskResult.level.toLowerCase() === 'medium' ? 'Moderate risk' : 'High risk') : 'Low risk';
 
   return (
-    <div className={styles.page}>
-      <div className={styles.previewGrid}>
-        <div className={styles.hero}>
-          <span className={styles.kicker}>Your B12 Assessment Result</span>
-          <div className={styles.scoreRing} style={{ borderColor: color, boxShadow: `0 0 40px ${color}40` }}>
-            <span className={styles.scoreNum} style={{ color }}>{pct}%</span>
-            <span className={styles.scoreLabel}>Risk Score</span>
-          </div>
-          <RiskBadge level={lvl} />
+    <div className={styles.scorePreviewPage}>
+      <header className={styles.header}>
+        <Link href="/" className={styles.brandTitle}>B12 Health Tracker</Link>
+      </header>
+
+      <main className={styles.container}>
+        {/* Results Hero Card */}
+        <div className={styles.heroCard}>
+          <p className={styles.heroKicker}>Your B12 risk score</p>
+          <h1 className={styles.scoreNumber}>{pct}%</h1>
+          <p className={styles.riskLevel}>{lvl}</p>
+          <RiskGauge percentage={pct} />
           <p className={styles.desc}>
-            {lvl === 'LOW' ? 'Your responses suggest a lower likelihood of B12 concerns at this time.' : lvl === 'MEDIUM' ? 'Some factors in your responses suggest moderate attention to B12 may be beneficial.' : 'Several factors in your responses suggest it may be worth discussing B12 with a healthcare professional.'}
+            {pct < 35
+              ? 'Your answers suggest a low chance of B12 deficiency right now.'
+              : pct < 65
+              ? 'Your answers suggest a moderate risk. Adding fortified foods or supplements may help.'
+              : 'Your answers indicate high potential signs of B12 deficiency. Consider discussing with a doctor.'}
           </p>
         </div>
 
-        <div className={styles.body}>
-          <div className={styles.guestCard}>
-            <span className={styles.guestEmoji}>🔒</span>
-            <h2 className={styles.guestTitle}>Save your results & unlock full tracking</h2>
-            <p className={styles.guestSub}>Create a free account to save your B12 score, track daily check-ins, view history, and get AI-powered insights.</p>
-            <PrimaryButton label="Create Free Account →" onClick={() => router.push('/auth?mode=register')} />
-            <button className={styles.loginBtn} onClick={() => router.push('/auth')}>Already have an account? Log in</button>
+        {/* Create Account Callout Card */}
+        <div className={styles.accountCard}>
+          <h2 className={styles.accountTitle}>Save your results & unlock full tracking</h2>
+          <p className={styles.accountSub}>
+            Create a free account to save your score, track daily check-ins, view trend charts, and get personalized B12 food suggestions.
+          </p>
+          <div className={styles.buttonRow}>
+            <button
+              type="button"
+              className={styles.createAccountBtn}
+              onClick={() => router.push('/auth?mode=register')}
+            >
+              Create free account
+            </button>
+            <button
+              type="button"
+              className={styles.loginBtn}
+              onClick={() => router.push('/auth?mode=login')}
+            >
+              Log in to existing account
+            </button>
           </div>
-          {riskResult.suggestions?.length > 0 && (
-            <div className={styles.tipsCard}>
-              <p className={styles.tipHead}>💡 Key suggestions</p>
-              {riskResult.suggestions.slice(0, 3).map((s, i) => (
-                <p key={i} className={styles.tip}>• {s}</p>
-              ))}
-            </div>
-          )}
-          <DisclaimerStrip />
         </div>
-      </div>
+
+        {/* Disclaimer */}
+        <div className={styles.disclaimer}>
+          This tool is for education and awareness. It does not provide a diagnosis. Please see a doctor for blood tests.
+        </div>
+      </main>
     </div>
   );
 }

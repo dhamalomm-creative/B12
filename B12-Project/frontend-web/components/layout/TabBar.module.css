@@ -1,43 +1,22 @@
-/* ── Desktop Sidebar ─────────────────────────────────────────────────────── */
+/* ── Desktop Sidebar ── */
 .sidebar {
   position: fixed;
   top: 0;
   left: 0;
   height: 100vh;
-  width: var(--sidebar-w, 240px);
-  background: var(--bg-glass-nav);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-right: 1px solid var(--border-ghost);
+  width: var(--sidebar-w, 230px);
+  background: var(--bg, #FAF6F0);
   display: flex;
   flex-direction: column;
-  padding: 28px 16px 24px;
-  z-index: 200;
-  /* inner glow on right edge — light hitting glass slide */
-  box-shadow: inset -1px 0 0 rgba(77, 217, 180, 0.06), 4px 0 32px rgba(0,0,0,0.20);
+  padding: 36px 20px 28px;
+  z-index: 100;
+  box-sizing: border-box;
 }
 
-/* ── Brand ── */
 .brand {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 8px 28px;
-  border-bottom: 1px solid var(--border-ghost);
-  margin-bottom: 24px;
-}
-
-.brandIcon {
-  width: 38px;
-  height: 38px;
-  border-radius: var(--radius-md);
-  background: var(--gradient-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--on-primary);
-  flex-shrink: 0;
-  box-shadow: 0 0 12px rgba(77, 217, 180, 0.20);
+  margin-bottom: 32px;
+  padding: 0 6px;
+  cursor: pointer;
 }
 
 .brandName {
@@ -45,27 +24,13 @@
   font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: -0.3px;
-  white-space: nowrap;
+  letter-spacing: -0.2px;
 }
 
-/* ── Nav section label ── */
-.navSection {
-  font-family: var(--font-body);
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 1.4px;
-  padding: 0 12px;
-  margin-bottom: 8px;
-}
-
-/* ── Nav ── */
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
   flex: 1;
 }
 
@@ -74,31 +39,31 @@
   align-items: center;
   gap: 12px;
   width: 100%;
-  padding: 11px 12px;
-  border-radius: var(--radius-md);
+  padding: 10px 16px;
+  border-radius: var(--radius-full);
   background: transparent;
   border: none;
   cursor: pointer;
-  color: var(--text-secondary);
+  color: var(--text-primary);
   font-family: var(--font-body);
-  font-size: var(--fs-sm);
+  font-size: 14px;
   font-weight: 500;
-  transition: background 0.18s, color 0.18s;
-  position: relative;
+  transition: background-color 0.18s, color 0.18s;
   text-align: left;
 }
+
 .navItem:hover {
-  background: var(--tint-primary);
-  color: var(--text-primary);
+  background: rgba(30, 58, 43, 0.05);
 }
 
 .navActive {
-  background: var(--tint-primary-strong);
-  color: var(--primary);
+  background: var(--primary) !important;
+  color: #FFFFFF !important;
   font-weight: 600;
 }
-.navActive:hover {
-  background: var(--tint-primary-strong);
+
+.navActive .navIcon svg {
+  stroke: #FFFFFF !important;
 }
 
 .navIcon {
@@ -106,142 +71,71 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  opacity: 0.65;
-  transition: opacity 0.18s, transform 0.18s;
-}
-.navActive .navIcon,
-.navItem:hover .navIcon {
-  opacity: 1;
-}
-.navActive .navIcon {
-  transform: scale(1.05);
-  color: var(--primary);
 }
 
 .navLabel {
-  flex: 1;
   white-space: nowrap;
 }
 
-/* Active indicator — right edge accent line */
-.navIndicator {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 60%;
-  border-radius: 2px 0 0 2px;
-  background: var(--gradient-primary);
-  box-shadow: 0 0 6px rgba(77, 217, 180, 0.25);
-}
-
-/* ── Sidebar footer ── */
 .sidebarFooter {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 14px 8px 0;
-  border-top: 1px solid var(--border-ghost);
-  margin-top: auto;
+  padding: 16px 6px 0;
 }
 
-.sidebarFooterStatus {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.statusDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--primary);
-  box-shadow: 0 0 6px rgba(77, 217, 180, 0.30);
-  animation: glowPulse 2.5s ease-in-out infinite;
-}
-
-.statusText {
-  font-family: var(--font-body);
-  font-size: var(--fs-xs);
+.footerNote {
+  font-size: 12px;
   color: var(--text-muted);
-  font-weight: 500;
-  letter-spacing: 0.3px;
-  white-space: nowrap;
+  line-height: 1.45;
 }
 
-.mobileBar {
+/* ── Mobile Tab Bar ── */
+.mobileTabBar {
   display: none;
 }
 
-@keyframes glowPulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.2); opacity: 0.6; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-/* ─── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 768px) {
   .sidebar {
     display: none;
   }
 
-  .mobileBar {
+  .mobileTabBar {
     display: flex;
     position: fixed;
     bottom: 0;
     left: 0;
     right: 0;
-    background: var(--bg-glass-nav);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border-top: 1px solid var(--border-ghost);
-    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
-    z-index: 200;
+    height: 64px;
+    background: #FAF6F0;
+    border-top: 1px solid var(--border);
     align-items: center;
     justify-content: space-around;
-    box-shadow: 0 -1px 0 rgba(77, 217, 180, 0.05);
+    padding: 0 8px;
+    z-index: 200;
   }
 
   .mobileTab {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 8px 16px;
+    justify-content: center;
+    gap: 3px;
+    background: none;
     border: none;
-    background: transparent;
+    padding: 6px 10px;
+    border-radius: 12px;
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: 500;
     cursor: pointer;
-    color: var(--text-muted);
-    border-radius: var(--radius-md);
-    transition: background 0.2s, color 0.2s;
-    min-width: 60px;
-  }
-  .mobileTab:hover {
-    background: var(--tint-primary);
-    color: var(--text-primary);
   }
 
   .mobileTabActive {
     color: var(--primary);
-    background: var(--tint-primary-strong);
+    font-weight: 700;
   }
 
   .mobileIcon {
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: transform 0.18s;
-  }
-  .mobileTabActive .mobileIcon {
-    transform: scale(1.1);
-  }
-
-  .mobileLabel {
-    font-family: var(--font-body);
-    font-size: 10px;
-    font-weight: 600;
-    white-space: nowrap;
   }
 }

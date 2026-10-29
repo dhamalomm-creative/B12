@@ -29,14 +29,14 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const register = useCallback(async (email, password) => {
+  const register = useCallback(async (email, password, extraData = {}) => {
     setIsLoading(true); setError('');
     try {
-      const data = await authAPI.register(email, password);
+      const data = await authAPI.register(email, password, extraData);
       if (data?.token) {
         localStorage.setItem('b12_token', data.token);
         setToken(data.token);
-        setUser(data.user || { email });
+        setUser(data.user || { email, name: extraData.name });
         return { success: true };
       }
       throw new Error(data?.error || 'Registration failed');

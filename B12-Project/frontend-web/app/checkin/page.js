@@ -3,81 +3,159 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp, addDailyLog, setStreak } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { DAILY_CHECKIN } from '@/data/questions';
 import { calculateStreak } from '@/utils/riskCalculator';
 import { checkinAPI } from '@/services/api';
-import { ProgressBar, PrimaryButton } from '@/components/UI';
 import AppShell from '@/components/layout/AppShell';
 import styles from './page.module.css';
+
+const CHECKIN_QUESTIONS = [
+  {
+    id: 'daily_energy',
+    title: 'How is your energy today?',
+    nextText: 'Next: Fatigue, Mood, Sleep, Focus',
+    options: [
+      { value: 0, label: 'Very low' },
+      { value: 1, label: 'Low' },
+      { value: 2, label: 'Okay' },
+      { value: 3, label: 'Good' },
+      { value: 4, label: 'Great' },
+    ],
+  },
+  {
+    id: 'daily_fatigue',
+    title: 'How is your fatigue level today?',
+    nextText: 'Next: Mood, Sleep, Focus',
+    options: [
+      { value: 0, label: 'Severe' },
+      { value: 1, label: 'High' },
+      { value: 2, label: 'Moderate' },
+      { value: 3, label: 'Low' },
+      { value: 4, label: 'None' },
+    ],
+  },
+  {
+    id: 'daily_mood',
+    title: 'How is your mood today?',
+    nextText: 'Next: Sleep, Focus',
+    options: [
+      { value: 0, label: 'Very low' },
+      { value: 1, label: 'Low' },
+      { value: 2, label: 'Balanced' },
+      { value: 3, label: 'Positive' },
+      { value: 4, label: 'Great' },
+    ],
+  },
+  {
+    id: 'daily_sleep',
+    title: 'How was your sleep quality last night?',
+    nextText: 'Next: Focus',
+    options: [
+      { value: 0, label: 'Poor' },
+      { value: 1, label: 'Restless' },
+      { value: 2, label: 'Fair' },
+      { value: 3, label: 'Good' },
+      { value: 4, label: 'Excellent' },
+    ],
+  },
+  {
+    id: 'daily_focus',
+    title: 'How was your mental clarity & focus today?',
+    nextText: 'Almost done!',
+    options: [
+      { value: 0, label: 'Foggy' },
+      { value: 1, label: 'Low' },
+      { value: 2, label: 'Moderate' },
+      { value: 3, label: 'Sharp' },
+      { value: 4, label: 'Laser sharp' },
+    ],
+  },
+];
 
 export default function CheckInPage() {
   const { state, dispatch } = useApp();
   const { isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const [currentIdx,   setCurrentIdx]   = useState(0);
-  const [answers,      setAnswers]      = useState({});
-  const [done,         setDone]         = useState(false);
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [selectedVal, setSelectedVal] = useState(3);
+  const [done, setDone] = useState(false);
   const [serverStreak, setServerStreak] = useState(null);
-  const [animKey,      setAnimKey]      = useState(0);
 
-  const q      = DAILY_CHECKIN[currentIdx];
-  const isLast = currentIdx === DAILY_CHECKIN.length - 1;
-
-  const mapToServer = (all) => ({
-    energyScore:  all.daily_energy  ? 4 - all.daily_energy.score  : 2,
-    fatigueScore: all.daily_fatigue ? 4 - all.daily_fatigue.score : 2,
-    moodScore:    all.daily_mood    ? 4 - all.daily_mood.score    : 2,
-    sleepScore:   all.daily_sleep   ? 4 - all.daily_sleep.score   : 2,
-    focusScore:   all.daily_dizziness ? (all.daily_dizziness.score === 3 ? 0 : 4) : 2,
-  });
+  const q = CHECKIN_QUESTIONS[currentIdx];
+  const total = CHECKIN_QUESTIONS.length;
+  const isLast = currentIdx === total - 1;
 
   const selectOption = async (opt) => {
+    setSelectedVal(opt.value);
     const updated = { ...answers, [q.id]: opt };
     setAnswers(updated);
 
-    if (isLast) {
-      const log = { date: new Date().toISOString(), answers: updated, score: Object.values(updated).reduce((s, a) => s + a.score, 0) };
-      dispatch(addDailyLog(log));
-      dispatch(setStreak(calculateStreak([...state.dailyLogs, log])));
-      try {
-        const data = await checkinAPI.submitDaily(mapToServer(updated));
-        if (data?.streak) {
-          setServerStreak(data.streak);
-          dispatch(setStreak(data.streak.current_streak));
-          dispatch({ type: 'SET_SERVER_STREAK', payload: data.streak });
-        }
-      } catch {}
-      setDone(true);
-    } else {
-      setAnimKey(k => k + 1);
-      setTimeout(() => setCurrentIdx(i => i + 1), 50);
-    }
+    // Auto move on after slight feedback delay
+    setTimeout(async () => {
+      if (isLast) {
+        const log = {
+          date: new Date().toISOString(),
+          answers: updated,
+          score: Object.values(updated).reduce((s, a) => s + a.value, 0),
+        };
+        dispatch(addDailyLog(log));
+        dispatch(setStreak(calculateStreak([...state.dailyLogs, log])));
+
+        try {
+          const data = await checkinAPI.submitDaily({
+            energyScore: updated.daily_energy?.value ?? 3,
+            fatigueScore: updated.daily_fatigue?.value ?? 3,
+            moodScore: updated.daily_mood?.value ?? 3,
+            sleepScore: updated.daily_sleep?.value ?? 3,
+            focusScore: updated.daily_focus?.value ?? 3,
+          });
+          if (data?.streak) {
+            setServerStreak(data.streak);
+            dispatch(setStreak(data.streak.current_streak));
+            dispatch({ type: 'SET_SERVER_STREAK', payload: data.streak });
+          }
+        } catch {}
+
+        setDone(true);
+      } else {
+        setCurrentIdx(i => i + 1);
+        setSelectedVal(null);
+      }
+    }, 280);
   };
 
   if (done) {
-    const streak = serverStreak?.current_streak || state.streak + 1;
-    const msgs = [
-      { range: [1,3],   emoji: '🌱', msg: "Great start! Keep the habit going!" },
-      { range: [4,7],   emoji: '🔥', msg: "One week strong! You're building a healthy habit!" },
-      { range: [8,14],  emoji: '⭐', msg: "Two weeks in — you're on a roll!" },
-      { range: [15,999],emoji: '🏆', msg: "Incredible consistency! You're a health champion!" },
-    ];
-    const cfg = msgs.find(m => streak >= m.range[0] && streak <= m.range[1]) || msgs[0];
+    const finalStreak = serverStreak?.current_streak || state.streak + 1;
     return (
       <AppShell>
-        <div className={styles.completionPage}>
-          <span className={styles.compEmoji}>{cfg.emoji}</span>
-          <h1 className={styles.compTitle}>Check-in Complete!</h1>
-          <p className={styles.compMsg}>{cfg.msg}</p>
-          <div className={styles.streakBox}>
-            <span style={{ fontSize: 40 }}>🔥</span>
-            <span className={styles.streakNum}>{streak}</span>
-            <span className={styles.streakLabel}>Day Streak</span>
+        <div className={styles.checkinPage}>
+          <div className={styles.completionCard}>
+            <h1 className={styles.compTitle}>Check-in Complete!</h1>
+            <p className={styles.compSubtitle}>
+              You&apos;re now on a {finalStreak}-day streak. Keep it going!
+            </p>
+            <div className={styles.streakPill}>
+              <span>🔥</span>
+              <span className={styles.streakNum}>{finalStreak} days</span>
+            </div>
+            <div className={styles.compActions}>
+              <button
+                type="button"
+                className={styles.viewProgressBtn}
+                onClick={() => router.push('/progress')}
+              >
+                View progress
+              </button>
+              <button
+                type="button"
+                className={styles.backDashBtn}
+                onClick={() => router.push('/dashboard')}
+              >
+                Back to dashboard
+              </button>
+            </div>
           </div>
-          <p className={styles.compNote}>Your responses have been saved. Come back tomorrow!</p>
-          <PrimaryButton label="View My Progress →" onClick={() => router.push('/progress')} className={styles.compBtn} />
-          <button className={styles.homeLink} onClick={() => router.push('/dashboard')}>Back to Home</button>
         </div>
       </AppShell>
     );
@@ -85,29 +163,47 @@ export default function CheckInPage() {
 
   return (
     <AppShell>
-      <div className={styles.page}>
-        <div className={styles.header}>
-          <button className={styles.closeBtn} onClick={() => router.back()}>✕</button>
-          <span className={styles.headerTitle}>Daily check-in</span>
-          <div style={{ width: 36 }} />
-        </div>
+      <div className={styles.checkinPage}>
+        <header className={styles.header}>
+          <h1 className={styles.title}>Daily check-in</h1>
+          <p className={styles.subtitle}>One tap per question. It moves on by itself.</p>
+        </header>
+
         <div className={styles.progressWrap}>
-          <ProgressBar progress={currentIdx + 1} total={DAILY_CHECKIN.length} color="var(--accent)" />
-        </div>
-        <div className={styles.body}>
-          <div key={animKey} className={styles.qAnim}>
-            <div className={styles.iconRing}><span className={styles.qIcon}>{q.icon}</span></div>
-            <p className={styles.stepLabel}>Step {currentIdx + 1} of {DAILY_CHECKIN.length}</p>
-            <h2 className={styles.qText}>{q.question}</h2>
-            <div className={styles.options}>
-              {q.options.map(opt => (
-                <button key={opt.id} className={`${styles.optCard} ${answers[q.id]?.id === opt.id ? styles.optSelected : ''}`} onClick={() => selectOption(opt)}>
-                  {opt.emoji && <div className={styles.optEmoji}><span>{opt.emoji}</span></div>}
-                  <span className={styles.optLabel}>{opt.label}</span>
-                </button>
-              ))}
-            </div>
+          <p className={styles.counterText}>
+            Question {currentIdx + 1} of {total}
+          </p>
+          <div className={styles.segmentedTrack}>
+            {CHECKIN_QUESTIONS.map((item, idx) => (
+              <span
+                key={item.id}
+                className={`${styles.segmentDash} ${idx <= currentIdx ? styles.dashActive : ''}`}
+              />
+            ))}
           </div>
+        </div>
+
+        <div className={styles.card}>
+          <h2 className={styles.questionText}>{q.title}</h2>
+
+          <div className={styles.ratingRow}>
+            {q.options.map((opt) => {
+              const isSelected = selectedVal === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  className={`${styles.ratingButton} ${isSelected ? styles.ratingActive : ''}`}
+                  onClick={() => selectOption(opt)}
+                >
+                  <span className={styles.ratingNumber}>{opt.value}</span>
+                  <span className={styles.ratingLabel}>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <p className={styles.nextHint}>{q.nextText}</p>
         </div>
       </div>
     </AppShell>
