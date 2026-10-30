@@ -88,9 +88,9 @@ export default function TermsPage() {
               </section>
             ))}
 
-            {/* Bottom Yellow Disclaimer */}
+            {/* Bottom Disclaimer */}
             <div className={styles.disclaimerBanner}>
-              Placeholder legal copy for design review. Have it checked before launch.
+              This platform is designed strictly for health education and nutritional awareness. It is not an alternative to licensed clinical evaluation or blood diagnostic tests.
             </div>
           </div>
         </div>

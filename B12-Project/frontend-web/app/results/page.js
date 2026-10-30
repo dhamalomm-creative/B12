@@ -48,6 +48,22 @@ export default function ResultsPage() {
 
   const breakdown = riskResult?.breakdown || {};
 
+  const getCategoryPct = (catName) => {
+    if (!breakdown) return 0;
+    let val = breakdown[catName] ?? breakdown[catName.toLowerCase()];
+    if (val === undefined) {
+      if (catName === 'Energy') val = breakdown['Energy & Fatigue'] ?? breakdown['energy & fatigue'] ?? breakdown['energy'];
+      else if (catName === 'Psychological') val = breakdown['Mood'] ?? breakdown['mood'] ?? breakdown['psychological'];
+      else if (catName === 'Digestive') val = breakdown['Digestive Health'] ?? breakdown['digestive health'] ?? breakdown['digestive'];
+      else if (catName === 'Diet') val = breakdown['Diet Habits'] ?? breakdown['diet habits'] ?? breakdown['diet'];
+    }
+    if (typeof val === 'object' && val !== null) {
+      return val.max > 0 ? Math.round((val.score / val.max) * 100) : 0;
+    }
+    const num = Number(val);
+    return isNaN(num) ? 0 : Math.min(100, Math.max(0, Math.round(num)));
+  };
+
   return (
     <AuthGuard>
       <AppShell>
@@ -97,8 +113,7 @@ export default function ResultsPage() {
                 <h3 className={styles.cardHeading}>Breakdown by category</h3>
                 <div className={styles.categoriesList}>
                   {DEFAULT_CATEGORIES.map((cat) => {
-                    const val = breakdown[cat.name.toLowerCase()] ?? breakdown[cat.name] ?? cat.defaultVal;
-                    const pct = Math.round(val);
+                    const pct = getCategoryPct(cat.name);
                     return (
                       <div key={cat.name} className={styles.catRow}>
                         <div className={styles.catHeader}>
@@ -108,7 +123,7 @@ export default function ResultsPage() {
                         <div className={styles.track}>
                           <div
                             className={styles.fill}
-                            style={{ width: `${Math.min(100, Math.max(0, pct))}%` }}
+                            style={{ width: `${pct}%` }}
                           />
                         </div>
                       </div>

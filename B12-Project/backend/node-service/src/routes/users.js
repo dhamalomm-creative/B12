@@ -44,7 +44,7 @@ router.post('/profile', [
       ...(smokingStatus !== undefined && { smoking_status: smokingStatus }),
     };
 
-    const [profile, created] = await UserProfile.upsert(profileData, { returning: true });
+    const [profile, created] = await UserProfile.upsert(profileData, { conflictFields: ['user_id'], returning: true });
     return sendSuccess(res, { profile }, created ? 201 : 200);
   } catch (err) {
     next(err);

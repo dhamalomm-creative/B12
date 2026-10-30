@@ -2,7 +2,7 @@
  * rateLimiter.js — Tiered rate limiting with progressive slow-down
  *
  * Defence layers:
- *  1. authLimiter   — 5 requests / 15 min per IP+email (brute-force, credential stuffing)
+ *  1. authLimiter   — 5 failed requests / 15 min per IP+email (brute-force, credential stuffing)
  *  2. apiLimiter    — 100 requests / 15 min per IP (general API abuse)
  *  3. authSlowDown  — progressive delays after 3 auth requests (makes automation expensive)
  *
@@ -14,7 +14,7 @@
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
 
-// ── [1] Auth rate limiter: strict ──
+// ── [1] Auth rate limiter: strict on failures ──
 // Defends against: brute-force login, credential stuffing, account enumeration
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -22,7 +22,7 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
   validate: false,
-  skipSuccessfulRequests: false, // Count ALL requests (including successful logins)
+  skipSuccessfulRequests: true, // Only count failed attempts so legitimate users are not penalized
   message: {
     success: false,
     error: 'Too many authentication attempts. Please wait 15 minutes before trying again.',

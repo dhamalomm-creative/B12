@@ -29,8 +29,8 @@ export const calculateRisk = (answers, questions, dietType) => {
   };
 
   questions.forEach((q) => {
-    const maxOptionScore = Math.max(...q.options.map((o) => o.score));
-    const weighted = maxOptionScore * q.weight;
+    const maxOptionScore = Math.max(...q.options.map((o) => o.score || 0));
+    const weighted = maxOptionScore * (q.weight || 1);
     maxPossible += weighted;
 
     if (breakdown[q.category] !== undefined) {
@@ -39,7 +39,7 @@ export const calculateRisk = (answers, questions, dietType) => {
 
     const answer = answers[q.id];
     if (answer) {
-      const contribution = answer.score * q.weight;
+      const contribution = (answer.score || 0) * (q.weight || 1);
       totalScore += contribution;
       if (breakdown[q.category] !== undefined) {
         breakdown[q.category].score += contribution;
@@ -47,16 +47,37 @@ export const calculateRisk = (answers, questions, dietType) => {
     }
   });
 
-  const percentage = Math.min(Math.round((totalScore / maxPossible) * 100), 100);
+  const percentage = maxPossible > 0 ? Math.min(Math.round((totalScore / maxPossible) * 100), 100) : 0;
 
   let level;
   if (percentage < 35)      level = 'LOW';
   else if (percentage < 65) level = 'MEDIUM';
   else                      level = 'HIGH';
 
+  const categoryPercentages = {};
+  for (const [cat, data] of Object.entries(breakdown)) {
+    const pct = data.max > 0 ? Math.min(100, Math.round((data.score / data.max) * 100)) : 0;
+    categoryPercentages[cat] = pct;
+    categoryPercentages[cat.toLowerCase()] = pct;
+  }
+
+  // Alias common short category names
+  categoryPercentages['diet'] = categoryPercentages['Diet'] ?? categoryPercentages['Diet Habits'] ?? 0;
+  categoryPercentages['energy'] = categoryPercentages['Energy & Fatigue'] ?? categoryPercentages['Fatigue'] ?? 0;
+  categoryPercentages['psychological'] = categoryPercentages['Mood'] ?? 0;
+  categoryPercentages['digestive'] = categoryPercentages['Digestive Health'] ?? 0;
+
   const suggestions = getSuggestions(level, answers, dietType);
 
-  return { score: totalScore, maxPossible, percentage, level, breakdown, suggestions };
+  return {
+    score: totalScore,
+    maxPossible,
+    percentage,
+    level,
+    breakdown: categoryPercentages,
+    rawBreakdown: breakdown,
+    suggestions,
+  };
 };
 
 const getSuggestions = (level, answers, dietType) => {
@@ -125,9 +146,8 @@ export const computeWeeklyTrend = (history) => {
  * Calculate streak from daily log history
  */
 export const calculateStreak = (history) => {
-  if (!history.length) return 0;
+  if (!history || !history.length) return 0;
   let streak = 0;
-  const today = new Date().toDateString();
   for (let i = history.length - 1; i >= 0; i--) {
     const expected = new Date();
     expected.setDate(expected.getDate() - (history.length - 1 - i));

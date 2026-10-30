@@ -59,8 +59,10 @@ export function SecondaryButton({ label, onClick, className = '', style }) {
   );
 }
 
-export function ProgressBar({ progress, total, color }) {
-  const pct = Math.min(100, Math.round((progress / total) * 100));
+export function ProgressBar({ progress = 0, total = 1, color }) {
+  const safeTotal = Number(total) || 1;
+  const safeProgress = Number(progress) || 0;
+  const pct = Math.min(100, Math.max(0, Math.round((safeProgress / safeTotal) * 100)));
   return (
     <div className="progress-bar-outer" style={{ height: 6, background: 'var(--border)', borderRadius: '9999px', overflow: 'hidden' }}>
       <div
@@ -77,9 +79,11 @@ export function ProgressBar({ progress, total, color }) {
   );
 }
 
-export function RiskGauge({ percentage = 24, level = 'Low', className = '' }) {
+export function RiskGauge({ percentage = 0, level = 'Low', className = '' }) {
+  const num = Number(percentage);
+  const safePct = isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
   // Clamp between 5% and 95% for the circle marker
-  const markerPos = Math.min(95, Math.max(5, percentage));
+  const markerPos = Math.min(95, Math.max(5, safePct));
   return (
     <div className={`risk-gauge-container ${className}`} style={{ width: '100%' }}>
       <div className="risk-gauge-track">

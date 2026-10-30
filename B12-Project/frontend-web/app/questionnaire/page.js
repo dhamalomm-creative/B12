@@ -48,28 +48,71 @@ export default function QuestionnairePage() {
   }, [currentIdx, q, answers]);
 
   const mapToServer = (localAnswers) => {
-    if (!serverQuestions.length) return null;
-    return Object.entries(localAnswers).map(([lid, opt]) => {
-      const lq = questions.find(qq => qq.id === lid);
-      const sq = serverQuestions.find(s => s.question_text === lq?.question);
-      return { questionId: sq?.id || 0, answerValue: opt.id };
-    }).filter(a => a.questionId > 0);
+    const list = [];
+    const diet = user?.dietType || 'vegetarian';
+
+    const foodAns = localAnswers.b12_food_intake?.id;
+    const foodMap = { daily: 'daily', weekly: 'few_week', monthly: 'rarely', rarely: 'never' };
+    list.push({ questionId: 1, answerValue: foodMap[foodAns] || (diet === 'vegan' ? 'never' : diet === 'vegetarian' ? 'rarely' : 'few_week') });
+
+    const suppAns = localAnswers.supplements?.id;
+    const suppMap = { yes: 'yes_regular', occasionally: 'yes_occasional', sometimes: 'yes_occasional', no: 'no' };
+    list.push({ questionId: 2, answerValue: suppMap[suppAns] || 'no' });
+
+    const fatAns = localAnswers.fatigue_frequency?.id || localAnswers.general_tiredness?.id;
+    const fatMap = { never: 'never', rarely: 'never', sometimes: 'sometimes', often: 'often', always: 'always' };
+    list.push({ questionId: 3, answerValue: fatMap[fatAns] || 'sometimes' });
+
+    const tingAns = localAnswers.tingling_numbness?.id || localAnswers.pins_needles?.id;
+    const tingMap = { never: 'never', rarely: 'occasionally', sometimes: 'occasionally', often: 'frequently', always: 'daily' };
+    list.push({ questionId: 4, answerValue: tingMap[tingAns] || 'occasionally' });
+
+    const concAns = localAnswers.concentration?.id || localAnswers.memory_issues?.id || localAnswers.brain_fog?.id;
+    const concMap = { never: 'never', rarely: 'occasionally', sometimes: 'occasionally', often: 'frequently', always: 'very_often' };
+    list.push({ questionId: 5, answerValue: concMap[concAns] || 'occasionally' });
+
+    const breathAns = localAnswers.breathlessness?.id || localAnswers.shortness_of_breath?.id;
+    const breathMap = { never: 'never', rarely: 'rarely', sometimes: 'sometimes', often: 'frequently', always: 'frequently' };
+    list.push({ questionId: 6, answerValue: breathMap[breathAns] || 'rarely' });
+
+    const moodAns = localAnswers.mood?.id || localAnswers.mood_changes?.id;
+    const moodMap = { happy: 'positive', neutral: 'occasional_low', low: 'frequent_low', irritable: 'persistent_low', never: 'positive', rarely: 'occasional_low', sometimes: 'frequent_low', often: 'persistent_low', always: 'persistent_low' };
+    list.push({ questionId: 7, answerValue: moodMap[moodAns] || 'occasional_low' });
+
+    const digAns = localAnswers.digestive?.id || localAnswers.digestive_issues?.id;
+    const digMap = { never: 'never', rarely: 'occasionally', sometimes: 'occasionally', often: 'frequently', always: 'always' };
+    list.push({ questionId: 8, answerValue: digMap[digAns] || 'never' });
+
+    const anAns = localAnswers.anemia?.id || localAnswers.anemia_history?.id;
+    const anMap = { no: 'no', past: 'past', current: 'current', yes: 'current' };
+    list.push({ questionId: 9, answerValue: anMap[anAns] || 'no' });
+
+    const tongAns = localAnswers.tongue_symptoms?.id || localAnswers.tongue_soreness?.id;
+    const tongMap = { no: 'no', occasionally: 'occasionally', yes: 'yes', never: 'no', rarely: 'occasionally', sometimes: 'occasionally', often: 'yes', always: 'yes' };
+    list.push({ questionId: 10, answerValue: tongMap[tongAns] || 'no' });
+
+    return list;
   };
 
   const submitToServer = async (allAnswers) => {
+    if (!isAuthenticated) return null;
     const sa = mapToServer(allAnswers);
-    if (!sa?.length) return null;
+    if (!sa || !sa.length) return null;
     try {
       const data = await questionnaireAPI.submit(sa);
-      return {
-        score: 0,
-        maxPossible: 0,
-        percentage: Math.round(data.percentage || 0),
-        level: (data.risk_level || 'low').toUpperCase(),
-        breakdown: data.breakdown || {},
-        suggestions: data.suggestions || []
-      };
-    } catch {
+      if (data?.percentage !== undefined) {
+        return {
+          score: Math.round(data.percentage || 0),
+          maxPossible: 100,
+          percentage: Math.round(data.percentage || 0),
+          level: (data.risk_level || 'low').toUpperCase(),
+          breakdown: data.breakdown || {},
+          suggestions: data.suggestions || [],
+        };
+      }
+      return null;
+    } catch (e) {
+      console.warn('Server assessment sync note:', e.message);
       return null;
     }
   };

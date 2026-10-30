@@ -128,13 +128,13 @@ router.post('/register', [
     const password_hash = await bcrypt.hash(password, 12);
     const user = await User.create({ email, password_hash });
 
-    if (age || gender || dietType) {
+    if (name || age || gender || dietType) {
       const ageNum = parseInt(age);
       await UserProfile.create({
         user_id:            user.id,
         name:               name || null,
-        age:                ageNum || null,
-        age_group:          ageNum ? getAgeGroup(ageNum) : null,
+        age:                (!isNaN(ageNum) && ageNum > 0) ? ageNum : null,
+        age_group:          (!isNaN(ageNum) && ageNum > 0) ? getAgeGroup(ageNum) : null,
         gender:             gender || null,
         diet_type:          dietType || null,
         diet_penalty_score: getDietPenalty(dietType),

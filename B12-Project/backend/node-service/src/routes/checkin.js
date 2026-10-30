@@ -4,7 +4,7 @@ const authMiddleware = require('../middleware/auth');
 const { DailyCheckin, UserStreak } = require('../models/DailyCheckin');
 const UserHealthState = require('../models/UserHealthState');
 const { sendSuccess, sendError } = require('../utils/response');
-const { Op, fn, col, literal } = require('sequelize');
+const { Op } = require('sequelize');
 
 const router = express.Router();
 router.use(authMiddleware);
@@ -14,6 +14,11 @@ const updateStreak = async (userId, today) => {
   let streak = await UserStreak.findOne({ where: { user_id: userId } });
   if (!streak) {
     streak = await UserStreak.create({ user_id: userId });
+  }
+
+  // If user already logged today, do not reset or increment duplicate streak
+  if (streak.last_checkin_date === today) {
+    return { current_streak: streak.current_streak, longest_streak: streak.longest_streak };
   }
 
   const yesterday = new Date(today);
@@ -49,7 +54,7 @@ router.post('/daily', [
     const { energyScore, fatigueScore, moodScore, sleepScore, focusScore, notes, durationSeconds } = req.body;
     const today = new Date().toISOString().split('T')[0];
 
-    // Upsert — one check-in per day
+    // Upsert — one check-in per day (handled via compound unique key user_id + checkin_date)
     const [checkin, created] = await DailyCheckin.upsert({
       user_id: req.user.id,
       checkin_date: today,
@@ -60,13 +65,11 @@ router.post('/daily', [
       focus_score: focusScore,
       notes: notes || null,
       duration_seconds: durationSeconds || null,
-    }, { returning: true });
+    }, { conflictFields: ['user_id', 'checkin_date'], returning: true });
 
     const streak = await updateStreak(req.user.id, today);
 
     // ── Update user_health_state with today's daily scores ──────────────────
-    // Only updates the current_* columns — questionnaire baseline stays intact.
-    // Uses a raw INCREMENT for total_checkins so we don't need to read first.
     const healthState = await UserHealthState.findOne({ where: { user_id: req.user.id } });
     if (healthState) {
       await healthState.update({
@@ -77,11 +80,9 @@ router.post('/daily', [
         current_focus_score:   focusScore,
         current_daily_total:   energyScore + fatigueScore + moodScore + sleepScore + focusScore,
         last_checkin_date:     today,
-        total_checkins:        (healthState.total_checkins || 0) + 1,
+        total_checkins:        (healthState.total_checkins || 0) + (created ? 1 : 0),
       });
     }
-    // (If healthState doesn't exist yet, the user hasn't done the questionnaire
-    // — we silently skip. It will be created when they submit the questionnaire.)
 
     return sendSuccess(res, { checkin, streak, isNew: created }, 201);
   } catch (err) {
