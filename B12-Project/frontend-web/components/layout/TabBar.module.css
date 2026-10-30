@@ -79,6 +79,32 @@
 
 .sidebarFooter {
   padding: 16px 6px 0;
+  border-top: 1px solid var(--border);
+}
+
+.signOutBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 14px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  transition: all 0.18s;
+  text-align: left;
+}
+
+.signOutBtn:hover {
+  background: rgba(217, 83, 56, 0.08);
+  color: #D95338;
+  border-color: rgba(217, 83, 56, 0.3);
 }
 
 .footerNote {

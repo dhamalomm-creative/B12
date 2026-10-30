@@ -1,7 +1,9 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import AppShell from '@/components/layout/AppShell';
 import styles from './page.module.css';
 
@@ -196,67 +198,122 @@ FOODS_BY_DIET.all = FOODS_BY_DIET.vegetarian;
 
 export default function FoodsPage() {
   const { state } = useApp();
+  const { isAuthenticated } = useAuth();
   const router = useRouter();
 
-  const [activeFilter, setActiveFilter] = useState('vegetarian');
+  const [activeFilter, setActiveFilter] = useState(
+    state.user?.dietType || 'vegetarian'
+  );
 
-  const userBmi = state.bmiData?.bmi || 22.4;
+  const userBmi = state.bmiData?.bmi;
   const foods = FOODS_BY_DIET[activeFilter] || FOODS_BY_DIET.vegetarian;
 
-  return (
-    <AppShell>
-      <div className={styles.foodsPage}>
-        {/* Header */}
-        <header className={styles.header}>
-          <h1 className={styles.title}>B12 foods</h1>
-          <p className={styles.subtitle}>Filtered for your diet and sorted for your BMI.</p>
-        </header>
+  const content = (
+    <div className={styles.foodsPage} style={{ padding: isAuthenticated ? undefined : '20px 24px 60px' }}>
+      {/* Header */}
+      <header className={styles.header}>
+        <h1 className={styles.title}>B12 foods directory</h1>
+        <p className={styles.subtitle}>Filtered for your diet and tailored for your nutritional balance.</p>
+      </header>
 
-        {/* Filter Pills */}
-        <div className={styles.filterRow}>
-          {DIET_FILTERS.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              className={`${styles.filterPill} ${activeFilter === f.id ? styles.filterPillActive : ''}`}
-              onClick={() => setActiveFilter(f.id)}
-            >
-              {f.label}
-            </button>
-          ))}
-        </div>
-
-        {/* BMI Status & Action */}
-        <div className={styles.bmiStatusRow}>
-          <p className={styles.bmiText}>
-            Sorted for a normal BMI of {userBmi}.
-          </p>
+      {/* Filter Pills */}
+      <div className={styles.filterRow}>
+        {DIET_FILTERS.map((f) => (
           <button
+            key={f.id}
             type="button"
-            className={styles.updateBmiBtn}
-            onClick={() => router.push('/bmi')}
+            className={`${styles.filterPill} ${activeFilter === f.id ? styles.filterPillActive : ''}`}
+            onClick={() => setActiveFilter(f.id)}
           >
-            Update BMI
+            {f.label}
           </button>
-        </div>
-
-        {/* Food Cards Grid */}
-        <div className={styles.foodGrid}>
-          {foods.map((food, idx) => (
-            <div
-              key={idx}
-              className={`${styles.foodCard} ${styles[food.colorClass]}`}
-            >
-              <div className={styles.cardTop}>
-                <span className={styles.foodName}>{food.name}</span>
-                <span className={styles.calBadge}>{food.tier}</span>
-              </div>
-              <p className={styles.foodAmount}>{food.amount}</p>
-              <p className={styles.foodDesc}>{food.desc}</p>
-            </div>
-          ))}
-        </div>
+        ))}
       </div>
-    </AppShell>
+
+      {/* BMI Status & Action */}
+      <div className={styles.bmiStatusRow}>
+        <p className={styles.bmiText}>
+          {userBmi
+            ? `Tailored for your recorded BMI of ${userBmi}.`
+            : 'Track your BMI to personalize calorie and nutrient recommendations.'}
+        </p>
+        <button
+          type="button"
+          className={styles.updateBmiBtn}
+          onClick={() => router.push(isAuthenticated ? '/bmi' : '/auth?mode=login')}
+        >
+          {userBmi ? 'Update BMI' : 'Calculate BMI'}
+        </button>
+      </div>
+
+      {/* Food Cards Grid */}
+      <div className={styles.foodGrid}>
+        {foods.map((food, idx) => (
+          <div
+            key={idx}
+            className={`${styles.foodCard} ${styles[food.colorClass]}`}
+          >
+            <div className={styles.cardTop}>
+              <span className={styles.foodName}>{food.name}</span>
+              <span className={styles.calBadge}>{food.tier}</span>
+            </div>
+            <p className={styles.foodAmount}>{food.amount}</p>
+            <p className={styles.foodDesc}>{food.desc}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  if (isAuthenticated) {
+    return <AppShell>{content}</AppShell>;
+  }
+
+  return (
+    <div style={{ minHeight: '100vh', backgroundColor: 'var(--bg, #FAF6F0)' }}>
+      {/* Public Header */}
+      <header style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '24px 32px',
+        maxWidth: '1100px',
+        margin: '0 auto',
+        width: '100%',
+        boxSizing: 'border-box'
+      }}>
+        <Link href="/" style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', textDecoration: 'none' }}>
+          B12 Health Tracker
+        </Link>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <Link href="/" style={{ fontSize: '14px', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+            Home
+          </Link>
+          <Link href="/onboarding" style={{ fontSize: '14px', color: 'var(--text-secondary)', textDecoration: 'none' }}>
+            Assessment
+          </Link>
+          <Link href="/auth?mode=login" style={{ fontSize: '14px', color: 'var(--text-primary)', fontWeight: 600, textDecoration: 'none' }}>
+            Log in
+          </Link>
+          <Link
+            href="/auth?mode=register"
+            style={{
+              fontSize: '13.5px',
+              backgroundColor: 'var(--primary, #1E3A2B)',
+              color: '#FFFFFF',
+              padding: '8px 18px',
+              borderRadius: '9999px',
+              fontWeight: 600,
+              textDecoration: 'none'
+            }}
+          >
+            Start free
+          </Link>
+        </nav>
+      </header>
+      <main style={{ maxWidth: '1040px', margin: '0 auto' }}>
+        {content}
+      </main>
+    </div>
   );
 }

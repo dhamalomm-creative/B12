@@ -6,6 +6,7 @@ import { useAuth } from '@/context/AuthContext';
 import { calculateStreak } from '@/utils/riskCalculator';
 import { checkinAPI } from '@/services/api';
 import AppShell from '@/components/layout/AppShell';
+import AuthGuard from '@/components/auth/AuthGuard';
 import styles from './page.module.css';
 
 const CHECKIN_QUESTIONS = [
@@ -78,7 +79,7 @@ export default function CheckInPage() {
 
   const [currentIdx, setCurrentIdx] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [selectedVal, setSelectedVal] = useState(3);
+  const [selectedVal, setSelectedVal] = useState(null);
   const [done, setDone] = useState(false);
   const [serverStreak, setServerStreak] = useState(null);
 
@@ -97,25 +98,30 @@ export default function CheckInPage() {
         const log = {
           date: new Date().toISOString(),
           answers: updated,
-          score: Object.values(updated).reduce((s, a) => s + a.value, 0),
+          score: Object.values(updated).reduce((s, a) => s + (a?.value || 0), 0),
         };
         dispatch(addDailyLog(log));
-        dispatch(setStreak(calculateStreak([...state.dailyLogs, log])));
+        const newLocalStreak = calculateStreak([...state.dailyLogs, log]);
+        dispatch(setStreak(newLocalStreak));
 
-        try {
-          const data = await checkinAPI.submitDaily({
-            energyScore: updated.daily_energy?.value ?? 3,
-            fatigueScore: updated.daily_fatigue?.value ?? 3,
-            moodScore: updated.daily_mood?.value ?? 3,
-            sleepScore: updated.daily_sleep?.value ?? 3,
-            focusScore: updated.daily_focus?.value ?? 3,
-          });
-          if (data?.streak) {
-            setServerStreak(data.streak);
-            dispatch(setStreak(data.streak.current_streak));
-            dispatch({ type: 'SET_SERVER_STREAK', payload: data.streak });
+        if (isAuthenticated) {
+          try {
+            const data = await checkinAPI.submitDaily({
+              energyScore: updated.daily_energy?.value ?? 3,
+              fatigueScore: updated.daily_fatigue?.value ?? 3,
+              moodScore: updated.daily_mood?.value ?? 3,
+              sleepScore: updated.daily_sleep?.value ?? 3,
+              focusScore: updated.daily_focus?.value ?? 3,
+            });
+            if (data?.streak) {
+              setServerStreak(data.streak);
+              dispatch(setStreak(data.streak.current_streak));
+              dispatch({ type: 'SET_SERVER_STREAK', payload: data.streak });
+            }
+          } catch (e) {
+            console.warn('Checkin sync error:', e);
           }
-        } catch {}
+        }
 
         setDone(true);
       } else {
@@ -126,86 +132,90 @@ export default function CheckInPage() {
   };
 
   if (done) {
-    const finalStreak = serverStreak?.current_streak || state.streak + 1;
+    const finalStreak = serverStreak?.current_streak || (state.streak > 0 ? state.streak : 1);
     return (
-      <AppShell>
-        <div className={styles.checkinPage}>
-          <div className={styles.completionCard}>
-            <h1 className={styles.compTitle}>Check-in Complete!</h1>
-            <p className={styles.compSubtitle}>
-              You&apos;re now on a {finalStreak}-day streak. Keep it going!
-            </p>
-            <div className={styles.streakPill}>
-              <span>🔥</span>
-              <span className={styles.streakNum}>{finalStreak} days</span>
-            </div>
-            <div className={styles.compActions}>
-              <button
-                type="button"
-                className={styles.viewProgressBtn}
-                onClick={() => router.push('/progress')}
-              >
-                View progress
-              </button>
-              <button
-                type="button"
-                className={styles.backDashBtn}
-                onClick={() => router.push('/dashboard')}
-              >
-                Back to dashboard
-              </button>
+      <AuthGuard>
+        <AppShell>
+          <div className={styles.checkinPage}>
+            <div className={styles.completionCard}>
+              <h1 className={styles.compTitle}>Check-in Complete!</h1>
+              <p className={styles.compSubtitle}>
+                You&apos;re now on a {finalStreak}-day streak. Keep it going!
+              </p>
+              <div className={styles.streakPill}>
+                <span>🔥</span>
+                <span className={styles.streakNum}>{finalStreak} {finalStreak === 1 ? 'day' : 'days'}</span>
+              </div>
+              <div className={styles.compActions}>
+                <button
+                  type="button"
+                  className={styles.viewProgressBtn}
+                  onClick={() => router.push('/progress')}
+                >
+                  View progress
+                </button>
+                <button
+                  type="button"
+                  className={styles.backDashBtn}
+                  onClick={() => router.push('/dashboard')}
+                >
+                  Back to dashboard
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      </AppShell>
+        </AppShell>
+      </AuthGuard>
     );
   }
 
   return (
-    <AppShell>
-      <div className={styles.checkinPage}>
-        <header className={styles.header}>
-          <h1 className={styles.title}>Daily check-in</h1>
-          <p className={styles.subtitle}>One tap per question. It moves on by itself.</p>
-        </header>
+    <AuthGuard>
+      <AppShell>
+        <div className={styles.checkinPage}>
+          <header className={styles.header}>
+            <h1 className={styles.title}>Daily check-in</h1>
+            <p className={styles.subtitle}>One tap per question. It moves on by itself.</p>
+          </header>
 
-        <div className={styles.progressWrap}>
-          <p className={styles.counterText}>
-            Question {currentIdx + 1} of {total}
-          </p>
-          <div className={styles.segmentedTrack}>
-            {CHECKIN_QUESTIONS.map((item, idx) => (
-              <span
-                key={item.id}
-                className={`${styles.segmentDash} ${idx <= currentIdx ? styles.dashActive : ''}`}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div className={styles.card}>
-          <h2 className={styles.questionText}>{q.title}</h2>
-
-          <div className={styles.ratingRow}>
-            {q.options.map((opt) => {
-              const isSelected = selectedVal === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  className={`${styles.ratingButton} ${isSelected ? styles.ratingActive : ''}`}
-                  onClick={() => selectOption(opt)}
-                >
-                  <span className={styles.ratingNumber}>{opt.value}</span>
-                  <span className={styles.ratingLabel}>{opt.label}</span>
-                </button>
-              );
-            })}
+          <div className={styles.progressWrap}>
+            <p className={styles.counterText}>
+              Question {currentIdx + 1} of {total}
+            </p>
+            <div className={styles.segmentedTrack}>
+              {CHECKIN_QUESTIONS.map((item, idx) => (
+                <span
+                  key={item.id}
+                  className={`${styles.segmentDash} ${idx <= currentIdx ? styles.dashActive : ''}`}
+                />
+              ))}
+            </div>
           </div>
 
-          <p className={styles.nextHint}>{q.nextText}</p>
+          <div className={styles.card}>
+            <h2 className={styles.questionText}>{q.title}</h2>
+
+            <div className={styles.ratingRow}>
+              {q.options.map((opt) => {
+                const isSelected = selectedVal === opt.value;
+                return (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`${styles.ratingButton} ${isSelected ? styles.ratingActive : ''}`}
+                    onClick={() => selectOption(opt)}
+                  >
+                    <span className={styles.ratingNumber}>{opt.value}</span>
+                    <span className={styles.ratingLabel}>{opt.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className={styles.nextHint}>{q.nextText}</p>
+          </div>
         </div>
-      </div>
-    </AppShell>
+      </AppShell>
+    </AuthGuard>
   );
 }

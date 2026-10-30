@@ -12,6 +12,7 @@ const initialState = {
   serverStreak: null,
   serverInsights: [],
   serverCheckinHistory: [],
+  bmiData: null,
 };
 
 // ─── Action Creators ──────────────────────────────────────────────────────────
@@ -23,6 +24,7 @@ export const addDailyLog        = (log)     => ({ type: 'ADD_DAILY_LOG',       p
 export const setStreak          = (streak)  => ({ type: 'SET_STREAK',          payload: streak });
 export const setServerInsights  = (data)    => ({ type: 'SET_SERVER_INSIGHTS', payload: data });
 export const setServerCheckins  = (data)    => ({ type: 'SET_SERVER_CHECKINS', payload: data });
+export const setBmiData         = (data)    => ({ type: 'SET_BMI_DATA',        payload: data });
 
 // ─── Reducer ──────────────────────────────────────────────────────────────────
 function appReducer(state, action) {
@@ -32,10 +34,12 @@ function appReducer(state, action) {
     case 'COMPLETE_ONBOARDING':return { ...state, onboardingDone: true };
     case 'SET_RISK_RESULT':    return { ...state, riskResult: action.payload };
     case 'ADD_DAILY_LOG':      return { ...state, dailyLogs: [...state.dailyLogs, action.payload] };
+    case 'SET_DAILY_LOGS':      return { ...state, dailyLogs: action.payload };
     case 'SET_STREAK':         return { ...state, streak: action.payload };
     case 'SET_SERVER_STREAK':  return { ...state, serverStreak: action.payload };
     case 'SET_SERVER_INSIGHTS':return { ...state, serverInsights: action.payload };
     case 'SET_SERVER_CHECKINS':return { ...state, serverCheckinHistory: action.payload };
+    case 'SET_BMI_DATA':       return { ...state, bmiData: action.payload };
     case 'RESET':              return initialState;
     default:                   return state;
   }
@@ -59,8 +63,12 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
-        const { serverInsights, serverStreak, serverCheckinHistory, ...persistable } = state;
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(persistable));
+        if (!state.user && !state.riskResult && state.dailyLogs.length === 0 && !state.onboardingDone) {
+          localStorage.removeItem(STORAGE_KEY);
+        } else {
+          const { serverInsights, serverStreak, serverCheckinHistory, ...persistable } = state;
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(persistable));
+        }
       } catch {}
     }
   }, [state]);

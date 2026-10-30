@@ -7,7 +7,7 @@ import { useApp } from '@/context/AppContext';
 import styles from './page.module.css';
 
 function AuthForm() {
-  const { register, login, isLoading, error, clearError } = useAuth();
+  const { register, login, isLoading, isAuthenticated, error, clearError } = useAuth();
   const { state } = useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,6 +18,12 @@ function AuthForm() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [localError, setLocalError] = useState('');
   const [dupEmail, setDupEmail] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) {
+      router.replace('/dashboard');
+    }
+  }, [isLoading, isAuthenticated, router]);
 
   useEffect(() => {
     const requestedMode = searchParams.get('mode');

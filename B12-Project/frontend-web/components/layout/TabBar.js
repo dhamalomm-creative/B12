@@ -1,5 +1,7 @@
 'use client';
 import { usePathname, useRouter } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
+import { useApp } from '@/context/AppContext';
 import styles from './TabBar.module.css';
 
 const NAV_ITEMS = [
@@ -62,13 +64,29 @@ const NAV_ITEMS = [
 export default function TabBar() {
   const pathname = usePathname();
   const router   = useRouter();
+  const { isAuthenticated, logout } = useAuth();
+  const { dispatch } = useApp();
+
+  const handleBrandClick = () => {
+    if (isAuthenticated) {
+      router.push('/dashboard');
+    } else {
+      router.push('/');
+    }
+  };
+
+  const handleSignOut = async () => {
+    await logout();
+    dispatch({ type: 'RESET' });
+    router.replace('/auth?mode=login');
+  };
 
   return (
     <>
       {/* ── Desktop Sidebar ── */}
       <aside className={styles.sidebar}>
         {/* Brand */}
-        <div className={styles.brand} onClick={() => router.push('/dashboard')}>
+        <div className={styles.brand} onClick={handleBrandClick}>
           <span className={styles.brandName}>B12 Health Tracker</span>
         </div>
 
@@ -91,8 +109,23 @@ export default function TabBar() {
           })}
         </nav>
 
-        {/* Bottom Disclaimer */}
+        {/* Bottom Section */}
         <div className={styles.sidebarFooter}>
+          {isAuthenticated && (
+            <button
+              type="button"
+              className={styles.signOutBtn}
+              onClick={handleSignOut}
+              aria-label="Sign out"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+              <span>Sign out</span>
+            </button>
+          )}
           <p className={styles.footerNote}>
             Educational tool, not a medical diagnosis.
           </p>

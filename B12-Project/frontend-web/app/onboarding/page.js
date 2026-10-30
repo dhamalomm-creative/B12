@@ -1,16 +1,16 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp, setUser, setGuestName, completeOnboarding } from '@/context/AppContext';
 import styles from './page.module.css';
 
 const AGE_RANGES = [
-  { id: 'under18', label: 'Under 18' },
-  { id: '18-24', label: '18 to 24' },
-  { id: '25-40', label: '25 to 40' },
-  { id: '41-60', label: '41 to 60' },
-  { id: '60+', label: '60+' },
+  { id: 'under18', label: 'Under 18', numericAge: 16 },
+  { id: '18-24', label: '18 to 24', numericAge: 21 },
+  { id: '25-40', label: '25 to 40', numericAge: 30 },
+  { id: '41-60', label: '41 to 60', numericAge: 50 },
+  { id: '60+', label: '60+', numericAge: 65 },
 ];
 
 const GENDERS = [
@@ -32,14 +32,20 @@ export default function OnboardingPage() {
 
   const [name, setName]         = useState(state.user?.name || state.guestName || '');
   const [age, setAge]           = useState(state.user?.age || '18-24');
-  const [gender, setGender]     = useState(state.user?.gender || 'male');
+  const [gender, setGender]     = useState(state.user?.gender || 'female');
   const [dietType, setDietType] = useState(state.user?.dietType || 'vegetarian');
   const [saving, setSaving]     = useState(false);
 
   const handleContinue = async () => {
     setSaving(true);
-    const chosenName = name.trim() || 'Om';
-    dispatch(setUser({ name: chosenName, age, gender, dietType }));
+    const chosenName = name.trim() || 'Friend';
+    const ageObj = AGE_RANGES.find(a => a.id === age);
+    dispatch(setUser({
+      name: chosenName,
+      age: ageObj ? String(ageObj.numericAge) : '21',
+      gender,
+      dietType,
+    }));
     dispatch(setGuestName(chosenName));
     dispatch(completeOnboarding());
     setSaving(false);
@@ -55,7 +61,7 @@ export default function OnboardingPage() {
       <main className={styles.contentWrap}>
         {/* Step Indicator */}
         <div className={styles.stepHeader}>
-          <span className={styles.stepCount}>Step 6 of 7</span>
+          <span className={styles.stepCount}>Assessment setup</span>
           <div className={styles.segmentedBar}>
             {[1, 2, 3, 4, 5, 6, 7].map((s) => (
               <span
@@ -69,7 +75,7 @@ export default function OnboardingPage() {
         {/* Heading & Subtitle */}
         <h1 className={styles.mainTitle}>Tell us a little about you</h1>
         <p className={styles.subtitle}>
-          This tunes your questions and food ideas. You can change it later.
+          This tunes your questions and food ideas. You can change it anytime.
         </p>
 
         {/* Form Card */}
@@ -80,7 +86,7 @@ export default function OnboardingPage() {
             <input
               type="text"
               className={styles.nameInput}
-              placeholder="Om"
+              placeholder="Enter your name (e.g. Alex)"
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -153,7 +159,7 @@ export default function OnboardingPage() {
             onClick={handleContinue}
             disabled={saving}
           >
-            {saving ? 'Loading…' : 'Continue'}
+            {saving ? 'Loading…' : 'Start assessment'}
           </button>
         </div>
       </main>
