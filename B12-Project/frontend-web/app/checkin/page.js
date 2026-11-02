@@ -87,6 +87,15 @@ const tipFor = (a) => {
   return 'Nice work. Small daily logs add up — after a week you’ll start to see your own patterns on the Progress page.';
 };
 
+// API row (snake_case) → form answers (camelCase)
+const answersFromRow = (row) => ({
+  energyScore: row.energy_score,
+  fatigueScore: row.fatigue_score,
+  moodScore: row.mood_score,
+  sleepScore: row.sleep_score,
+  focusScore: row.focus_score,
+});
+
 export default function CheckInPage() {
   const { dispatch } = useApp();
   const router = useRouter();
@@ -94,24 +103,55 @@ export default function CheckInPage() {
   const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({});
   const [notes, setNotes] = useState('');
-  const [phase, setPhase] = useState('asking'); // asking | review | saving | done
+  // loading → asking → review → saving → done
+  // Once today's check-in exists the page is locked on the 'done' summary; the only
+  // way back into the questions is "Edit today's check-in" (mode 'edit' → PUT).
+  const [phase, setPhase] = useState('loading');
+  const [mode, setMode] = useState('new'); // new | edit
+  const [headline, setHeadline] = useState('');
   const [error, setError] = useState('');
-  const [alreadyToday, setAlreadyToday] = useState(false);
   const [streak, setStreakState] = useState(null);
+  const [saved, setSaved] = useState(null); // today's saved entry, restored on "Cancel"
   const startedAt = useRef(Date.now());
   const advanceTimer = useRef(null);
 
-  // Has the user already checked in today?
+  const lockOnEntry = (row, title) => {
+    const a = answersFromRow(row);
+    setAnswers(a);
+    setNotes(row.notes || '');
+    setSaved({ answers: a, notes: row.notes || '' });
+    setHeadline(title);
+    setMode('new');
+    setPhase('done');
+  };
+
+  // Has the user already checked in today? If so, lock the page on today's entry.
   useEffect(() => {
     checkinAPI.getHistory(2)
       .then((d) => {
-        const today = localISODate();
-        const todays = (d?.logs || []).find((l) => l.checkin_date === today);
-        if (todays) setAlreadyToday(true);
+        if (d?.streak) setStreakState(d.streak);
+        const todays = (d?.logs || []).find((l) => l.checkin_date === localISODate());
+        if (todays) lockOnEntry(todays, "You've checked in today");
+        else setPhase('asking');
       })
-      .catch(() => {});
+      // Can't tell — show the form; the server still refuses a second check-in.
+      .catch(() => setPhase('asking'));
     return () => clearTimeout(advanceTimer.current);
   }, []);
+
+  const startEdit = () => {
+    setError('');
+    setMode('edit');
+    setIdx(0);
+    setPhase('review'); // start on the review list so one answer can be changed quickly
+  };
+
+  const cancelEdit = () => {
+    if (saved) { setAnswers(saved.answers); setNotes(saved.notes); }
+    setMode('new');
+    setError('');
+    setPhase('done');
+  };
 
   const q = CHECKIN_QUESTIONS[idx];
   const total = CHECKIN_QUESTIONS.length;
@@ -121,7 +161,9 @@ export default function CheckInPage() {
     setAnswers((prev) => ({ ...prev, [q.id]: opt.value }));
     clearTimeout(advanceTimer.current);
     advanceTimer.current = setTimeout(() => {
-      if (idx < total - 1) setIdx((i) => i + 1);
+      // While editing, each changed answer goes straight back to the review list.
+      if (mode === 'edit') setPhase('review');
+      else if (idx < total - 1) setIdx((i) => i + 1);
       else setPhase('review');
     }, 260);
   };
@@ -135,23 +177,43 @@ export default function CheckInPage() {
   const save = async () => {
     setError('');
     setPhase('saving');
+    const payload = {
+      ...answers,
+      notes: notes.trim() || null,
+      durationSeconds: Math.min(3600, Math.round((Date.now() - startedAt.current) / 1000)),
+      localDate: localISODate(),
+    };
     try {
-      const data = await checkinAPI.submitDaily({
-        ...answers,
-        notes: notes.trim() || undefined,
-        durationSeconds: Math.min(3600, Math.round((Date.now() - startedAt.current) / 1000)),
-        localDate: localISODate(),
-      });
+      const data = mode === 'edit'
+        ? await checkinAPI.updateDaily(payload)
+        : await checkinAPI.submitDaily(payload);
       if (data?.streak) {
         setStreakState(data.streak);
         dispatch(setStreak(data.streak));
       }
-      setPhase('done');
+      lockOnEntry(data.checkin, mode === 'edit' ? 'Check-in updated' : 'Check-in saved');
     } catch (err) {
+      // Checked in from another tab/device meanwhile — show that entry instead.
+      if (err?.data?.code === 'ALREADY_CHECKED_IN' && err.data.checkin) {
+        lockOnEntry(err.data.checkin, "You've already checked in today");
+        return;
+      }
       setError(err.message || 'Could not save your check-in. Please try again.');
       setPhase('review');
     }
   };
+
+  if (phase === 'loading') {
+    return (
+      <AuthGuard>
+        <AppShell>
+          <div className={styles.checkinPage} aria-busy="true">
+            <p className={styles.subtitle}>Loading today&apos;s check-in…</p>
+          </div>
+        </AppShell>
+      </AuthGuard>
+    );
+  }
 
   if (phase === 'done') {
     const current = streak?.current_streak || 1;
@@ -161,7 +223,8 @@ export default function CheckInPage() {
           <div className={styles.checkinPage}>
             <div className={styles.completionCard}>
               <div className={styles.doneIcon} aria-hidden="true">✓</div>
-              <h1 className={styles.compTitle}>{alreadyToday ? 'Check-in updated' : 'Check-in saved'}</h1>
+              <h1 className={styles.compTitle}>{headline}</h1>
+              <p className={styles.lockedNote}>Your next check-in opens tomorrow.</p>
               <div className={styles.streakPill}>
                 <span aria-hidden="true">🔥</span>
                 <span>{current}-day streak</span>
@@ -177,8 +240,12 @@ export default function CheckInPage() {
                   );
                 })}
               </div>
+              {notes && <p className={styles.savedNotes}>📝 {notes}</p>}
               <p className={styles.tip}>{tipFor(answers)}</p>
               <div className={styles.compActions}>
+                <button type="button" className={styles.backDashBtn} onClick={startEdit}>
+                  ✏️ Edit today&apos;s check-in
+                </button>
                 <button type="button" className={styles.viewProgressBtn} onClick={() => router.push('/progress')}>
                   View my trends
                 </button>
@@ -200,15 +267,13 @@ export default function CheckInPage() {
       <AppShell>
         <div className={styles.checkinPage}>
           <header className={styles.header}>
-            <h1 className={styles.title}>Daily check-in</h1>
-            <p className={styles.subtitle}>Five taps, about 30 seconds. Answer for how you feel today.</p>
+            <h1 className={styles.title}>{mode === 'edit' ? "Edit today's check-in" : 'Daily check-in'}</h1>
+            <p className={styles.subtitle}>
+              {mode === 'edit'
+                ? 'Change any answer, then save. Your streak stays the same.'
+                : 'Five taps, about 30 seconds. Answer for how you feel today.'}
+            </p>
           </header>
-
-          {alreadyToday && (
-            <div className={styles.notice}>
-              You&apos;ve already checked in today — submitting again will update today&apos;s entry.
-            </div>
-          )}
 
           <div className={styles.progressWrap}>
             <p className={styles.counterText}>
@@ -256,7 +321,7 @@ export default function CheckInPage() {
             </div>
           ) : (
             <div className={styles.card}>
-              <h2 className={styles.questionText}>Anything else today?</h2>
+              <h2 className={styles.questionText}>{mode === 'edit' ? 'Tap an answer to change it' : 'Anything else today?'}</h2>
               <ul className={styles.reviewList}>
                 {CHECKIN_QUESTIONS.map((cq, i) => {
                   const opt = cq.options.find((o) => o.value === answers[cq.id]);
@@ -284,9 +349,11 @@ export default function CheckInPage() {
               />
               {error && <p className={styles.error} role="alert">{error}</p>}
               <div className={styles.cardFooter}>
-                <button type="button" className={styles.textBtn} onClick={back}>← Back</button>
+                {mode === 'edit'
+                  ? <button type="button" className={styles.textBtn} onClick={cancelEdit} disabled={phase === 'saving'}>Cancel</button>
+                  : <button type="button" className={styles.textBtn} onClick={back}>← Back</button>}
                 <button type="button" className={styles.viewProgressBtn} onClick={save} disabled={phase === 'saving'}>
-                  {phase === 'saving' ? 'Saving…' : 'Save check-in'}
+                  {phase === 'saving' ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Save check-in'}
                 </button>
               </div>
             </div>

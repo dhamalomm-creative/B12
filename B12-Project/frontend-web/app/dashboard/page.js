@@ -147,7 +147,7 @@ export default function DashboardPage() {
                   {checkedInToday ? 'Checked in today ✓' : "Today's check-in"}
                 </h2>
                 <p className={styles.checkinSub}>
-                  {checkedInToday ? 'Nice — you can update it any time today.' : 'Five quick taps, about 30 seconds.'}
+                  {checkedInToday ? 'Done for today — your next check-in opens tomorrow.' : 'Five quick taps, about 30 seconds.'}
                 </p>
               </div>
               <ol className={styles.week} aria-label="Check-ins over the last 7 days">
@@ -162,7 +162,7 @@ export default function DashboardPage() {
                 ))}
               </ol>
               <button type="button" className={styles.checkinBtn} onClick={() => router.push('/checkin')}>
-                {checkedInToday ? 'Update check-in' : 'Start check-in'}
+                {checkedInToday ? "View or edit today's" : 'Start check-in'}
               </button>
             </section>
           </div>

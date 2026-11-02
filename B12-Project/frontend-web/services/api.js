@@ -117,7 +117,10 @@ export const questionnaireExtAPI = questionnaireAPI;
 
 // ─── Daily Check-in ───────────────────────────────────────────────────────────
 export const checkinAPI = {
+  // One check-in per day: POST creates today's entry (409 ALREADY_CHECKED_IN if it exists),
+  // PUT edits today's existing entry.
   submitDaily: (scores) => request('/api/checkin/daily', { method: 'POST', body: scores }),
+  updateDaily: (scores) => request('/api/checkin/daily', { method: 'PUT', body: scores }),
   // Returns { logs, streak, days }
   getHistory: (days = 7) => request(`/api/checkin/history?days=${days}`),
 };

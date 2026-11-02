@@ -71,11 +71,7 @@ const updateStreak = async (userId, today) => {
   };
 };
 
-// ── POST /api/checkin/daily — Submit daily check-in ──
-// Score semantics (shared with the Android app and insights engine):
-//   energy / mood / sleep / focus : 0 = very poor … 4 = excellent
-//   fatigue                       : 0 = none      … 4 = severe
-router.post('/daily', [
+const scoreValidators = [
   body('energyScore').isInt({ min: 0, max: 4 }).toInt(),
   body('fatigueScore').isInt({ min: 0, max: 4 }).toInt(),
   body('moodScore').isInt({ min: 0, max: 4 }).toInt(),
@@ -84,53 +80,100 @@ router.post('/daily', [
   body('notes').optional({ nullable: true }).isString().isLength({ max: 500 }).withMessage('Notes must be 500 characters or fewer.'),
   body('durationSeconds').optional({ nullable: true }).isInt({ min: 0, max: 3600 }).toInt(),
   body('localDate').optional().isString(),
-], async (req, res, next) => {
+];
+
+const scoreFields = ({ energyScore, fatigueScore, moodScore, sleepScore, focusScore, notes }) => ({
+  energy_score: energyScore,
+  fatigue_score: fatigueScore,
+  mood_score: moodScore,
+  sleep_score: sleepScore,
+  focus_score: focusScore,
+  notes: notes ? String(notes).trim() : null,
+});
+
+// Mirror the latest daily scores into user_health_state (ML / insights snapshot).
+const syncHealthState = async (userId, today, b, { countAsNew }) => {
+  const healthState = await UserHealthState.findOne({ where: { user_id: userId } });
+  if (!healthState) return;
+  await healthState.update({
+    current_energy_score:  b.energyScore,
+    current_fatigue_score: b.fatigueScore,
+    current_mood_score:    b.moodScore,
+    current_sleep_score:   b.sleepScore,
+    current_focus_score:   b.focusScore,
+    current_daily_total:   b.energyScore + b.fatigueScore + b.moodScore + b.sleepScore + b.focusScore,
+    last_checkin_date:     today,
+    total_checkins:        (healthState.total_checkins || 0) + (countAsNew ? 1 : 0),
+  });
+};
+
+const alreadyCheckedIn = (res, checkin, today) => res.status(409).json({
+  success: false,
+  code: 'ALREADY_CHECKED_IN',
+  error: "You've already checked in today. You can edit today's check-in instead.",
+  checkin,
+  checkinDate: today,
+});
+
+// ── POST /api/checkin/daily — Submit today's check-in (once per day) ──
+// Score semantics (shared with the Android app and insights engine):
+//   energy / mood / sleep / focus : 0 = very poor … 4 = excellent
+//   fatigue                       : 0 = none      … 4 = severe
+// A second submission for the same day is rejected with 409 ALREADY_CHECKED_IN;
+// changes to today's entry go through PUT /api/checkin/daily instead.
+router.post('/daily', scoreValidators, async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) return sendError(res, errors.array()[0].msg);
 
-    const { energyScore, fatigueScore, moodScore, sleepScore, focusScore, notes, durationSeconds, localDate } = req.body;
-    const today = resolveCheckinDate(localDate);
+    const today = resolveCheckinDate(req.body.localDate);
 
-    // Sequelize's Postgres upsert doesn't report whether a row was created,
-    // so check explicitly (needed for accurate totals).
-    const existing = await DailyCheckin.findOne({
-      where: { user_id: req.user.id, checkin_date: today },
-      attributes: ['id'],
-    });
-    const created = !existing;
+    const existing = await DailyCheckin.findOne({ where: { user_id: req.user.id, checkin_date: today } });
+    if (existing) return alreadyCheckedIn(res, existing, today);
 
-    // Upsert — one check-in per day (compound unique key user_id + checkin_date)
-    const [checkin] = await DailyCheckin.upsert({
-      user_id: req.user.id,
-      checkin_date: today,
-      energy_score: energyScore,
-      fatigue_score: fatigueScore,
-      mood_score: moodScore,
-      sleep_score: sleepScore,
-      focus_score: focusScore,
-      notes: notes ? String(notes).trim() : null,
-      duration_seconds: durationSeconds || null,
-    }, { conflictFields: ['user_id', 'checkin_date'], returning: true });
-
-    const streak = await updateStreak(req.user.id, today);
-
-    // ── Update user_health_state with today's daily scores ──────────────────
-    const healthState = await UserHealthState.findOne({ where: { user_id: req.user.id } });
-    if (healthState) {
-      await healthState.update({
-        current_energy_score:  energyScore,
-        current_fatigue_score: fatigueScore,
-        current_mood_score:    moodScore,
-        current_sleep_score:   sleepScore,
-        current_focus_score:   focusScore,
-        current_daily_total:   energyScore + fatigueScore + moodScore + sleepScore + focusScore,
-        last_checkin_date:     today,
-        total_checkins:        (healthState.total_checkins || 0) + (created ? 1 : 0),
+    let checkin;
+    try {
+      checkin = await DailyCheckin.create({
+        user_id: req.user.id,
+        checkin_date: today,
+        ...scoreFields(req.body),
+        duration_seconds: req.body.durationSeconds || null,
       });
+    } catch (err) {
+      // Two submissions racing (double tap, two tabs) — the UNIQUE(user_id, checkin_date)
+      // constraint lets only one through; the loser gets the same 409 as above.
+      if (err.name === 'SequelizeUniqueConstraintError') {
+        const winner = await DailyCheckin.findOne({ where: { user_id: req.user.id, checkin_date: today } });
+        return alreadyCheckedIn(res, winner, today);
+      }
+      throw err;
     }
 
-    return sendSuccess(res, { checkin, streak, isNew: created, checkinDate: today }, created ? 201 : 200);
+    const streak = await updateStreak(req.user.id, today);
+    await syncHealthState(req.user.id, today, req.body, { countAsNew: true });
+
+    return sendSuccess(res, { checkin, streak, isNew: true, checkinDate: today }, 201);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── PUT /api/checkin/daily — Edit today's existing check-in ──
+// Only today's entry can be edited; streak and totals are not touched.
+router.put('/daily', scoreValidators, async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return sendError(res, errors.array()[0].msg);
+
+    const today = resolveCheckinDate(req.body.localDate);
+    const checkin = await DailyCheckin.findOne({ where: { user_id: req.user.id, checkin_date: today } });
+    if (!checkin) return sendError(res, "You haven't checked in today yet.", 404);
+
+    await checkin.update(scoreFields(req.body));
+    await syncHealthState(req.user.id, today, req.body, { countAsNew: false });
+
+    const streakRow = await UserStreak.findOne({ where: { user_id: req.user.id } });
+    return sendSuccess(res, { checkin, streak: streakRow, isNew: false, checkinDate: today });
   } catch (err) {
     next(err);
   }

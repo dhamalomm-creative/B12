@@ -13,7 +13,8 @@ const validateEnv = () => {
   // Trim accidental leading/trailing whitespace & tabs from copy-pasting
   ['NODE_ENV', 'JWT_SECRET', 'DATABASE_URL', 'ALLOWED_ORIGINS', 'JWT_EXPIRES_IN'].forEach((key) => {
     if (process.env[key]) {
-      process.env[key] = process.env[key].trim();
+      // Also drop surrounding quotes pasted into a hosting dashboard ("abc" → abc)
+      process.env[key] = process.env[key].trim().replace(/^(["'])(.*)\1$/, '$2');
     }
   });
 
@@ -40,12 +41,15 @@ const validateEnv = () => {
       '5f7a0fd5ccc99d4cd7e14a0e235ebc646ec23eaf71a97c13a95062fbcaeb4907',
       'B12HealthSecretKey2026ChangeMeInProduction',
     ];
-    const isWeak = weakPatterns.some((p) => jwtSecret.toLowerCase().includes(p))
-      || /^REPLACE[-_]/i.test(jwtSecret)
-      || publishedSecrets.includes(jwtSecret);
-    if (isWeak) {
+    // Report which rule matched (never the secret itself) so a failed deploy is easy to diagnose.
+    const weakWord = weakPatterns.find((p) => jwtSecret.toLowerCase().includes(p));
+    let reason = null;
+    if (publishedSecrets.includes(jwtSecret)) reason = 'it is the old value that was published in this repo';
+    else if (/^REPLACE[-_]/i.test(jwtSecret)) reason = 'it is still the REPLACE_WITH… placeholder';
+    else if (weakWord) reason = `it contains the word "${weakWord}"`;
+    if (reason) {
       errors.push(
-        'JWT_SECRET appears to be a default/placeholder value (or one published in this repo).\n' +
+        `JWT_SECRET appears to be a default/placeholder value — ${reason} (length ${jwtSecret.length}).\n` +
         '   Generate a new one: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"\n' +
         '   Then set it in your host\'s environment variables (Vercel: Project → Settings →\n' +
         '   Environment Variables → Production; Railway: Service → Variables) and REDEPLOY.',

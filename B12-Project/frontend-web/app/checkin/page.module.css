@@ -161,8 +161,10 @@
 
 .compActions {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
-  gap: 16px;
+  gap: 12px 16px;
   margin-top: 12px;
 }
 
@@ -340,4 +342,19 @@
   .compActions { flex-direction: column; width: 100%; }
   .compActions button { width: 100%; }
   .reviewList li { flex-direction: column; align-items: flex-start; }
+}
+
+/* Locked "done for today" summary */
+.lockedNote {
+  margin: -4px 0 0;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.savedNotes {
+  max-width: 520px;
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-primary);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

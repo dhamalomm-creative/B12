@@ -96,7 +96,7 @@ describe('questionnaire', () => {
 });
 
 describe('daily check-in', () => {
-  it('creates then updates today without double counting', async () => {
+  it('allows one check-in per day, then only edits', async () => {
     const body = { energyScore: 3, fatigueScore: 1, moodScore: 3, sleepScore: 2, focusScore: 3 };
     const first = await request(app).post('/api/checkin/daily').set(auth()).send(body);
     expect(first.status).toBe(201);
@@ -104,9 +104,15 @@ describe('daily check-in', () => {
     expect(first.body.streak.current_streak).toBe(1);
 
     const second = await request(app).post('/api/checkin/daily').set(auth()).send({ ...body, energyScore: 4 });
-    expect(second.status).toBe(200);
-    expect(second.body.isNew).toBe(false);
-    expect(second.body.streak.total_checkins).toBe(1);
+    expect(second.status).toBe(409);
+    expect(second.body.code).toBe('ALREADY_CHECKED_IN');
+    expect(second.body.checkin.energy_score).toBe(3);
+
+    const edit = await request(app).put('/api/checkin/daily').set(auth()).send({ ...body, energyScore: 4 });
+    expect(edit.status).toBe(200);
+    expect(edit.body.checkin.energy_score).toBe(4);
+    expect(edit.body.streak.total_checkins).toBe(1);
+    expect(edit.body.streak.current_streak).toBe(1);
   });
 
   it('rejects out-of-range scores', async () => {
