@@ -2,7 +2,7 @@
 
 A full-stack web app that estimates a person's risk of **vitamin B12 deficiency** from a short adaptive questionnaire, then helps them track symptoms over time with daily check-ins, trend charts, BMI logs and a B12 food guide.
 
-The REST API is shared with the B12 Health Android app ([prasadsatpute07/B12-health-app](https://github.com/prasadsatpute07/B12-health-app)), so both clients read and write the same accounts and data.
+
 
 > **Medical disclaimer:** B12 Health Tracker is for education and wellness tracking only. It does not diagnose any condition and is not a substitute for a doctor or a blood test.
 
