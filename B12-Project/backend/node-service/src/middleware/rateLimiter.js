@@ -60,6 +60,7 @@ const authSlowDown = slowDown({
   delayAfter: 3,             // Start adding delay after 3 requests
   delayMs: (hits) => (hits - 3) * 500, // +500ms per request after the 3rd
   maxDelayMs: 10000,         // Cap at 10 seconds
+  skipSuccessfulRequests: true, // Don't slow down people who simply log in a few times a day
   validate: false,
   keyGenerator: (req) => {
     const email = (req.body?.email || '').toLowerCase().substring(0, 100);

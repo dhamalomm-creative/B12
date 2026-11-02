@@ -14,16 +14,22 @@ try {
     dialect: 'postgres',
     dialectModule: pg, // Explicitly provide pg module for serverless bundlers (Vercel)
     logging: process.env.NODE_ENV === 'development' ? console.log : false,
+    // Serverless (Vercel) runs many short-lived instances, each with its own pool —
+    // a large per-instance pool quickly exhausts Supabase's connection limit and makes
+    // requests queue. Keep it tiny there; a long-running server can use more.
     pool: {
-      max: 10,
+      max: process.env.VERCEL ? 2 : parseInt(process.env.DB_POOL_MAX || '10', 10),
       min: 0,
-      acquire: 30000,
-      idle: 10000,
+      acquire: 10000,
+      idle: process.env.VERCEL ? 5000 : 10000,
     },
     dialectOptions: {
       ssl: requiresSSL
         ? { require: true, rejectUnauthorized: false }
         : false,
+      // Fail fast instead of hanging a request when a query runs away.
+      statement_timeout: 10000,
+      idle_in_transaction_session_timeout: 10000,
     },
   });
 } catch (err) {

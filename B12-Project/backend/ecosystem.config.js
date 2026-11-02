@@ -26,7 +26,7 @@ module.exports = {
       error_file: 'D:\\B12\\backend-v2\\logs\\python-api-error.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss',
       env: {
-        DATABASE_URL: 'postgresql://b12user:B12Health@localhost:5432/b12db',
+        DATABASE_URL: process.env.DATABASE_URL,
         FASTAPI_PORT: '8000',
       },
     },
@@ -46,8 +46,8 @@ module.exports = {
       env: {
         NODE_ENV: 'production',
         NODE_PORT: '3000',
-        DATABASE_URL: 'postgresql://b12user:B12Health@localhost:5432/b12db',
-        JWT_SECRET: 'B12HealthSecretKey2026ChangeMeInProduction',
+        DATABASE_URL: process.env.DATABASE_URL,
+        JWT_SECRET: process.env.JWT_SECRET, // never hard-code secrets here
         JWT_EXPIRES_IN: '7d',
         FASTAPI_URL: 'http://localhost:8000',
         ENABLE_MONGODB: 'false',

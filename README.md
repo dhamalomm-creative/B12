@@ -1,221 +1,134 @@
-# 🩺 B12 Health Tracker
+# B12 Health Tracker
 
-> **A full-stack, clinical-grade Vitamin B12 deficiency risk-assessment and symptom-tracking platform.**  
-> Built with Next.js 16, Node.js Express, Supabase (PostgreSQL), and Docker.
+A full-stack web app that estimates a person's risk of **vitamin B12 deficiency** from a short adaptive questionnaire, then helps them track symptoms over time with daily check-ins, trend charts, BMI logs and a B12 food guide.
 
----
+The REST API is shared with the B12 Health Android app ([prasadsatpute07/B12-health-app](https://github.com/prasadsatpute07/B12-health-app)), so both clients read and write the same accounts and data.
 
-## 🌟 Highlights
-
-- **Adaptive Clinical Questionnaire**: 25 weighted questions analyzing diet, neurological markers, energy levels, digestive symptoms, and lifestyle indicators.
-- **Embedded Clinical Risk Engine**: High-precision risk scoring (Low, Medium, High) with category-level breakdowns and personalized clinical suggestions.
-- **Daily Symptom Protocol**: Track 5 core health dimensions daily (Energy, Fatigue, Mood, Sleep, Focus) with automatic streak tracking.
-- **Progress & Trend Analytics**: Interactive trend graphs (Recharts) with pattern alerts (e.g. chronic fatigue or sleep disruption warnings).
-- **Nutrient & Food Database**: Searchable library of 100+ B12-rich foods with category filters, microgram content, and % daily values.
-- **BMI & Metabolic Health**: Built-in BMI calculator with historic tracking and personalized dietary guidance.
-- **15-Layer Security Hardening**: Strict JWT authentication with token revocation/blacklisting, bcrypt password hashing, brute-force rate limiting, audit logging, Helmet headers, XSS cleaning, and parameter pollution protection.
+> **Medical disclaimer:** B12 Health Tracker is for education and wellness tracking only. It does not diagnose any condition and is not a substitute for a doctor or a blood test.
 
 ---
 
-## 🏗️ Architecture
+## Features
+
+| Area | What it does |
+|---|---|
+| **Risk assessment** | Adaptive questionnaire (common, clinical, age-specific and gender-specific questions) with a weighted scoring engine that returns a Low / Medium / High risk level, a per-category breakdown and personalised next steps. |
+| **Guest mode** | Anyone can take the assessment without an account. The answers are kept on the device and submitted automatically after sign-up. |
+| **Daily check-in** | A 30-second log of energy, fatigue, mood, sleep and focus (0–4 each), with streaks and optional notes. |
+| **Progress** | 7 / 14 / 30-day charts for all five metrics, trend labels, pattern alerts and assessment history. |
+| **Insights** | Server-generated insights from the latest assessment and the last 7 days of check-ins. |
+| **Food guide** | Searchable list of B12-rich foods with per-serving micrograms and % of daily need. |
+| **BMI** | BMI calculator with saved history. |
+| **Account** | Profile editing, password change, logout with token revocation and permanent account deletion. |
+| **Security** | JWT (HS256) with revocation, bcrypt, brute-force lockout, rate limiting, input sanitisation, audit log, Helmet/CSP and Row Level Security in Supabase. |
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Web app | Next.js 16 (App Router), React 19, CSS Modules, Recharts, Framer Motion |
+| API | Node.js 20, Express 4, Sequelize 6, express-validator, Winston |
+| Database | PostgreSQL 16 (hosted on Supabase) |
+| Auth | JSON Web Tokens + bcrypt |
+| Tests | Jest + Supertest, scoring parity script |
+| Hosting | Vercel (web, and optionally the API), Railway or Docker (API), Supabase (DB) |
+
+## Architecture at a glance
 
 ```mermaid
-graph TB
-  subgraph "Client Layer"
-    WEB["🌐 Next.js 16 Web App<br/>(React 19 + CSS Modules + Recharts)<br/>Port: 3001 | Deployed on Vercel"]
-  end
-
-  subgraph "API & Logic Layer"
-    API["⚙️ Node.js Express API Gateway<br/>(15-Layer Security + Native Scoring Engine)<br/>Port: 3000 | Deployed on Railway / Docker"]
-  end
-
-  subgraph "Data & Cloud Layer"
-    DB[("⚡ Supabase / PostgreSQL 16<br/>(13 Relational Tables + Audit Trail)<br/>SSL Pooler Port: 6543")]
-  end
-
-  WEB -->|"REST API (Bearer JWT)"| API
-  API -->|"Sequelize ORM (SSL)"| DB
+graph LR
+  WEB["Next.js web app<br/>:3001"] -->|"REST + Bearer JWT"| API["Express API<br/>:3000"]
+  APP["Android app"] -->|"REST + Bearer JWT"| API
+  API -->|"Sequelize over SSL"| DB[("PostgreSQL / Supabase")]
 ```
 
-### Technology Stack
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the full picture.
 
-| Layer | Technology | Description |
-|---|---|---|
-| **Frontend** | **Next.js 16 (App Router)** | React 19, Turbopack, CSS Modules, CSS custom tokens |
-| **Data Viz** | **Recharts** | Interactive symptom tracking and progress charts |
-| **Backend** | **Node.js + Express** | RESTful API, validation, audit logs, native scoring engine |
-| **ORM** | **Sequelize** | Object-Relational Mapping for PostgreSQL |
-| **Database** | **Supabase (PostgreSQL 16)** | Cloud managed database with 13 tables & ML-ready schema |
-| **Security** | **JWT + Bcrypt + Helmet** | 15 security middlewares, brute-force protection, audit logs |
-| **DevOps** | **Docker & Docker Compose** | Multi-stage production containerization |
+## Quick start
 
----
+**Prerequisites:** Node.js 20+, npm, and a PostgreSQL database (a free [Supabase](https://supabase.com) project works).
 
-## 📁 Project Structure
+1. **Create the database.** In the Supabase SQL editor, run [`B12-Project/backend/database/supabase_setup.sql`](B12-Project/backend/database/supabase_setup.sql). It creates every table, index and the question seed in one go.
+
+2. **Configure and start the API.**
+
+   ```bash
+   cd B12-Project/backend/node-service
+   cp .env.example .env    # then set DATABASE_URL and JWT_SECRET
+   npm install
+   npm run dev
+   ```
+
+   Generate a `JWT_SECRET` with:
+
+   ```bash
+   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+   ```
+
+   Check it is up: <http://localhost:3000/health>
+
+3. **Configure and start the web app** (in a second terminal).
+
+   ```bash
+   cd B12-Project/frontend-web
+   cp .env.example .env.local
+   npm install
+   npm run dev
+   ```
+
+   Open <http://localhost:3001>.
+
+Full instructions, including Docker and a local Postgres, are in [docs/SETUP.md](docs/SETUP.md).
+
+## Documentation
+
+| Document | Contents |
+|---|---|
+| [docs/SETUP.md](docs/SETUP.md) | Local development, step by step |
+| [docs/CONFIGURATION.md](docs/CONFIGURATION.md) | Every environment variable for the API and web app |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, request lifecycle, data flow, design decisions |
+| [docs/API.md](docs/API.md) | REST API reference with request and response examples |
+| [docs/openapi.yaml](docs/openapi.yaml) | OpenAPI 3.0 spec (import into Swagger UI, Postman or Insomnia) |
+| [docs/DATABASE.md](docs/DATABASE.md) | Schema, tables, relationships, migrations, maintenance |
+| [docs/SCORING.md](docs/SCORING.md) | How the B12 risk score is calculated (v1 and v2) |
+| [docs/FRONTEND.md](docs/FRONTEND.md) | Web app pages, user flow, state and local storage |
+| [docs/SECURITY.md](docs/SECURITY.md) | Security controls in the API, web app and database |
+| [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) | Deploying to Supabase, Railway, Vercel or Docker |
+| [docs/TESTING.md](docs/TESTING.md) | Running the test suites and the scoring parity check |
+| [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Common problems and fixes |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Branching, code style, commit and PR guidelines |
+| [SECURITY.md](SECURITY.md) | How to report a vulnerability |
+| [CHANGELOG.md](CHANGELOG.md) | Release history |
+
+## Repository layout
 
 ```text
 B12/
-├── B12-Project/
-│   ├── frontend-web/              # Next.js 16 Frontend Web Application
-│   │   ├── app/                   # App Router routes (11 full pages)
-│   │   │   ├── auth/              # Login & Registration
-│   │   │   ├── bmi/               # BMI Calculator & History
-│   │   │   ├── checkin/           # Daily 5-metric symptom log
-│   │   │   ├── dashboard/         # User hub, metrics & activity feed
-│   │   │   ├── foods/             # B12 Nutrient food directory
-│   │   │   ├── onboarding/        # 7-slide educational walkthrough
-│   │   │   ├── profile/           # User profile & account management
-│   │   │   ├── progress/          # Longitudinal trend analytics
-│   │   │   ├── questionnaire/     # 25-step adaptive B12 risk test
-│   │   │   ├── results/           # Complete clinical assessment breakdown
-│   │   │   ├── score-preview/     # Guest result view & conversion funnel
-│   │   │   ├── layout.js          # Root layout with typography & providers
-│   │   │   └── page.js            # Smart router based on auth & completion state
-│   │   ├── components/            # Reusable UI components & layouts
-│   │   │   ├── layout/            # AppShell, Sidebar, TabBar (responsive)
-│   │   │   └── UI/                # Skeleton, EmptyState, ErrorState, ThemeToggle, etc.
-│   │   ├── context/               # React Context (AuthContext, AppContext)
-│   │   ├── data/                  # Static question banks & B12 food sources
-│   │   ├── services/              # API Client (authAPI, checkinAPI, usersAPI, etc.)
-│   │   ├── Dockerfile             # Multi-stage production Docker container
-│   │   └── package.json
-│   │
-│   ├── backend/
-│   │   ├── node-service/          # Express API Gateway & Scoring Engine
-│   │   │   ├── src/
-│   │   │   │   ├── config/        # Database (db.js with Supabase SSL) & validateEnv.js
-│   │   │   │   ├── middleware/    # Auth, security, rate-limiting, audit logging
-│   │   │   │   ├── models/        # Sequelize models (User, Profile, Assessment, etc.)
-│   │   │   │   ├── routes/        # Auth, Questionnaire, Checkin, Users, Insights
-│   │   │   │   └── services/      # scoringEngine.js (Native JS clinical scoring)
-│   │   │   ├── Dockerfile         # Node.js production Docker container
-│   │   │   ├── railway.json       # Railway deployment configuration
-│   │   │   └── server.js          # Main HTTP server entrypoint
-│   │   │
-│   │   └── database/              # PostgreSQL Schemas & Migrations
-│   │       ├── migrations/        # 6 incremental SQL migration files
-│   │       ├── seeds/             # Master 25-question bank seed file
-│   │       └── supabase_setup.sql # 1-Click All-in-One Supabase Initialization Script
-│   │
-│   ├── docker-compose.yml         # Unified Docker Compose (Web + API + Supabase)
-│   ├── DEPLOYMENT_GUIDE.md        # Comprehensive production deployment walkthrough
-│   └── .env.docker.example        # Environment variable template
-│
-└── README.md                      # This documentation file
+├── README.md                 ← you are here
+├── CHANGELOG.md · CONTRIBUTING.md · SECURITY.md · LICENSE
+├── docs/                     ← project documentation
+└── B12-Project/
+    ├── frontend-web/         ← Next.js web app
+    ├── backend/
+    │   ├── node-service/     ← Express API
+    │   └── database/         ← SQL migrations, seeds, supabase_setup.sql
+    ├── scripts/              ← check-scoring-parity.mjs
+    ├── docker-compose.yml    ← API + web containers (uses an external DB)
+    └── .env.docker.example
 ```
 
----
+## Scripts
 
-## 🚀 Quickstart (Local Development)
-
-### Prerequisites
-
-- **Node.js** (v18 or v20+)
-- **Git**
-- A **PostgreSQL** database or free **Supabase** account
-
----
-
-### 1. Database Setup (Supabase)
-
-1. Create a free project on [Supabase](https://supabase.com).
-2. Open the **SQL Editor** in Supabase dashboard.
-3. Open [`B12-Project/backend/database/supabase_setup.sql`](./B12-Project/backend/database/supabase_setup.sql), copy its contents, paste into the SQL editor, and click **Run**.
-4. Copy your database connection string from **Project Settings ➔ Database ➔ URI**.
-
----
-
-### 2. Configure Environment Variables
-
-#### Backend (`B12-Project/backend/node-service/.env`):
-```env
-PORT=3000
-NODE_ENV=development
-DATABASE_URL=postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
-DATABASE_SSL=true
-JWT_SECRET=REPLACE_WITH_64_CHAR_RANDOM_HEX
-JWT_EXPIRES_IN=7d
-ALLOWED_ORIGINS=http://localhost:3001
-```
-
-#### Frontend (`B12-Project/frontend-web/.env.local`):
-```env
-NEXT_PUBLIC_API_URL=http://localhost:3000
-```
-
----
-
-### 3. Run Locally
-
-Open two terminal windows:
-
-#### Terminal 1 — Backend:
-```bash
-cd B12-Project/backend/node-service
-npm install
-npm run dev
-```
-*Health check:* `http://localhost:3000/health`
-
-#### Terminal 2 — Frontend:
-```bash
-cd B12-Project/frontend-web
-npm install
-npm run dev -- -p 3001
-```
-*Open application in browser:* **`http://localhost:3001`**
-
----
-
-## 🐳 Docker Deployment
-
-To run both frontend and backend in isolated production containers:
-
-1. Copy `.env.docker.example` to `.env` at root:
-   ```bash
-   cp B12-Project/.env.docker.example .env
-   ```
-2. Fill in your `DATABASE_URL` and `JWT_SECRET`.
-3. Launch with Docker Compose:
-   ```bash
-   docker compose up --build -d
-   ```
-4. Access:
-   - Web App: `http://localhost:3001`
-   - API: `http://localhost:3000`
-
----
-
-## ☁️ Cloud Production Deployment
-
-Follow our detailed [**Deployment Guide**](./B12-Project/DEPLOYMENT_GUIDE.md) for step-by-step instructions:
-
-| Component | Platform | Configuration |
+| Location | Command | Purpose |
 |---|---|---|
-| **Database** | **Supabase** | Run `supabase_setup.sql` in SQL Editor |
-| **API Gateway** | **Railway / Render** | Root directory: `backend/node-service` |
-| **Web Frontend** | **Vercel** | Root directory: `frontend-web` |
+| `backend/node-service` | `npm run dev` | API with auto-reload (nodemon) |
+| `backend/node-service` | `npm start` | API in production mode |
+| `backend/node-service` | `npm test` | Jest + Supertest tests (needs a database) |
+| `frontend-web` | `npm run dev` | Web app on port 3001 |
+| `frontend-web` | `npm run build` / `npm start` | Production build and serve |
+| `frontend-web` | `npm run lint` | ESLint |
+| `B12-Project` | `node scripts/check-scoring-parity.mjs` | Verify web and server scoring agree |
 
----
+## License
 
-## 🔒 Security Architecture
-
-The backend includes a **15-layer security stack**:
-
-1. **Helmet**: Automated security HTTP headers (CSP, HSTS, X-Frame-Options).
-2. **CORS Whitelisting**: Strict origin verification (`ALLOWED_ORIGINS`).
-3. **JWT Blacklisting**: Revoked tokens are tracked in `token_blacklist` upon logout.
-4. **Brute-Force Guard**: IP and account lockouts after 5 failed login attempts.
-5. **Audit Logging**: Comprehensive security event recording in `audit_logs`.
-6. **XSS Sanitization**: Strip dangerous HTML payloads from inputs.
-7. **HPP Guard**: HTTP Parameter Pollution protection.
-8. **Rate Limiting**: 100 requests per 15-minute sliding window.
-
----
-
-## 📄 License & Medical Disclaimer
-
-This project is licensed under the **MIT License**.
-
-> ⚕️ **Medical Disclaimer**:  
-> *The B12 Health Tracker is designed for educational awareness, wellness tracking, and research purposes only. It does not provide medical diagnoses or replace consultations with licensed healthcare professionals. Always consult a qualified physician for clinical evaluations and blood tests.*
+Released under the [MIT License](LICENSE).

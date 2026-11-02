@@ -93,8 +93,10 @@ app.use(helmet({
 //  - localhost is only auto-allowed outside production
 const rawOrigins = process.env.ALLOWED_ORIGINS || '*';
 const allowedOrigins = rawOrigins.split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean);
-const allowVercelPreviews = (process.env.ALLOW_VERCEL_PREVIEWS || 'true') !== 'false';
 const isProduction = process.env.NODE_ENV === 'production';
+// Any *.vercel.app site (including ones other people deploy) matches this, so it is
+// off by default in production — opt in with ALLOW_VERCEL_PREVIEWS=true if you need it.
+const allowVercelPreviews = (process.env.ALLOW_VERCEL_PREVIEWS || (isProduction ? 'false' : 'true')) === 'true';
 
 const isOriginAllowed = (origin) => {
   if (allowedOrigins.length === 0 || allowedOrigins.includes('*')) return true;

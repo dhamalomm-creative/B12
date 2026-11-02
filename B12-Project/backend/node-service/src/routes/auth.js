@@ -33,6 +33,7 @@ const { logSecurityEvent, EVENTS } = require('../middleware/auditLogger');
 const { sendSuccess, sendError, getAgeGroup, getDietPenalty } = require('../utils/response');
 
 const { UserStreak } = require('../models/DailyCheckin');
+const { sequelize } = require('../config/db');
 
 const router = express.Router();
 
@@ -65,21 +66,20 @@ const generateToken = (user) => {
   return { token, jti };
 };
 
-// ── Helper: Check if email is currently brute-force rate-limited ──
-const isEmailBruteForced = async (email) => {
-  const windowMs  = parseInt(process.env.ACCOUNT_LOCKOUT_MINUTES || '15') * 60 * 1000;
-  const maxAttempts = parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5');
-  const since     = new Date(Date.now() - windowMs);
+// ── Helper: Count recent failed logins for an email (brute-force window) ──
+const MAX_LOGIN_ATTEMPTS = () => parseInt(process.env.MAX_LOGIN_ATTEMPTS || '5', 10);
 
-  const failCount = await LoginAttempt.count({
+const countRecentFailures = async (email) => {
+  const windowMs = parseInt(process.env.ACCOUNT_LOCKOUT_MINUTES || '15', 10) * 60 * 1000;
+  const since    = new Date(Date.now() - windowMs);
+
+  return LoginAttempt.count({
     where: {
       email:        email.toLowerCase(),
       success:      false,
       attempted_at: { [Op.gte]: since },
     },
   });
-
-  return failCount >= maxAttempts;
 };
 
 // ── Helper: Record a login attempt ──
@@ -128,23 +128,29 @@ router.post('/register', [
     }
 
     const password_hash = await bcrypt.hash(password, 12);
-    const user = await User.create({ email, password_hash });
 
-    if (cleanName || age || cleanGender || cleanDiet) {
-      const ageNum = parseInt(age, 10);
-      const validAge = !isNaN(ageNum) && ageNum > 0 && ageNum <= 120;
-      await UserProfile.create({
-        user_id:            user.id,
-        name:               cleanName || null,
-        age:                validAge ? ageNum : null,
-        age_group:          validAge ? getAgeGroup(ageNum) : null,
-        gender:             cleanGender,
-        diet_type:          cleanDiet,
-        diet_penalty_score: getDietPenalty(cleanDiet),
-      });
-    }
+    // User + profile + streak are created atomically — a failure part-way must not
+    // leave a half-created account that can log in but has no streak row.
+    const user = await sequelize.transaction(async (transaction) => {
+      const created = await User.create({ email, password_hash }, { transaction });
+      const rows = [UserStreak.create({ user_id: created.id }, { transaction })];
 
-    await UserStreak.create({ user_id: user.id });
+      if (cleanName || age || cleanGender || cleanDiet) {
+        const ageNum = parseInt(age, 10);
+        const validAge = !isNaN(ageNum) && ageNum > 0 && ageNum <= 120;
+        rows.push(UserProfile.create({
+          user_id:            created.id,
+          name:               cleanName || null,
+          age:                validAge ? ageNum : null,
+          age_group:          validAge ? getAgeGroup(ageNum) : null,
+          gender:             cleanGender,
+          diet_type:          cleanDiet,
+          diet_penalty_score: getDietPenalty(cleanDiet),
+        }, { transaction }));
+      }
+      await Promise.all(rows);
+      return created;
+    });
 
     const { token } = generateToken(user);
 
@@ -177,9 +183,12 @@ router.post('/login', [
     const { email, password } = req.body;
     const ip = getClientIp(req);
 
-    // [3] Brute-force gate: too many recent failures for this email?
-    const bruteForced = await isEmailBruteForced(email);
-    if (bruteForced) {
+    // [3] Brute-force gate + user lookup run in parallel (independent queries).
+    const [failCount, user] = await Promise.all([
+      countRecentFailures(email),
+      User.findOne({ where: { email } }),
+    ]);
+    if (failCount >= MAX_LOGIN_ATTEMPTS()) {
       await logSecurityEvent(req, EVENTS.ACCOUNT_LOCKED, {
         metadata: { email, reason: 'brute_force_threshold_on_login' },
       });
@@ -189,9 +198,6 @@ router.post('/login', [
         429,
       );
     }
-
-    // Look up user by email
-    const user = await User.findOne({ where: { email } });
 
     // [2] TIMING ATTACK PREVENTION
     // ALWAYS run bcrypt.compare — even if user doesn't exist.
@@ -205,26 +211,26 @@ router.post('/login', [
     const authFailed = !user || !passwordValid || !user.is_active;
 
     if (authFailed) {
-      // Record the failure
-      await recordAttempt(email, ip, false);
-
       // [4] Temporary lockout: once the failure threshold is reached, further attempts
       // are rejected by the brute-force gate above until the window expires.
       // We deliberately do NOT set is_active=false here — doing so would let anyone
       // permanently lock a victim's account just by typing their email 5 times.
-      const nowBruteForced = await isEmailBruteForced(email);
-      if (nowBruteForced && user) {
-        await logSecurityEvent(req, EVENTS.ACCOUNT_LOCKED, {
-          userId:   user.id,
-          metadata: { email, reason: 'temporary_lockout_threshold_reached' },
-        });
-      }
+      const nowBruteForced = failCount + 1 >= MAX_LOGIN_ATTEMPTS();
 
-      // [10] Log the failure
-      await logSecurityEvent(req, EVENTS.FAILED_LOGIN, {
-        userId:   user?.id || null,
-        metadata: { email },
-      });
+      // Record the failure + [10] audit logs, written in parallel
+      await Promise.all([
+        recordAttempt(email, ip, false),
+        nowBruteForced && user
+          ? logSecurityEvent(req, EVENTS.ACCOUNT_LOCKED, {
+            userId:   user.id,
+            metadata: { email, reason: 'temporary_lockout_threshold_reached' },
+          })
+          : null,
+        logSecurityEvent(req, EVENTS.FAILED_LOGIN, {
+          userId:   user?.id || null,
+          metadata: { email },
+        }),
+      ]);
 
       // [12] Generic message — NEVER say whether email or password was wrong
       // Specific messages help attackers confirm valid emails (enumeration)
@@ -232,15 +238,16 @@ router.post('/login', [
     }
 
     // ── Authentication succeeded ──
-    await recordAttempt(email, ip, true);
-
     const { token } = generateToken(user);
 
-    // [10] Audit log successful login
-    await logSecurityEvent(req, EVENTS.LOGIN, {
-      userId:   user.id,
-      metadata: { email },
-    });
+    // Record the attempt + [10] audit log, written in parallel
+    await Promise.all([
+      recordAttempt(email, ip, true),
+      logSecurityEvent(req, EVENTS.LOGIN, {
+        userId:   user.id,
+        metadata: { email },
+      }),
+    ]);
 
     return sendSuccess(res, { token, user: { id: user.id, email: user.email } });
   } catch (err) {

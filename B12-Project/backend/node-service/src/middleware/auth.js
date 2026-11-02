@@ -40,25 +40,24 @@ const authMiddleware = async (req, res, next) => {
       audience:   process.env.JWT_AUDIENCE || 'b12-app',
     });
 
-    // ── [2] Token blacklist check (logout revocation) ──
-    // If the user has logged out, their token's jti is stored in token_blacklist.
+    // ── [2] Token blacklist check (logout revocation) + [3] active user check ──
+    // Both lookups run in parallel: this middleware runs on every protected request,
+    // so two sequential DB round trips here would double the latency of the whole API.
+    const [isBlacklisted, user] = await Promise.all([
+      decoded.jti ? TokenBlacklist.findByPk(decoded.jti, { attributes: ['jti'] }) : null,
+      User.findByPk(decoded.id, { attributes: ['id', 'email', 'is_active'] }),
+    ]);
+
     // A stolen token that was logged-out is immediately rejected here.
-    if (decoded.jti) {
-      const isBlacklisted = await TokenBlacklist.findByPk(decoded.jti);
-      if (isBlacklisted) {
-        return res.status(401).json({
-          success: false,
-          error: 'Session has been terminated. Please log in again.',
-        });
-      }
+    if (isBlacklisted) {
+      return res.status(401).json({
+        success: false,
+        error: 'Session has been terminated. Please log in again.',
+      });
     }
 
-    // ── [3] Active user check ──
     // Handles: account lockout after brute-force, admin-deactivated accounts,
-    // and soft-deleted users. A valid JWT for a locked user is still rejected.
-    const user = await User.findByPk(decoded.id, {
-      attributes: ['id', 'email', 'is_active'],
-    });
+    // and deleted users. A valid JWT for a locked user is still rejected.
 
     if (!user) {
       return res.status(401).json({

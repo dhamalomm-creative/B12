@@ -1,0 +1,768 @@
+openapi: 3.0.3
+info:
+  title: B12 Health Tracker API
+  version: 1.0.0
+  description: |
+    REST API for the B12 Health Tracker web and Android apps.
+    Human-readable reference: docs/API.md.
+
+    All responses include `success: boolean`. Errors return `{ success: false, error: string }`.
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:3000
+    description: Local development
+tags:
+  - name: System
+  - name: Auth
+  - name: Users
+  - name: BMI
+  - name: Questionnaire
+  - name: Check-in
+  - name: Insights
+  - name: Notifications
+
+security:
+  - bearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags: [System]
+      summary: Health check
+      security: []
+      responses:
+        '200':
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  service: { type: string, example: B12 Health Tracker API }
+                  status: { type: string, example: healthy }
+                  timestamp: { type: string, format: date-time }
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Create an account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Error' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Log in
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, maxLength: 128 }
+      responses:
+        '200':
+          description: Logged in
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuthResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Revoke the current token
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Exchange a valid token for a new one
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+      responses:
+        '200':
+          description: New token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  token: { type: string }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/users/profile:
+    get:
+      tags: [Users]
+      summary: Get the signed-in user and profile
+      responses:
+        '200':
+          description: User and profile (profile may be null)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  user:
+                    type: object
+                    properties:
+                      id: { type: string, format: uuid }
+                      email: { type: string }
+                      created_at: { type: string, format: date-time }
+                  profile:
+                    nullable: true
+                    allOf: [{ $ref: '#/components/schemas/Profile' }]
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    post:
+      tags: [Users]
+      summary: Create or update the profile (partial update)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProfileUpdate' }
+      responses:
+        '200':
+          description: Profile updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProfileResponse' }
+        '201':
+          description: Profile created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProfileResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/users/password:
+    post:
+      tags: [Users]
+      summary: Change password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [currentPassword, newPassword]
+              properties:
+                currentPassword: { type: string }
+                newPassword: { $ref: '#/components/schemas/Password' }
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/users/me:
+    delete:
+      tags: [Users]
+      summary: Permanently delete the account and all health data
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password:
+                  type: string
+                  description: If supplied it must be correct.
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/users/bmi:
+    post:
+      tags: [BMI]
+      summary: Save a BMI measurement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [heightCm, weightKg]
+              properties:
+                heightCm: { type: number, minimum: 50, maximum: 300 }
+                weightKg: { type: number, minimum: 10, maximum: 500 }
+      responses:
+        '201':
+          description: Saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  bmi: { $ref: '#/components/schemas/BmiLog' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/users/bmi/latest:
+    get:
+      tags: [BMI]
+      summary: Most recent BMI record
+      responses:
+        '200':
+          description: Latest record or null
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  bmi:
+                    nullable: true
+                    allOf: [{ $ref: '#/components/schemas/BmiLog' }]
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/users/bmi/history:
+    get:
+      tags: [BMI]
+      summary: BMI history, newest first
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 10, maximum: 50 }
+      responses:
+        '200':
+          description: History
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  history:
+                    type: array
+                    items: { $ref: '#/components/schemas/BmiLog' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/questionnaire/questions:
+    get:
+      tags: [Questionnaire]
+      summary: v1 question set filtered by the user's age group and gender
+      responses:
+        '200':
+          description: Questions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  total: { type: integer }
+                  questions:
+                    type: array
+                    items: { $ref: '#/components/schemas/Question' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/questionnaire/submit:
+    post:
+      tags: [Questionnaire]
+      summary: Score and save a questionnaire
+      description: |
+        Send either all v2 answers (`questionKey`, web app) or all v1 answers (`questionId`, Android app).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answers]
+              properties:
+                answers:
+                  type: array
+                  minItems: 1
+                  maxItems: 60
+                  items:
+                    oneOf:
+                      - $ref: '#/components/schemas/AnswerV2'
+                      - $ref: '#/components/schemas/AnswerV1'
+            example:
+              answers:
+                - { questionKey: fatigue_frequency, answerValue: often }
+                - { questionKey: tingling_numbness, answerValue: sometimes }
+      responses:
+        '200':
+          description: Scored result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SubmitResult' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/questionnaire/latest:
+    get:
+      tags: [Questionnaire]
+      summary: Latest assessment
+      responses:
+        '200':
+          description: Assessment or null
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  assessment:
+                    nullable: true
+                    allOf: [{ $ref: '#/components/schemas/Assessment' }]
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/questionnaire/history:
+    get:
+      tags: [Questionnaire]
+      summary: Assessment history, newest first
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 20, maximum: 100 }
+      responses:
+        '200':
+          description: History
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  assessments:
+                    type: array
+                    items: { $ref: '#/components/schemas/Assessment' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/questionnaire/{id}:
+    get:
+      tags: [Questionnaire]
+      summary: One assessment with its answers
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: Assessment and answers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  assessment: { $ref: '#/components/schemas/Assessment' }
+                  answers:
+                    type: array
+                    items: { $ref: '#/components/schemas/AssessmentAnswer' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /api/checkin/daily:
+    post:
+      tags: [Check-in]
+      summary: Create or update today's check-in
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CheckinRequest' }
+      responses:
+        '200':
+          description: Today's check-in updated
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CheckinResponse' }
+        '201':
+          description: Today's check-in created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CheckinResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/checkin/history:
+    get:
+      tags: [Check-in]
+      summary: Check-ins for the last N days, oldest first
+      parameters:
+        - in: query
+          name: days
+          schema: { type: integer, default: 7, minimum: 1, maximum: 90 }
+      responses:
+        '200':
+          description: History and streak
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  days: { type: integer }
+                  logs:
+                    type: array
+                    items: { $ref: '#/components/schemas/Checkin' }
+                  streak:
+                    nullable: true
+                    allOf: [{ $ref: '#/components/schemas/Streak' }]
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/insights:
+    get:
+      tags: [Insights]
+      summary: Personalised insights
+      responses:
+        '200':
+          description: Insights
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  total: { type: integer }
+                  insights:
+                    type: array
+                    items: { $ref: '#/components/schemas/Insight' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  /api/notifications/token:
+    post:
+      tags: [Notifications]
+      summary: Register an Expo push token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token: { type: string }
+                platform: { type: string, enum: [ios, android], default: android }
+      responses:
+        '200': { $ref: '#/components/responses/Message' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Message:
+      description: Success message
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean, example: true }
+              message: { type: string }
+    BadRequest:
+      description: Validation failed (first error only)
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    Unauthorized:
+      description: Missing, invalid, expired or revoked token, or bad credentials
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    NotFound:
+      description: Not found
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Error' }
+    TooManyRequests:
+      description: Rate limit or login lockout
+      content:
+        application/json:
+          schema:
+            allOf:
+              - $ref: '#/components/schemas/Error'
+              - type: object
+                properties:
+                  code: { type: string, enum: [RATE_LIMIT_AUTH, RATE_LIMIT_API] }
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error: { type: string }
+        correlationId: { type: string, description: Present on unexpected errors }
+
+    Password:
+      type: string
+      minLength: 8
+      maxLength: 128
+      description: At least one uppercase letter and one number.
+
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, maxLength: 254 }
+        password: { $ref: '#/components/schemas/Password' }
+        name: { type: string, maxLength: 80 }
+        age: { type: integer, minimum: 1, maximum: 120 }
+        gender: { type: string, enum: [male, female, other] }
+        dietType: { type: string, enum: [vegan, vegetarian, pescatarian, omnivore] }
+
+    AuthResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        token: { type: string }
+        user:
+          type: object
+          properties:
+            id: { type: string, format: uuid }
+            email: { type: string }
+
+    ProfileUpdate:
+      type: object
+      properties:
+        name: { type: string, maxLength: 80, nullable: true }
+        age: { type: integer, minimum: 1, maximum: 120, nullable: true }
+        gender: { type: string, enum: [male, female, other] }
+        dietType: { type: string, enum: [vegan, vegetarian, pescatarian, omnivore] }
+        hasPerniciousAnemia: { type: boolean }
+        hasCrohnsCeliac: { type: boolean }
+        hasGastricSurgery: { type: boolean }
+        takesMetformin: { type: boolean }
+        takesPpi: { type: boolean }
+        isPregnant: { type: boolean }
+        isBreastfeeding: { type: boolean }
+        alcoholFrequency: { type: string, maxLength: 20, nullable: true }
+        smokingStatus: { type: string, maxLength: 20, nullable: true }
+
+    Profile:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        name: { type: string, nullable: true }
+        age: { type: integer, nullable: true }
+        age_group: { type: string, enum: ['15-24', '25-40', '41-60', '60+', 'all'], nullable: true }
+        gender: { type: string, nullable: true }
+        diet_type: { type: string, nullable: true }
+        diet_penalty_score: { type: integer }
+        has_pernicious_anemia: { type: boolean }
+        has_crohns_disease: { type: boolean }
+        has_celiac_disease: { type: boolean }
+        has_gastric_surgery: { type: boolean }
+        takes_metformin: { type: boolean }
+        takes_ppi: { type: boolean }
+        is_pregnant: { type: boolean }
+        is_breastfeeding: { type: boolean }
+        alcohol_frequency: { type: string, nullable: true }
+        smoking_status: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ProfileResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        profile: { $ref: '#/components/schemas/Profile' }
+
+    BmiLog:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        height_cm: { type: number }
+        weight_kg: { type: number }
+        bmi: { type: number }
+        bmi_category: { type: string, enum: [underweight, normal, overweight, obese] }
+        measured_at: { type: string, format: date }
+        created_at: { type: string, format: date-time }
+
+    Question:
+      type: object
+      properties:
+        id: { type: integer }
+        question_text: { type: string }
+        category: { type: string }
+        weight: { type: string, description: NUMERIC returned as string }
+        audience: { type: string }
+        age_group: { type: string }
+        options:
+          type: array
+          items:
+            type: object
+            properties:
+              label: { type: string }
+              value: { type: string }
+              score: { type: number }
+
+    AnswerV2:
+      type: object
+      required: [questionKey, answerValue]
+      properties:
+        questionKey: { type: string, maxLength: 60, example: fatigue_frequency }
+        answerValue: { type: string, maxLength: 100, example: often }
+
+    AnswerV1:
+      type: object
+      required: [questionId, answerValue]
+      properties:
+        questionId: { type: integer, minimum: 1, maximum: 1000, example: 1 }
+        answerValue: { type: string, maxLength: 100, example: often }
+
+    SubmitResult:
+      type: object
+      properties:
+        success: { type: boolean }
+        assessment_id: { type: string, format: uuid }
+        risk_level: { type: string, enum: [low, medium, high] }
+        percentage: { type: number, minimum: 0, maximum: 100 }
+        breakdown:
+          type: object
+          additionalProperties: { type: number }
+        suggestions:
+          type: array
+          items: { type: string }
+        scoring_version: { type: string, example: '2.0', description: v2 submissions only }
+        completed_at: { type: string, format: date-time, description: v2 submissions only }
+
+    Assessment:
+      type: object
+      description: NUMERIC columns are returned as strings.
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        risk_level: { type: string, enum: [low, medium, high] }
+        risk_percentage: { type: string }
+        normalized_score: { type: string }
+        raw_score: { type: string }
+        max_possible_score: { type: string }
+        category_breakdown:
+          type: object
+          additionalProperties: { type: number }
+        suggestions:
+          type: array
+          items: { type: string }
+        questions_shown: { type: integer }
+        scoring_version: { type: string }
+        age_at_assessment: { type: integer, nullable: true }
+        age_group: { type: string, nullable: true }
+        gender: { type: string, nullable: true }
+        diet_type: { type: string, nullable: true }
+        completed_at: { type: string, format: date-time }
+
+    AssessmentAnswer:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        assessment_id: { type: string, format: uuid }
+        question_id: { type: integer, nullable: true, description: null for v2 answers }
+        answer_value: { type: string }
+        answer_label: { type: string }
+        answer_score: { type: string }
+        question_weight: { type: string }
+        weighted_score: { type: string }
+        question_category: { type: string }
+        question_text_snapshot: { type: string }
+        answered_at: { type: string, format: date-time }
+
+    CheckinRequest:
+      type: object
+      required: [energyScore, fatigueScore, moodScore, sleepScore, focusScore]
+      properties:
+        energyScore: { type: integer, minimum: 0, maximum: 4, description: '0 very poor … 4 excellent' }
+        fatigueScore: { type: integer, minimum: 0, maximum: 4, description: '0 none … 4 severe' }
+        moodScore: { type: integer, minimum: 0, maximum: 4 }
+        sleepScore: { type: integer, minimum: 0, maximum: 4 }
+        focusScore: { type: integer, minimum: 0, maximum: 4 }
+        notes: { type: string, maxLength: 500, nullable: true }
+        durationSeconds: { type: integer, minimum: 0, maximum: 3600, nullable: true }
+        localDate: { type: string, format: date, description: 'Accepted if within ±1 day of server UTC date' }
+
+    Checkin:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        checkin_date: { type: string, format: date }
+        energy_score: { type: integer }
+        fatigue_score: { type: integer }
+        mood_score: { type: integer }
+        sleep_score: { type: integer }
+        focus_score: { type: integer }
+        total_score: { type: integer }
+        notes: { type: string, nullable: true }
+        duration_seconds: { type: integer, nullable: true }
+
+    Streak:
+      type: object
+      properties:
+        current_streak: { type: integer }
+        longest_streak: { type: integer }
+        total_checkins: { type: integer }
+        last_checkin_date: { type: string, format: date, nullable: true }
+
+    CheckinResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        isNew: { type: boolean }
+        checkinDate: { type: string, format: date }
+        checkin: { $ref: '#/components/schemas/Checkin' }
+        streak: { $ref: '#/components/schemas/Streak' }
+
+    Insight:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [risk_alert, risk_moderate, risk_low, no_assessment, trend_alert, checkin_reminder]
+        priority: { type: string, enum: [high, medium, low] }
+        title: { type: string }
+        message: { type: string }

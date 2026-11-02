@@ -38,13 +38,17 @@ const validateEnv = () => {
     // Secrets that were ever published in docs/examples must never be used.
     const publishedSecrets = [
       '5f7a0fd5ccc99d4cd7e14a0e235ebc646ec23eaf71a97c13a95062fbcaeb4907',
+      'B12HealthSecretKey2026ChangeMeInProduction',
     ];
     const isWeak = weakPatterns.some((p) => jwtSecret.toLowerCase().includes(p))
-      || jwtSecret.startsWith('REPLACE_WITH')
+      || /^REPLACE[-_]/i.test(jwtSecret)
       || publishedSecrets.includes(jwtSecret);
     if (isWeak) {
       errors.push(
-        'JWT_SECRET appears to be a default/placeholder value. Use a randomly generated secret.',
+        'JWT_SECRET appears to be a default/placeholder value (or one published in this repo).\n' +
+        '   Generate a new one: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"\n' +
+        '   Then set it in your host\'s environment variables (Vercel: Project → Settings →\n' +
+        '   Environment Variables → Production; Railway: Service → Variables) and REDEPLOY.',
       );
     }
   }
