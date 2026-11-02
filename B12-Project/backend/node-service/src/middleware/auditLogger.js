@@ -25,21 +25,18 @@ const EVENTS = {
   TOKEN_REFRESH:        'TOKEN_REFRESH',
   UNAUTHORIZED_ACCESS:  'UNAUTHORIZED_ACCESS',
   IDOR_ATTEMPT:         'IDOR_ATTEMPT',
+  ACCOUNT_DELETED:      'ACCOUNT_DELETED',
 };
 
 // ── Extract the real client IP ──
 // Handles proxies, load balancers, Docker NAT
+// req.ip already honours `trust proxy` (1 hop), so it can't be spoofed by a client
+// sending its own X-Forwarded-For header. Fall back to socket info if unavailable.
 const getClientIp = (req) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) {
-    // X-Forwarded-For can be a comma-separated list — take the FIRST (original client)
-    return forwarded.split(',')[0].trim();
-  }
   return (
-    req.headers['x-real-ip'] ||
-    req.connection?.remoteAddress ||
-    req.socket?.remoteAddress ||
     req.ip ||
+    req.headers['x-real-ip'] ||
+    req.socket?.remoteAddress ||
     'unknown'
   );
 };

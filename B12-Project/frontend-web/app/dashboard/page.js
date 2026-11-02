@@ -1,215 +1,218 @@
 'use client';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useApp, setServerInsights, setServerCheckins, setRiskResult, setStreak } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { calculateStreak } from '@/utils/riskCalculator';
-import { insightsAPI, checkinAPI, questionnaireExtAPI } from '@/services/api';
+import { insightsAPI, checkinAPI, questionnaireAPI } from '@/services/api';
+import { normalizeServerResult, localISODate } from '@/utils/riskCalculator';
 import AppShell from '@/components/layout/AppShell';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { RiskGauge } from '@/components/UI';
 import styles from './page.module.css';
 
-const DAYS_OF_WEEK = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const LEVEL_LABEL = { LOW: 'Low', MEDIUM: 'Moderate', HIGH: 'High' };
+
+const greeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+};
+
+const stripEmoji = (s = '') => s.replace(/^[^\p{L}\p{N}]+\s*/u, '');
 
 export default function DashboardPage() {
   const { state, dispatch } = useApp();
-  const { user: authUser, isAuthenticated } = useAuth();
+  const { user: authUser, isAuthenticated, syncPendingAssessment } = useAuth();
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
 
-  const { user, guestName, riskResult, dailyLogs, serverStreak, serverInsights } = state;
-  const localStreak = useMemo(() => calculateStreak(dailyLogs), [dailyLogs]);
-  const streak = serverStreak?.current_streak ?? localStreak ?? 0;
-  const totalCheckins = serverStreak?.total_checkins ?? dailyLogs.length ?? 0;
-
-  const displayName = authUser?.name || user?.name || guestName || authUser?.email?.split('@')[0] || 'Friend';
-  const hasAssessment = !!riskResult;
-  const riskLevelText = hasAssessment
-    ? (riskResult.level ? (riskResult.level.toLowerCase() === 'low' ? 'Low' : riskResult.level.toLowerCase() === 'medium' ? 'Medium' : 'High') : 'Low')
-    : 'Not assessed';
-  const riskPct = hasAssessment ? (riskResult.percentage ?? 0) : 0;
+  const { riskResult, serverStreak, serverInsights, serverCheckinHistory } = state;
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated) return undefined;
+    let cancelled = false;
+    (async () => {
+      if (state.pendingAnswers?.length) await syncPendingAssessment();
+      const [ins, hist, latest] = await Promise.allSettled([
+        insightsAPI.get(),
+        checkinAPI.getHistory(14),
+        questionnaireAPI.getLatest(),
+      ]);
+      if (cancelled) return;
+      if (ins.status === 'fulfilled') dispatch(setServerInsights(ins.value?.insights || []));
+      if (hist.status === 'fulfilled') {
+        dispatch(setServerCheckins(hist.value?.logs || []));
+        dispatch(setStreak(hist.value?.streak || null));
+      }
+      if (latest.status === 'fulfilled') {
+        dispatch(setRiskResult(latest.value?.assessment ? normalizeServerResult(latest.value.assessment) : null));
+      }
+      setLoading(false);
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
-    // Load server insights
-    insightsAPI.get()
-      .then(d => {
-        if (d?.insights) dispatch(setServerInsights(d.insights));
-      })
-      .catch(() => {});
+  const displayName = authUser?.name || authUser?.email?.split('@')[0] || 'there';
+  const today = localISODate();
 
-    // Load check-in history and streak
-    checkinAPI.getHistory(14)
-      .then(d => {
-        if (d?.logs) dispatch(setServerCheckins(d.logs));
-        if (d?.streak) {
-          dispatch({ type: 'SET_SERVER_STREAK', payload: d.streak });
-          dispatch(setStreak(d.streak.current_streak));
-        }
-      })
-      .catch(() => {});
-
-    // If assessment not loaded in memory, fetch latest from server
-    if (!riskResult) {
-      questionnaireExtAPI.getLatest()
-        .then(d => {
-          if (d?.assessment) {
-            dispatch(setRiskResult({
-              level: d.assessment.risk_level,
-              percentage: Math.round(d.assessment.risk_percentage || 0),
-              breakdown: d.assessment.category_breakdown || {},
-              suggestions: d.assessment.suggestions || [],
-            }));
-          }
-        })
-        .catch(() => {});
-    }
-  }, [isAuthenticated, dispatch, riskResult]);
-
-  const currentDayIndex = (new Date().getDay() + 6) % 7; // Monday = 0, Sunday = 6
-
-  // Pick primary insight
-  const activeInsight = serverInsights && serverInsights.length > 0
-    ? serverInsights[0]
-    : {
-        title: 'Daily Tip',
-        message: 'Check in each day to monitor subtle energy shifts and see your habit streak grow.',
+  const week = useMemo(() => {
+    const logged = new Set((serverCheckinHistory || []).map((l) => l.checkin_date));
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date();
+      d.setDate(d.getDate() - (6 - i));
+      const iso = localISODate(d);
+      return {
+        iso,
+        label: d.toLocaleDateString(undefined, { weekday: 'narrow' }),
+        done: logged.has(iso),
+        isToday: iso === today,
       };
+    });
+  }, [serverCheckinHistory, today]);
+
+  const checkedInToday = week[6]?.done;
+  const streak = serverStreak?.current_streak ?? 0;
+  const totalCheckins = serverStreak?.total_checkins ?? 0;
+
+  const avgEnergy = useMemo(() => {
+    const last7 = (serverCheckinHistory || []).slice(-7);
+    if (!last7.length) return null;
+    return last7.reduce((s, l) => s + (l.energy_score ?? 0), 0) / last7.length;
+  }, [serverCheckinHistory]);
+
+  const levelKey = (riskResult?.level || '').toUpperCase();
+  const tone = levelKey === 'HIGH' ? 'high' : levelKey === 'MEDIUM' ? 'medium' : 'low';
+
+  const insights = (serverInsights || []).slice(0, 3);
 
   return (
     <AuthGuard>
       <AppShell>
-        <div className={styles.dashboardPage}>
-          {/* Header Greeting */}
-          <header className={styles.greetingHeader}>
-            <h1 className={styles.greetingTitle}>Good day, {displayName}</h1>
-            <p className={styles.greetingSubtitle}>
-              {streak > 0
-                ? `You're on a ${streak}-day streak. Keep it going!`
-                : 'Start your daily check-in to begin your streak.'}
-            </p>
+        <div className={styles.page}>
+          <header className={styles.header}>
+            <div>
+              <h1 className={styles.title}>{greeting()}, {displayName}</h1>
+              <p className={styles.subtitle}>
+                {streak > 0
+                  ? `🔥 ${streak}-day check-in streak — keep it going.`
+                  : 'Log a quick check-in today to start your streak.'}
+              </p>
+            </div>
           </header>
 
-          {/* Top 2 Cards Row */}
-          <div className={styles.topCardsRow}>
-            {/* Your B12 Risk Card */}
-            <div className={styles.riskCard}>
-              <p className={styles.cardKicker}>Your B12 risk</p>
-              <h2 className={styles.riskLevelText}>{riskLevelText}</h2>
-              {hasAssessment && <RiskGauge percentage={riskPct} />}
-              <p className={styles.riskSubtext}>
-                {hasAssessment
-                  ? 'Based on your latest assessment. Eat regular B12 foods and keep logging daily.'
-                  : 'Take the 5-minute clinical assessment to estimate your vitamin B12 deficiency risk.'}
-              </p>
-              <button
-                type="button"
-                className={styles.fullReportBtn}
-                onClick={() => router.push(hasAssessment ? '/results' : '/questionnaire')}
-              >
-                {hasAssessment ? 'See full report' : 'Take assessment'}
-              </button>
-            </div>
+          <div className={styles.topRow}>
+            {/* Risk */}
+            <section className={`${styles.card} ${styles.riskCard}`} aria-labelledby="risk-h">
+              <p id="risk-h" className={styles.kicker}>Your B12 risk</p>
+              {loading && !riskResult ? (
+                <div className={styles.skeletonLine} />
+              ) : riskResult ? (
+                <>
+                  <div className={styles.riskRow}>
+                    <span className={styles.riskValue}>{riskResult.percentage}%</span>
+                    <span className={`${styles.badge} ${styles[`badge_${tone}`]}`}>{LEVEL_LABEL[levelKey] || 'Low'} risk</span>
+                  </div>
+                  <RiskGauge percentage={riskResult.percentage} />
+                  <p className={styles.muted}>
+                    From your assessment on{' '}
+                    {new Date(riskResult.completedAt || Date.now()).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}.
+                  </p>
+                  <div className={styles.btnRow}>
+                    <button type="button" className={styles.primaryBtn} onClick={() => router.push('/results')}>
+                      View full report
+                    </button>
+                    <button type="button" className={styles.ghostBtn} onClick={() => router.push('/questionnaire')}>
+                      Retake
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h2 className={styles.emptyTitle}>Not assessed yet</h2>
+                  <p className={styles.muted}>Answer about 20 quick questions to estimate your B12 deficiency risk.</p>
+                  <button type="button" className={styles.primaryBtn} onClick={() => router.push('/questionnaire')}>
+                    Take the assessment
+                  </button>
+                </>
+              )}
+            </section>
 
-            {/* Today's Check-in Card */}
-            <div className={styles.checkinCard}>
-              <div className={styles.checkinTop}>
-                <h3 className={styles.checkinTitle}>Today&apos;s check-in</h3>
-                <p className={styles.checkinSubtitle}>Five quick taps, about 30 seconds.</p>
+            {/* Check-in */}
+            <section className={`${styles.card} ${styles.checkinCard}`} aria-labelledby="checkin-h">
+              <div>
+                <h2 id="checkin-h" className={styles.checkinTitle}>
+                  {checkedInToday ? 'Checked in today ✓' : "Today's check-in"}
+                </h2>
+                <p className={styles.checkinSub}>
+                  {checkedInToday ? 'Nice — you can update it any time today.' : 'Five quick taps, about 30 seconds.'}
+                </p>
               </div>
-
-              {/* Week day dots */}
-              <div className={styles.weekDotsRow}>
-                {DAYS_OF_WEEK.map((day, idx) => {
-                  const isPast = idx < currentDayIndex;
-                  const isToday = idx === currentDayIndex;
-                  return (
-                    <div
-                      key={idx}
-                      className={`${styles.weekDot} ${isPast ? styles.weekDotCompleted : ''} ${isToday ? styles.weekDotToday : ''}`}
-                    >
-                      <span>{day}</span>
-                    </div>
-                  );
-                })}
-              </div>
-
-              <button
-                type="button"
-                className={styles.startCheckinBtn}
-                onClick={() => router.push('/checkin')}
-              >
-                Start check-in
+              <ol className={styles.week} aria-label="Check-ins over the last 7 days">
+                {week.map((d) => (
+                  <li
+                    key={d.iso}
+                    className={`${styles.day} ${d.done ? styles.dayDone : ''} ${d.isToday ? styles.dayToday : ''}`}
+                    aria-label={`${d.iso}: ${d.done ? 'checked in' : 'no check-in'}`}
+                  >
+                    <span>{d.done ? '✓' : d.label}</span>
+                  </li>
+                ))}
+              </ol>
+              <button type="button" className={styles.checkinBtn} onClick={() => router.push('/checkin')}>
+                {checkedInToday ? 'Update check-in' : 'Start check-in'}
               </button>
+            </section>
+          </div>
+
+          <div className={styles.stats}>
+            <div className={`${styles.stat} ${styles.statGreen}`}>
+              <p className={styles.statLabel}>Current streak</p>
+              <p className={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</p>
+              <p className={styles.statFoot}>Best: {serverStreak?.longest_streak ?? 0} days</p>
+            </div>
+            <div className={`${styles.stat} ${styles.statYellow}`}>
+              <p className={styles.statLabel}>Avg. energy (7 days)</p>
+              <p className={styles.statValue}>{avgEnergy === null ? '—' : `${avgEnergy.toFixed(1)} / 4`}</p>
+              <p className={styles.statFoot}>{avgEnergy === null ? 'No check-ins yet' : avgEnergy >= 2.5 ? 'Looking steady' : 'Lower than ideal'}</p>
+            </div>
+            <div className={`${styles.stat} ${styles.statBlue}`}>
+              <p className={styles.statLabel}>Total check-ins</p>
+              <p className={styles.statValue}>{totalCheckins}</p>
+              <p className={styles.statFoot}>All time</p>
             </div>
           </div>
 
-          {/* Middle 3 Stat Cards Row */}
-          <div className={styles.statCardsRow}>
-            {/* Card 1 — Energy */}
-            <div className={styles.statCardGreen}>
-              <p className={styles.statLabel}>Energy</p>
-              <h3 className={styles.statValue}>
-                {totalCheckins > 0 ? 'Active' : 'Not logged'}
-              </h3>
-              <p className={styles.statFoot}>Daily tracking</p>
+          <section aria-labelledby="ins-h">
+            <h2 id="ins-h" className={styles.sectionTitle}>Insights for you</h2>
+            <div className={styles.insights}>
+              {insights.length === 0 && (
+                <div className={`${styles.insight} ${styles.insight_low}`}>
+                  <h3>Daily tip</h3>
+                  <p>Checking in daily helps reveal subtle patterns in energy and fatigue that are easy to miss.</p>
+                </div>
+              )}
+              {insights.map((ins) => (
+                <div key={`${ins.type}-${ins.title}`} className={`${styles.insight} ${styles[`insight_${ins.priority || 'low'}`]}`}>
+                  <h3>{stripEmoji(ins.title)}</h3>
+                  <p>{ins.message}</p>
+                </div>
+              ))}
             </div>
+          </section>
 
-            {/* Card 2 — Check-ins */}
-            <div className={styles.statCardYellow}>
-              <p className={styles.statLabel}>Check-ins</p>
-              <h3 className={styles.statValue}>{totalCheckins}</h3>
-              <p className={styles.statFoot}>Total logged</p>
-            </div>
+          <nav className={styles.quick} aria-label="Quick links">
+            <Link href="/foods" className={styles.quickLink}><span aria-hidden="true">🥚</span> B12 foods</Link>
+            <Link href="/progress" className={styles.quickLink}><span aria-hidden="true">📈</span> Progress</Link>
+            <Link href="/bmi" className={styles.quickLink}><span aria-hidden="true">⚖️</span> BMI</Link>
+            <Link href="/profile" className={styles.quickLink}><span aria-hidden="true">👤</span> Profile</Link>
+          </nav>
 
-            {/* Card 3 — Streak */}
-            <div className={styles.statCardBlue}>
-              <p className={styles.statLabel}>Streak</p>
-              <h3 className={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</h3>
-              <p className={styles.statFoot}>Consecutive days</p>
-            </div>
-          </div>
-
-          {/* Insight Card */}
-          <div className={styles.insightCard}>
-            <h4 className={styles.insightTitle}>{activeInsight.title || 'Insight'}</h4>
-            <p className={styles.insightText}>
-              {activeInsight.message || activeInsight.text || 'Checking in daily helps identify subtle patterns in energy and fatigue.'}
-            </p>
-          </div>
-
-          {/* Action Pills Row */}
-          <div className={styles.actionPillsRow}>
-            <button
-              type="button"
-              className={styles.actionPill}
-              onClick={() => router.push('/bmi')}
-            >
-              BMI Calculator
-            </button>
-            <button
-              type="button"
-              className={styles.actionPill}
-              onClick={() => router.push('/foods')}
-            >
-              B12 Foods
-            </button>
-            <button
-              type="button"
-              className={styles.actionPill}
-              onClick={() => router.push('/progress')}
-            >
-              Progress Charts
-            </button>
-            <button
-              type="button"
-              className={styles.actionPill}
-              onClick={() => router.push('/questionnaire')}
-            >
-              {hasAssessment ? 'Retake assessment' : 'Take assessment'}
-            </button>
-          </div>
+          <p className={styles.disclaimer}>
+            Educational tool, not a medical diagnosis. Talk to a doctor about any symptoms that worry you.
+          </p>
         </div>
       </AppShell>
     </AuthGuard>

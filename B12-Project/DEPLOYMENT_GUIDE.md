@@ -57,7 +57,7 @@
    PORT=3000
    DATABASE_URL=postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
    DATABASE_SSL=true
-   JWT_SECRET=5f7a0fd5ccc99d4cd7e14a0e235ebc646ec23eaf71a97c13a95062fbcaeb4907
+   JWT_SECRET=REPLACE_WITH_64_CHAR_RANDOM_HEX  # node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    JWT_EXPIRES_IN=7d
    ALLOWED_ORIGINS=https://your-frontend-app.vercel.app,http://localhost:3001
    ```
@@ -96,7 +96,7 @@ If you ever want to run both frontend and backend using Docker on any VPS (Digit
    ```env
    DATABASE_URL=postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
    DATABASE_SSL=true
-   JWT_SECRET=5f7a0fd5ccc99d4cd7e14a0e235ebc646ec23eaf71a97c13a95062fbcaeb4907
+   JWT_SECRET=REPLACE_WITH_64_CHAR_RANDOM_HEX  # node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
    ALLOWED_ORIGINS=http://localhost:3001,https://your-domain.com
    NEXT_PUBLIC_API_URL=http://localhost:3000
    ```

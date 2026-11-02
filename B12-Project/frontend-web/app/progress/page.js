@@ -1,247 +1,232 @@
 'use client';
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApp } from '@/context/AppContext';
-import { useAuth } from '@/context/AuthContext';
-import { checkinAPI } from '@/services/api';
-import { calculateStreak } from '@/utils/riskCalculator';
-import { ResponsiveContainer, AreaChart, Area, Tooltip } from 'recharts';
+import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { useApp, setStreak } from '@/context/AppContext';
+import { checkinAPI, questionnaireAPI } from '@/services/api';
 import AppShell from '@/components/layout/AppShell';
 import AuthGuard from '@/components/auth/AuthGuard';
 import styles from './page.module.css';
 
+const RANGES = [7, 14, 30];
+
+// For fatigue, lower is better — we chart it as-is but explain it in the card.
+const METRICS = [
+  { key: 'energy', label: 'Energy', color: '#2E7D4E', fill: '#5AB879', better: 'higher' },
+  { key: 'fatigue', label: 'Fatigue', color: '#C04A2D', fill: '#E76F51', better: 'lower' },
+  { key: 'mood', label: 'Mood', color: '#3E657D', fill: '#5A8AA8', better: 'higher' },
+  { key: 'sleep', label: 'Sleep', color: '#5A4A8A', fill: '#8E7CC3', better: 'higher' },
+  { key: 'focus', label: 'Focus', color: '#9A6A0C', fill: '#E8C15A', better: 'higher' },
+];
+
+const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null);
+
+const trendOf = (values, better) => {
+  if (values.length < 4) return null;
+  const mid = Math.floor(values.length / 2);
+  const diff = avg(values.slice(mid)) - avg(values.slice(0, mid));
+  if (Math.abs(diff) < 0.3) return { label: 'Steady', tone: 'neutral' };
+  const improving = better === 'higher' ? diff > 0 : diff < 0;
+  return improving ? { label: 'Improving', tone: 'good' } : { label: 'Worsening', tone: 'bad' };
+};
+
 export default function ProgressPage() {
   const { state, dispatch } = useApp();
-  const { isAuthenticated } = useAuth();
   const router = useRouter();
-  const [history, setHistory] = useState([]);
-  const [mounted, setMounted] = useState(false);
+  const [range, setRange] = useState(14);
+  const [logs, setLogs] = useState([]);
+  const [assessments, setAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
 
-  const streak = state.serverStreak?.current_streak ?? calculateStreak(state.dailyLogs) ?? 0;
-  const totalLogs = state.serverStreak?.total_checkins ?? state.dailyLogs.length ?? 0;
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
-    setMounted(true);
-    if (!isAuthenticated) return;
-
-    checkinAPI.getHistory(14)
-      .then(d => {
-        if (d?.logs && d.logs.length > 0) {
-          const formatted = d.logs.map((h, i) => ({
-            day: h.checkin_date ? new Date(h.checkin_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : `Day ${i + 1}`,
-            energy: h.energy_score ?? 0,
-            mood: h.mood_score ?? 0,
-            fatigue: h.fatigue_score ?? 0,
-          }));
-          setHistory(formatted);
-        } else {
-          setHistory([]);
-        }
+    let cancelled = false;
+    setLoading(true);
+    setError('');
+    checkinAPI.getHistory(range)
+      .then((d) => {
+        if (cancelled) return;
+        setLogs(d?.logs || []);
+        if (d?.streak) dispatch(setStreak(d.streak));
       })
-      .catch(() => {
-        setHistory([]);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [isAuthenticated]);
+      .catch((err) => { if (!cancelled) setError(err.message || 'Could not load your check-ins.'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [range, dispatch]);
 
-  const avgEnergy = useMemo(() => {
-    if (!history.length) return '—';
-    const sum = history.reduce((acc, cur) => acc + (cur.energy || 0), 0);
-    return `${(sum / history.length).toFixed(1)} / 4`;
-  }, [history]);
+  useEffect(() => {
+    questionnaireAPI.getHistory(12).then((d) => setAssessments(d?.assessments || [])).catch(() => {});
+  }, []);
+
+  const data = useMemo(() => logs.map((h) => ({
+    day: new Date(`${h.checkin_date}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+    energy: h.energy_score ?? null,
+    fatigue: h.fatigue_score ?? null,
+    mood: h.mood_score ?? null,
+    sleep: h.sleep_score ?? null,
+    focus: h.focus_score ?? null,
+    notes: h.notes,
+  })), [logs]);
+
+  const alerts = useMemo(() => {
+    if (logs.length < 3) return [];
+    const out = [];
+    const highFatigue = logs.filter((l) => l.fatigue_score >= 3).length;
+    if (highFatigue >= 3) out.push(`High fatigue on ${highFatigue} of ${logs.length} logged days.`);
+    const poorSleep = logs.filter((l) => l.sleep_score <= 1).length;
+    if (poorSleep >= 3) out.push(`Poor sleep on ${poorSleep} of ${logs.length} logged days.`);
+    const lowMood = logs.filter((l) => l.mood_score <= 1).length;
+    if (lowMood >= 3) out.push(`Low mood on ${lowMood} of ${logs.length} logged days.`);
+    const fog = logs.filter((l) => l.focus_score <= 1).length;
+    if (fog >= 3) out.push(`Brain fog on ${fog} of ${logs.length} logged days.`);
+    return out;
+  }, [logs]);
+
+  const streak = state.serverStreak?.current_streak ?? 0;
+  const assessmentData = useMemo(() => [...assessments].reverse().map((a) => ({
+    day: new Date(a.completed_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+    score: Math.round(Number(a.risk_percentage || 0)),
+  })), [assessments]);
 
   return (
     <AuthGuard>
       <AppShell>
-        <div className={styles.progressPage}>
-          {/* Header */}
+        <div className={styles.page}>
           <header className={styles.header}>
-            <h1 className={styles.title}>Your progress</h1>
-            <p className={styles.subtitle}>
-              {history.length > 0 ? `Showing last ${history.length} logged days` : 'Track your daily check-in to see 14-day symptom trends'}
-            </p>
+            <div>
+              <h1 className={styles.title}>Your progress</h1>
+              <p className={styles.subtitle}>Daily check-ins on a 0–4 scale. Patterns over 2+ weeks are the most useful.</p>
+            </div>
+            <div className={styles.rangeToggle} role="tablist" aria-label="Date range">
+              {RANGES.map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  role="tab"
+                  aria-selected={range === r}
+                  className={`${styles.rangeBtn} ${range === r ? styles.rangeActive : ''}`}
+                  onClick={() => setRange(r)}
+                >
+                  {r} days
+                </button>
+              ))}
+            </div>
           </header>
 
-          {/* 3 Top Stat Cards */}
-          <div className={styles.statCardsRow}>
-            {/* Streak */}
-            <div className={styles.statCardGreen}>
+          <div className={styles.stats}>
+            <div className={`${styles.stat} ${styles.statGreen}`}>
               <p className={styles.statLabel}>Streak</p>
-              <h3 className={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</h3>
-              <p className={styles.statFoot}>{streak > 0 ? 'Consecutive days' : 'No streak yet'}</p>
+              <p className={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</p>
             </div>
-
-            {/* Total logs */}
-            <div className={styles.statCardYellow}>
-              <p className={styles.statLabel}>Total logs</p>
-              <h3 className={styles.statValue}>{totalLogs}</h3>
-              <p className={styles.statFoot}>Check-ins recorded</p>
+            <div className={`${styles.stat} ${styles.statYellow}`}>
+              <p className={styles.statLabel}>Days logged</p>
+              <p className={styles.statValue}>{Math.min(logs.length, range)} / {range}</p>
             </div>
-
-            {/* Average energy */}
-            <div className={styles.statCardBlue}>
-              <p className={styles.statLabel}>Average energy</p>
-              <h3 className={styles.statValue}>{avgEnergy}</h3>
-              <p className={styles.statFoot}>Last 14 days</p>
+            <div className={`${styles.stat} ${styles.statBlue}`}>
+              <p className={styles.statLabel}>Avg. energy</p>
+              <p className={styles.statValue}>
+                {logs.length ? `${avg(logs.map((l) => l.energy_score)).toFixed(1)} / 4` : '—'}
+              </p>
             </div>
           </div>
 
-          {/* If no check-in logs yet */}
-          {!loading && history.length === 0 ? (
-            <div style={{
-              backgroundColor: '#FFFFFF',
-              border: '1px solid var(--border)',
-              borderRadius: '20px',
-              padding: '36px 24px',
-              textAlign: 'center',
-              margin: '12px 0 28px',
-            }}>
-              <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
-                No daily check-ins recorded yet
-              </h3>
-              <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '420px', margin: '0 auto 20px', lineHeight: 1.5 }}>
-                Take your first 30-second daily check-in to start tracking energy, mood, and fatigue patterns.
-              </p>
-              <button
-                type="button"
-                onClick={() => router.push('/checkin')}
-                style={{
-                  backgroundColor: 'var(--primary, #1E3A2B)',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  padding: '10px 22px',
-                  borderRadius: '9999px',
-                  fontSize: '14px',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                }}
-              >
+          {error && <div className={styles.error} role="alert">{error}</div>}
+
+          {alerts.length > 0 && (
+            <section className={styles.alert} aria-labelledby="alert-h">
+              <h2 id="alert-h">Patterns worth noticing</h2>
+              <ul>{alerts.map((a) => <li key={a}>{a}</li>)}</ul>
+              <p>These are common B12-related symptoms. If they continue, consider discussing a B12 blood test with your doctor.</p>
+            </section>
+          )}
+
+          {!loading && logs.length === 0 ? (
+            <div className={styles.empty}>
+              <h2>No check-ins in the last {range} days</h2>
+              <p>Log a 30-second daily check-in to start seeing your energy, mood and sleep trends here.</p>
+              <button type="button" className={styles.primaryBtn} onClick={() => router.push('/checkin')}>
                 Start daily check-in
               </button>
             </div>
           ) : (
-            /* 3 Side-by-Side Charts Row */
             <div className={styles.chartsGrid}>
-              {/* Energy Chart (Green) */}
-              <div className={styles.chartCard}>
-                <h4 className={styles.chartTitle}>Energy</h4>
-                <div className={styles.chartWrap}>
-                  {mounted && (
-                    <ResponsiveContainer width="100%" height={120}>
-                      <AreaChart data={history} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="energyGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#5AB879" stopOpacity={0.35} />
-                            <stop offset="95%" stopColor="#5AB879" stopOpacity={0.05} />
-                          </linearGradient>
-                        </defs>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#FFFFFF',
-                            border: '1px solid #E8E2D5',
-                            borderRadius: 8,
-                            fontSize: 12,
-                            padding: '4px 8px',
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="energy"
-                          stroke="#2E7D4E"
-                          strokeWidth={2}
-                          fillOpacity={1}
-                          fill="url(#energyGrad)"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </div>
+              {METRICS.map((m) => {
+                const values = logs.map((l) => l[`${m.key}_score`]).filter((v) => v !== null && v !== undefined);
+                const t = trendOf(values, m.better);
+                const a = avg(values);
+                return (
+                  <section key={m.key} className={styles.chartCard} aria-label={`${m.label} trend`}>
+                    <div className={styles.chartHead}>
+                      <div>
+                        <h2 className={styles.chartTitle}>{m.label}</h2>
+                        <p className={styles.chartSub}>
+                          {a === null ? 'No data' : `Avg ${a.toFixed(1)} / 4`} · {m.better} is better
+                        </p>
+                      </div>
+                      {t && <span className={`${styles.trend} ${styles[`trend_${t.tone}`]}`}>{t.label}</span>}
+                    </div>
+                    <div className={styles.chartWrap}>
+                      {mounted && !loading && (
+                        <ResponsiveContainer width="100%" height={150}>
+                          <AreaChart data={data} margin={{ top: 8, right: 6, left: -26, bottom: 0 }}>
+                            <defs>
+                              <linearGradient id={`g-${m.key}`} x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor={m.fill} stopOpacity={0.35} />
+                                <stop offset="95%" stopColor={m.fill} stopOpacity={0.03} />
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid stroke="#F0EAE0" vertical={false} />
+                            <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#85948A' }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={18} />
+                            <YAxis domain={[0, 4]} ticks={[0, 2, 4]} tick={{ fontSize: 11, fill: '#85948A' }} tickLine={false} axisLine={false} />
+                            <Tooltip
+                              contentStyle={{ background: '#fff', border: '1px solid #E8E2D5', borderRadius: 10, fontSize: 12 }}
+                              formatter={(v) => [`${v} / 4`, m.label]}
+                            />
+                            <Area type="monotone" dataKey={m.key} stroke={m.color} strokeWidth={2.2} fill={`url(#g-${m.key})`} connectNulls dot={{ r: 2.5, fill: m.color }} />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      )}
+                    </div>
+                  </section>
+                );
+              })}
 
-              {/* Mood Chart (Blue) */}
-              <div className={styles.chartCard}>
-                <h4 className={styles.chartTitle}>Mood</h4>
+              <section className={styles.chartCard} aria-label="Assessment score history">
+                <div className={styles.chartHead}>
+                  <div>
+                    <h2 className={styles.chartTitle}>B12 risk score</h2>
+                    <p className={styles.chartSub}>Your assessments over time · lower is better</p>
+                  </div>
+                </div>
                 <div className={styles.chartWrap}>
-                  {mounted && (
-                    <ResponsiveContainer width="100%" height={120}>
-                      <AreaChart data={history} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="moodGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#5A8AA8" stopOpacity={0.35} />
-                            <stop offset="95%" stopColor="#5A8AA8" stopOpacity={0.05} />
-                          </linearGradient>
-                        </defs>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#FFFFFF',
-                            border: '1px solid #E8E2D5',
-                            borderRadius: 8,
-                            fontSize: 12,
-                            padding: '4px 8px',
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="mood"
-                          stroke="#3E657D"
-                          strokeWidth={2}
-                          fillOpacity={1}
-                          fill="url(#moodGrad)"
-                        />
+                  {assessmentData.length < 2 ? (
+                    <p className={styles.chartEmpty}>
+                      {assessmentData.length === 1
+                        ? `Latest score: ${assessmentData[0].score}%. Retake in a few weeks to see a trend.`
+                        : 'Take the assessment to start tracking your score.'}
+                    </p>
+                  ) : mounted && (
+                    <ResponsiveContainer width="100%" height={150}>
+                      <AreaChart data={assessmentData} margin={{ top: 8, right: 6, left: -20, bottom: 0 }}>
+                        <CartesianGrid stroke="#F0EAE0" vertical={false} />
+                        <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#85948A' }} tickLine={false} axisLine={false} />
+                        <YAxis domain={[0, 100]} ticks={[0, 35, 65, 100]} tick={{ fontSize: 11, fill: '#85948A' }} tickLine={false} axisLine={false} />
+                        <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E8E2D5', borderRadius: 10, fontSize: 12 }} formatter={(v) => [`${v}%`, 'Risk']} />
+                        <Area type="monotone" dataKey="score" stroke="#1E3A2B" strokeWidth={2.2} fill="#E5EFE7" dot={{ r: 3, fill: '#1E3A2B' }} />
                       </AreaChart>
                     </ResponsiveContainer>
                   )}
                 </div>
-              </div>
-
-              {/* Fatigue Chart (Coral) */}
-              <div className={styles.chartCard}>
-                <h4 className={styles.chartTitle}>Fatigue</h4>
-                <div className={styles.chartWrap}>
-                  {mounted && (
-                    <ResponsiveContainer width="100%" height={120}>
-                      <AreaChart data={history} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
-                        <defs>
-                          <linearGradient id="fatigueGrad" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="#E76F51" stopOpacity={0.35} />
-                            <stop offset="95%" stopColor="#E76F51" stopOpacity={0.05} />
-                          </linearGradient>
-                        </defs>
-                        <Tooltip
-                          contentStyle={{
-                            backgroundColor: '#FFFFFF',
-                            border: '1px solid #E8E2D5',
-                            borderRadius: 8,
-                            fontSize: 12,
-                            padding: '4px 8px',
-                          }}
-                        />
-                        <Area
-                          type="monotone"
-                          dataKey="fatigue"
-                          stroke="#C04A2D"
-                          strokeWidth={2}
-                          fillOpacity={1}
-                          fill="url(#fatigueGrad)"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  )}
-                </div>
-              </div>
+              </section>
             </div>
           )}
 
-          {/* Pattern Alert Banner */}
-          <div className={styles.patternAlert}>
-            <h4 className={styles.alertTitle}>Health reminder</h4>
-            <p className={styles.alertText}>
-              Persistent fatigue, low energy, and mental fog are potential signs of vitamin B12 deficiency. If symptoms persist, consider consulting a medical professional.
-            </p>
-          </div>
+          <p className={styles.disclaimer}>
+            Symptom tracking can help you spot patterns, but it can&apos;t diagnose B12 deficiency. Only a blood test can.
+          </p>
         </div>
       </AppShell>
     </AuthGuard>

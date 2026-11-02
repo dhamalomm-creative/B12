@@ -1,8 +1,9 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
+import { toast } from '@/components/UI';
 import { usersAPI } from '@/services/api';
 import { calculateBMI, getBMICategory } from '@/data/b12Foods';
 import AppShell from '@/components/layout/AppShell';
@@ -10,9 +11,8 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import styles from './page.module.css';
 
 export default function BMIPage() {
-  const { state, dispatch } = useApp();
+  const { dispatch } = useApp();
   const { isAuthenticated } = useAuth();
-  const router = useRouter();
 
   const [height, setHeight] = useState('170');
   const [weight, setWeight] = useState('65');
@@ -21,22 +21,28 @@ export default function BMIPage() {
   const [history, setHistory] = useState([]);
   const [saving, setSaving] = useState(false);
   const [loadingHistory, setLoadingHistory] = useState(true);
+  const [error, setError] = useState('');
+
+  const h = parseFloat(height);
+  const w = parseFloat(weight);
+  const inputsValid = h >= 50 && h <= 250 && w >= 10 && w <= 400;
 
   useEffect(() => {
-    const h = parseFloat(height);
-    const w = parseFloat(weight);
-    if (h > 50 && h < 300 && w > 10 && w < 500) {
+    if (inputsValid) {
       const calculated = calculateBMI(h, w);
       setBmi(calculated);
       setCategory(getBMICategory(calculated));
     }
-  }, [height, weight]);
+  }, [h, w, inputsValid]);
 
   useEffect(() => {
     if (!isAuthenticated) return;
     usersAPI.getBMIHistory(5)
       .then(d => {
         if (d?.history && d.history.length > 0) {
+          const latest = d.history[0];
+          if (latest?.height_cm) setHeight(String(latest.height_cm));
+          if (latest?.weight_kg) setWeight(String(latest.weight_kg));
           const list = d.history.map(item => ({
             date: new Date(item.measured_at || item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
             bmi: String(item.bmi),
@@ -56,41 +62,35 @@ export default function BMIPage() {
   }, [isAuthenticated]);
 
   const handleSave = async () => {
+    setError('');
+    if (!inputsValid) {
+      setError('Enter a height between 50–250 cm and a weight between 10–400 kg.');
+      return;
+    }
     setSaving(true);
-    const h = parseFloat(height);
-    const w = parseFloat(weight);
     const calculated = calculateBMI(h, w);
     const cat = getBMICategory(calculated);
 
-    dispatch({
-      type: 'SET_BMI_DATA',
-      payload: {
-        bmi: calculated,
-        bmiCategory: cat,
-        heightCm: h,
-        weightKg: w,
-        measuredAt: new Date().toISOString().split('T')[0],
-      },
-    });
-
-    if (isAuthenticated) {
-      try {
-        await usersAPI.saveBMI({ heightCm: h, weightKg: w });
-      } catch (e) {
-        console.warn('Failed to save BMI to server:', e);
-      }
+    try {
+      if (isAuthenticated) await usersAPI.saveBMI({ heightCm: h, weightKg: w });
+      dispatch({
+        type: 'SET_BMI_DATA',
+        payload: { bmi: calculated, bmiCategory: cat, heightCm: h, weightKg: w, measuredAt: new Date().toISOString().split('T')[0] },
+      });
+      setHistory((prev) => [
+        {
+          date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+          bmi: String(calculated),
+          category: cat.charAt(0).toUpperCase() + cat.slice(1),
+        },
+        ...prev.slice(0, 4),
+      ]);
+      toast('Measurement saved', 'success');
+    } catch (err) {
+      setError(err.message || 'Could not save your measurement.');
+    } finally {
+      setSaving(false);
     }
-
-    setHistory(prev => [
-      {
-        date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
-        bmi: String(calculated),
-        category: cat.charAt(0).toUpperCase() + cat.slice(1),
-      },
-      ...prev.slice(0, 4),
-    ]);
-
-    setSaving(false);
   };
 
   const catLower = (category || 'Normal').toLowerCase();
@@ -114,6 +114,9 @@ export default function BMIPage() {
                   <label className={styles.fieldLabel}>Height (cm)</label>
                   <input
                     type="number"
+                    inputMode="decimal"
+                    min={50}
+                    max={250}
                     className={styles.numInput}
                     placeholder="170"
                     value={height}
@@ -125,6 +128,9 @@ export default function BMIPage() {
                   <label className={styles.fieldLabel}>Weight (kg)</label>
                   <input
                     type="number"
+                    inputMode="decimal"
+                    min={10}
+                    max={400}
                     className={styles.numInput}
                     placeholder="65"
                     value={weight}
@@ -132,6 +138,7 @@ export default function BMIPage() {
                   />
                 </div>
 
+                {error && <p className={styles.error} role="alert">{error}</p>}
                 <button
                   type="button"
                   className={styles.saveBtn}
@@ -149,7 +156,7 @@ export default function BMIPage() {
               <div className={styles.resultCard}>
                 <p className={styles.resultKicker}>Your BMI</p>
                 <h2 className={styles.resultValue}>{bmi}</h2>
-                <p className={styles.resultCategory}>{category}</p>
+                <p className={styles.resultCategory}>{category.charAt(0).toUpperCase() + category.slice(1)}</p>
 
                 {/* Segmented scale bar */}
                 <div className={styles.scaleBar}>
@@ -170,7 +177,14 @@ export default function BMIPage() {
                 <p className={styles.resultTip}>
                   {catLower.includes('normal')
                     ? 'A healthy range. Keep a balanced diet with regular B12 sources.'
-                    : 'Maintaining a balanced BMI helps optimal nutrient absorption and cellular energy metabolism.'}
+                    : catLower.includes('under')
+                      ? 'Below the healthy range. Energy-dense B12 foods like dairy, eggs and fish can help — and consider speaking to a doctor.'
+                      : 'Above the healthy range. Lean, low-calorie B12 sources such as fish, yogurt and fortified cereals fit well.'}{' '}
+                  <Link href="/foods">See foods for you →</Link>
+                </p>
+                <p className={styles.bmiNote}>
+                  BMI is a rough screening measure — it doesn&apos;t account for muscle, age or ethnicity. Some Asian health
+                  bodies use a lower healthy cut-off (23).
                 </p>
               </div>
 

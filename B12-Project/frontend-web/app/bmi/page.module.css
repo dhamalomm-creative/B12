@@ -218,3 +218,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+.error {
+  font-size: 13.5px;
+  color: #8A3B26;
+  background: var(--pastel-peach);
+  padding: 10px 14px;
+  border-radius: 12px;
+}
+
+.bmiNote {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.resultTip a { font-weight: 700; text-decoration: underline; }

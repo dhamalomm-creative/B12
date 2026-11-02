@@ -35,7 +35,13 @@ const validateEnv = () => {
       'change-this', 'change-me', 'changeme', 'secret', 'your-secret',
       'mysecret', 'password', '123456', 'jwt-secret', 'default',
     ];
-    const isWeak = weakPatterns.some((p) => jwtSecret.toLowerCase().includes(p));
+    // Secrets that were ever published in docs/examples must never be used.
+    const publishedSecrets = [
+      '5f7a0fd5ccc99d4cd7e14a0e235ebc646ec23eaf71a97c13a95062fbcaeb4907',
+    ];
+    const isWeak = weakPatterns.some((p) => jwtSecret.toLowerCase().includes(p))
+      || jwtSecret.startsWith('REPLACE_WITH')
+      || publishedSecrets.includes(jwtSecret);
     if (isWeak) {
       errors.push(
         'JWT_SECRET appears to be a default/placeholder value. Use a randomly generated secret.',

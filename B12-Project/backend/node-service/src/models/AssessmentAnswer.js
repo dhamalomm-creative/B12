@@ -5,7 +5,8 @@ const AssessmentAnswer = sequelize.define('AssessmentAnswer', {
   id: { type: DataTypes.UUID, defaultValue: DataTypes.UUIDV4, primaryKey: true },
   assessment_id: { type: DataTypes.UUID, allowNull: false },
   user_id: { type: DataTypes.UUID, allowNull: false },   // denormalized for ML export
-  question_id: { type: DataTypes.INTEGER, allowNull: false },
+  // Nullable: web (scoring v2) answers reference questions by key, stored in question_text_snapshot
+  question_id: { type: DataTypes.INTEGER, allowNull: true },
   // Raw answer
   answer_value: { type: DataTypes.STRING(100), allowNull: false },
   answer_label: { type: DataTypes.STRING(200) },

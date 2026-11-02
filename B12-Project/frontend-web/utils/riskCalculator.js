@@ -1,161 +1,191 @@
-// ─── Risk Calculator ─────────────────────────────────────────────────────────
+// ─── B12 Risk Engine (scoring v2) ─────────────────────────────────────────────
+// IMPORTANT: this logic is mirrored 1:1 in the backend at
+//   backend/node-service/src/services/scoringEngineV2.js
+// so a guest's on-device score and the score saved to the server are identical.
+// If you change anything here, change it there too (a parity test guards this).
+
+export const SCORING_VERSION = '2.0';
+
+export const DIET_PENALTY = { vegan: 12, vegetarian: 8, pescatarian: 4, omnivore: 0 };
+const MAX_DIET_PENALTY = 12;
+
+export const THRESHOLD_LOW = 35;
+export const THRESHOLD_HIGH = 65;
+
+// Display category → breakdown group
+export const CATEGORY_GROUPS = {
+  'Energy & Fatigue': 'energy',
+  Energy: 'energy',
+  Fatigue: 'energy',
+  Neurological: 'neurological',
+  Mood: 'psychological',
+  Diet: 'diet',
+  'Diet Habits': 'diet',
+  'Digestive Health': 'digestive',
+  Medical: 'medical',
+  Lifestyle: 'lifestyle',
+  Sleep: 'lifestyle',
+  'Work Lifestyle': 'lifestyle',
+  Physical: 'physical',
+  'Female Health': 'female_health',
+};
+
+export const GROUP_INFO = {
+  energy:        { label: 'Energy & fatigue', desc: 'Tiredness, weakness and energy dips.' },
+  neurological:  { label: 'Nerves & brain', desc: 'Tingling, numbness, balance, focus and memory.' },
+  psychological: { label: 'Mood', desc: 'Low mood or irritability without a clear cause.' },
+  diet:          { label: 'Diet & intake', desc: 'How much B12 your food and supplements provide.' },
+  digestive:     { label: 'Digestion', desc: 'Gut symptoms that can reduce absorption.' },
+  medical:       { label: 'Medical & medicines', desc: 'Conditions and medicines that block absorption.' },
+  lifestyle:     { label: 'Lifestyle', desc: 'Sleep, stress, alcohol and daily routine.' },
+  physical:      { label: 'Physical signs', desc: 'Tongue, breathlessness and paleness.' },
+  female_health: { label: "Women's health", desc: 'Periods, pregnancy and related fatigue.' },
+};
+
+const round = (n) => Math.round(n);
+
+export const getRiskLevel = (percentage) => {
+  if (percentage < THRESHOLD_LOW) return 'LOW';
+  if (percentage < THRESHOLD_HIGH) return 'MEDIUM';
+  return 'HIGH';
+};
 
 /**
- * Calculate B12 deficiency risk from questionnaire answers
- * @param {Object} answers   { questionId: { id, score } }
- * @param {Array}  questions full question set used
- * @param {string} dietType  vegan | vegetarian | pescatarian | omnivore
- * @returns {{ score, level, percentage, breakdown, suggestions }}
+ * Core scoring — identical on client and server.
+ * @param {Array<{questionKey, category, weight, score, maxScore, answerValue}>} items
+ * @param {string} dietType
  */
-export const calculateRisk = (answers, questions, dietType) => {
-  const DIET_PENALTY = { vegan: 12, vegetarian: 8, pescatarian: 4, omnivore: 0 };
+export const scoreItems = (items, dietType) => {
+  const diet = DIET_PENALTY[dietType] !== undefined ? dietType : 'omnivore';
+  const penalty = DIET_PENALTY[diet];
 
-  let totalScore    = DIET_PENALTY[dietType] || 0;
-  let maxPossible   = Object.values(DIET_PENALTY).reduce((a, b) => Math.max(a, b), 0);
+  let raw = penalty;
+  let max = MAX_DIET_PENALTY;
+  const groupScore = { diet: penalty };
+  const groupMax = { diet: MAX_DIET_PENALTY };
 
-  const breakdown = {
-    'Energy & Fatigue':   { score: 0, max: 0 },
-    'Neurological':       { score: 0, max: 0 },
-    'Mood':               { score: 0, max: 0 },
-    'Diet':               { score: 0, max: 0 },
-    'Lifestyle':          { score: 0, max: 0 },
-    'Work Lifestyle':     { score: 0, max: 0 },
-    'Female Health':      { score: 0, max: 0 },
-    'Physical':           { score: 0, max: 0 },
-    'Sleep':              { score: 0, max: 0 },
-    'Fatigue':            { score: 0, max: 0 },
-    'Digestive Health':   { score: 0, max: 0 },
-    'Diet Habits':        { score: 0, max: 0 },
-  };
-
-  questions.forEach((q) => {
-    const maxOptionScore = Math.max(...q.options.map((o) => o.score || 0));
-    const weighted = maxOptionScore * (q.weight || 1);
-    maxPossible += weighted;
-
-    if (breakdown[q.category] !== undefined) {
-      breakdown[q.category].max += weighted;
-    }
-
-    const answer = answers[q.id];
-    if (answer) {
-      const contribution = (answer.score || 0) * (q.weight || 1);
-      totalScore += contribution;
-      if (breakdown[q.category] !== undefined) {
-        breakdown[q.category].score += contribution;
-      }
-    }
+  items.forEach((it) => {
+    const w = Number(it.weight) || 1;
+    const got = (Number(it.score) || 0) * w;
+    const top = (Number(it.maxScore) || 0) * w;
+    raw += got;
+    max += top;
+    const g = CATEGORY_GROUPS[it.category] || 'lifestyle';
+    groupScore[g] = (groupScore[g] || 0) + got;
+    groupMax[g] = (groupMax[g] || 0) + top;
   });
 
-  const percentage = maxPossible > 0 ? Math.min(Math.round((totalScore / maxPossible) * 100), 100) : 0;
+  const percentage = max > 0 ? Math.min(100, round((raw / max) * 100)) : 0;
+  const breakdown = {};
+  Object.keys(groupMax).forEach((g) => {
+    breakdown[g] = groupMax[g] > 0 ? Math.min(100, round((groupScore[g] / groupMax[g]) * 100)) : 0;
+  });
 
-  let level;
-  if (percentage < 35)      level = 'LOW';
-  else if (percentage < 65) level = 'MEDIUM';
-  else                      level = 'HIGH';
-
-  const categoryPercentages = {};
-  for (const [cat, data] of Object.entries(breakdown)) {
-    const pct = data.max > 0 ? Math.min(100, Math.round((data.score / data.max) * 100)) : 0;
-    categoryPercentages[cat] = pct;
-    categoryPercentages[cat.toLowerCase()] = pct;
-  }
-
-  // Alias common short category names
-  categoryPercentages['diet'] = categoryPercentages['Diet'] ?? categoryPercentages['Diet Habits'] ?? 0;
-  categoryPercentages['energy'] = categoryPercentages['Energy & Fatigue'] ?? categoryPercentages['Fatigue'] ?? 0;
-  categoryPercentages['psychological'] = categoryPercentages['Mood'] ?? 0;
-  categoryPercentages['digestive'] = categoryPercentages['Digestive Health'] ?? 0;
-
-  const suggestions = getSuggestions(level, answers, dietType);
+  const level = getRiskLevel(percentage);
+  const answers = {};
+  items.forEach((it) => { answers[it.questionKey] = it.answerValue; });
 
   return {
-    score: totalScore,
-    maxPossible,
+    score: Math.round(raw * 100) / 100,
+    maxPossible: Math.round(max * 100) / 100,
     percentage,
     level,
-    breakdown: categoryPercentages,
-    rawBreakdown: breakdown,
-    suggestions,
+    breakdown,
+    suggestions: buildSuggestions(level, breakdown, diet, answers),
+    scoringVersion: SCORING_VERSION,
+    answeredCount: items.length,
   };
 };
 
-const getSuggestions = (level, answers, dietType) => {
-  const base = [
-    'Eat B12-rich foods: eggs, dairy, fish, or fortified cereals daily',
-    'Stay well-hydrated — dehydration worsens fatigue',
-    'Maintain a consistent sleep schedule of 7-9 hours',
-  ];
-
-  if (dietType === 'vegan' || dietType === 'vegetarian') {
-    base.unshift('Consider a B12 supplement — plant-based diets are naturally low in B12');
-    base.unshift('Look for B12-fortified plant milks and nutritional yeast');
-  }
+export const buildSuggestions = (level, breakdown, dietType, answers = {}) => {
+  const out = [];
+  const b = (k) => breakdown[k] || 0;
 
   if (level === 'HIGH') {
-    return [
-      '🩺 Consult a doctor and request a B12 blood test as soon as possible',
-      '💊 Ask about B12 injections or high-dose supplements',
-      '🥩 Immediately increase B12-rich food intake',
-      ...base,
-    ];
+    out.push('See a doctor and ask for a vitamin B12 blood test (serum B12 — your doctor may add MMA or homocysteine).');
+  } else if (level === 'MEDIUM') {
+    out.push('Consider a B12 blood test at your next check-up, especially if your symptoms continue.');
   }
 
-  if (level === 'MEDIUM') {
-    return [
-      '💊 Consider adding a B12 supplement to your routine',
-      '🥩 Increase your B12-rich food intake: meat, eggs, fish, dairy',
-      '📋 Schedule a routine blood test in the next 1-2 months',
-      ...base,
-    ];
+  if (b('neurological') >= 50) {
+    out.push('Tingling, numbness, balance or memory changes should be checked by a doctor soon — nerve symptoms from low B12 can become lasting if untreated.');
+  }
+  if (answers.absorption_conditions === 'yes') {
+    out.push('Conditions that affect absorption often need B12 injections or high-dose tablets — discuss this with your doctor.');
+  }
+  if (answers.medications === 'one' || answers.medications === 'both') {
+    out.push("Metformin and acid-reducing medicines can lower B12 over time. Ask your doctor about yearly B12 checks — don't stop them on your own.");
+  }
+  if (dietType === 'vegan' && answers.supplement_use !== 'yes_regular') {
+    out.push('On a vegan diet, a regular B12 supplement or B12-fortified foods every day is essential.');
+  } else if (dietType === 'vegetarian' && answers.supplement_use === 'no') {
+    out.push('Include dairy, eggs or fortified foods daily, or consider a B12 supplement.');
+  }
+  if (b('diet') >= 40) {
+    out.push('Add B12-rich foods to most meals — the Foods tab lists options that fit your diet.');
+  }
+  if (answers.alcohol === 'daily' || answers.alcohol === 'weekly') {
+    out.push('Cutting back on alcohol helps your stomach absorb B vitamins.');
+  }
+  if (b('energy') >= 50) {
+    out.push('Log the 30-second daily check-in — two weeks of energy and fatigue data is useful to show your doctor.');
+  }
+  if (level === 'LOW') {
+    out.push('Your answers suggest a low risk right now. Keep eating B12 sources regularly and recheck in 3–6 months.');
   }
 
-  return [
-    '✅ Your B12 levels appear healthy — keep it up!',
-    '🥗 Continue maintaining a balanced, nutrient-rich diet',
-    ...base,
-  ];
+  return [...new Set(out)].slice(0, 6);
 };
 
-/**
- * Compute weekly trend from daily check-in history
- * @param {Array} history  array of { date, answers } daily logs
- * @returns {{ energyTrend, fatigueTrend, moodTrend, sleepTrend }}
- */
-export const computeWeeklyTrend = (history) => {
-  const last7 = history.slice(-7);
-  const extract = (key) =>
-    last7.map((day) => {
-      const ans = day.answers?.[key];
-      return ans ? 5 - ans.score : null; // invert so 5 = best
-    });
+/** Turn the local answer map into scoring items using the question definitions. */
+export const toScoringItems = (answers, questions) =>
+  questions
+    .filter((q) => answers[q.id])
+    .map((q) => ({
+      questionKey: q.id,
+      category: q.category,
+      weight: q.weight || 1,
+      score: answers[q.id].score || 0,
+      maxScore: Math.max(...q.options.map((o) => o.score || 0)),
+      answerValue: answers[q.id].id,
+    }));
 
+/**
+ * Calculate B12 deficiency risk from questionnaire answers (guest / offline path).
+ * @param {Object} answers   { questionId: option }
+ * @param {Array}  questions question set shown to the user
+ * @param {string} dietType  vegan | vegetarian | pescatarian | omnivore
+ */
+export const calculateRisk = (answers, questions, dietType) =>
+  scoreItems(toScoringItems(answers, questions), dietType);
+
+/** Payload for POST /api/questionnaire/submit (scoring v2). */
+export const toServerAnswers = (answers, questions) =>
+  questions
+    .filter((q) => answers[q.id])
+    .map((q) => ({ questionKey: q.id, answerValue: answers[q.id].id }));
+
+/** Normalise a server assessment / submit response into the client result shape. */
+export const normalizeServerResult = (data) => {
+  if (!data) return null;
+  const pct = data.percentage ?? data.risk_percentage ?? data.normalized_score;
+  if (pct === undefined || pct === null) return null;
   return {
-    energyTrend:  extract('daily_energy'),
-    fatigueTrend: extract('daily_fatigue'),
-    moodTrend:    extract('daily_mood'),
-    sleepTrend:   extract('daily_sleep'),
-    labels:       last7.map((d) => {
-      const date = new Date(d.date);
-      return date.toLocaleDateString('en', { weekday: 'short' });
-    }),
+    percentage: Math.round(Number(pct) || 0),
+    level: String(data.risk_level || data.level || getRiskLevel(Number(pct))).toUpperCase(),
+    breakdown: data.breakdown || data.category_breakdown || {},
+    suggestions: data.suggestions || [],
+    completedAt: data.completed_at || data.completedAt || new Date().toISOString(),
+    assessmentId: data.assessment_id || data.id || null,
+    scoringVersion: data.scoring_version || SCORING_VERSION,
+    synced: true,
   };
 };
 
-/**
- * Calculate streak from daily log history
- */
-export const calculateStreak = (history) => {
-  if (!history || !history.length) return 0;
-  let streak = 0;
-  for (let i = history.length - 1; i >= 0; i--) {
-    const expected = new Date();
-    expected.setDate(expected.getDate() - (history.length - 1 - i));
-    if (new Date(history[i].date).toDateString() === expected.toDateString()) {
-      streak++;
-    } else {
-      break;
-    }
-  }
-  return streak;
+/** Local-date string (YYYY-MM-DD) in the user's own timezone. */
+export const localISODate = (d = new Date()) => {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
 };

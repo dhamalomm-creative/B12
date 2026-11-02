@@ -1,164 +1,188 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApp, addDailyLog, setStreak } from '@/context/AppContext';
-import { useAuth } from '@/context/AuthContext';
-import { calculateStreak } from '@/utils/riskCalculator';
+import { useApp, setStreak } from '@/context/AppContext';
 import { checkinAPI } from '@/services/api';
+import { localISODate } from '@/utils/riskCalculator';
 import AppShell from '@/components/layout/AppShell';
 import AuthGuard from '@/components/auth/AuthGuard';
 import styles from './page.module.css';
 
+// Values sent to the API (shared with the Android app):
+//   energy / mood / sleep / focus: 0 = very poor … 4 = excellent
+//   fatigue:                       0 = none      … 4 = severe
 const CHECKIN_QUESTIONS = [
   {
-    id: 'daily_energy',
+    id: 'energyScore',
     title: 'How is your energy today?',
-    nextText: 'Next: Fatigue, Mood, Sleep, Focus',
+    icon: '⚡',
     options: [
-      { value: 0, label: 'Very low' },
-      { value: 1, label: 'Low' },
-      { value: 2, label: 'Okay' },
-      { value: 3, label: 'Good' },
-      { value: 4, label: 'Great' },
+      { value: 0, label: 'Very low', emoji: '🪫' },
+      { value: 1, label: 'Low', emoji: '😔' },
+      { value: 2, label: 'Okay', emoji: '😐' },
+      { value: 3, label: 'Good', emoji: '🙂' },
+      { value: 4, label: 'Great', emoji: '🔋' },
     ],
   },
   {
-    id: 'daily_fatigue',
-    title: 'How is your fatigue level today?',
-    nextText: 'Next: Mood, Sleep, Focus',
+    id: 'fatigueScore',
+    title: 'How tired or fatigued do you feel?',
+    icon: '😴',
     options: [
-      { value: 0, label: 'Severe' },
-      { value: 1, label: 'High' },
-      { value: 2, label: 'Moderate' },
-      { value: 3, label: 'Low' },
-      { value: 4, label: 'None' },
+      { value: 4, label: 'Exhausted', emoji: '😫' },
+      { value: 3, label: 'Very tired', emoji: '🥱' },
+      { value: 2, label: 'Somewhat', emoji: '😐' },
+      { value: 1, label: 'A little', emoji: '🙂' },
+      { value: 0, label: 'Not at all', emoji: '😄' },
     ],
   },
   {
-    id: 'daily_mood',
+    id: 'moodScore',
     title: 'How is your mood today?',
-    nextText: 'Next: Sleep, Focus',
+    icon: '🧠',
     options: [
-      { value: 0, label: 'Very low' },
-      { value: 1, label: 'Low' },
-      { value: 2, label: 'Balanced' },
-      { value: 3, label: 'Positive' },
-      { value: 4, label: 'Great' },
+      { value: 0, label: 'Very low', emoji: '😢' },
+      { value: 1, label: 'Low', emoji: '😔' },
+      { value: 2, label: 'Balanced', emoji: '😐' },
+      { value: 3, label: 'Positive', emoji: '🙂' },
+      { value: 4, label: 'Great', emoji: '😄' },
     ],
   },
   {
-    id: 'daily_sleep',
-    title: 'How was your sleep quality last night?',
-    nextText: 'Next: Focus',
+    id: 'sleepScore',
+    title: 'How well did you sleep last night?',
+    icon: '🌙',
     options: [
-      { value: 0, label: 'Poor' },
-      { value: 1, label: 'Restless' },
-      { value: 2, label: 'Fair' },
-      { value: 3, label: 'Good' },
-      { value: 4, label: 'Excellent' },
+      { value: 0, label: 'Terrible', emoji: '😫' },
+      { value: 1, label: 'Restless', emoji: '😔' },
+      { value: 2, label: 'Fair', emoji: '😐' },
+      { value: 3, label: 'Good', emoji: '🙂' },
+      { value: 4, label: 'Excellent', emoji: '😴' },
     ],
   },
   {
-    id: 'daily_focus',
-    title: 'How was your mental clarity & focus today?',
-    nextText: 'Almost done!',
+    id: 'focusScore',
+    title: 'How clear and focused is your mind?',
+    icon: '🎯',
     options: [
-      { value: 0, label: 'Foggy' },
-      { value: 1, label: 'Low' },
-      { value: 2, label: 'Moderate' },
-      { value: 3, label: 'Sharp' },
-      { value: 4, label: 'Laser sharp' },
+      { value: 0, label: 'Foggy', emoji: '🌫️' },
+      { value: 1, label: 'Low', emoji: '😔' },
+      { value: 2, label: 'Moderate', emoji: '😐' },
+      { value: 3, label: 'Sharp', emoji: '🙂' },
+      { value: 4, label: 'Very sharp', emoji: '🎯' },
     ],
   },
 ];
 
+const tipFor = (a) => {
+  if ((a.fatigueScore ?? 0) >= 3 || (a.energyScore ?? 4) <= 1) {
+    return 'Low energy today. If tiredness lasts more than two weeks, mention it to your doctor and ask about a B12 test.';
+  }
+  if ((a.sleepScore ?? 4) <= 1) {
+    return 'Rough night. A consistent bedtime and less screen time in the last hour can help — poor sleep makes fatigue feel worse.';
+  }
+  if ((a.focusScore ?? 4) <= 1) {
+    return 'Brain fog can have many causes, including low B12. Logging daily helps you spot whether it keeps coming back.';
+  }
+  return 'Nice work. Small daily logs add up — after a week you’ll start to see your own patterns on the Progress page.';
+};
+
 export default function CheckInPage() {
-  const { state, dispatch } = useApp();
-  const { isAuthenticated } = useAuth();
+  const { dispatch } = useApp();
   const router = useRouter();
 
-  const [currentIdx, setCurrentIdx] = useState(0);
+  const [idx, setIdx] = useState(0);
   const [answers, setAnswers] = useState({});
-  const [selectedVal, setSelectedVal] = useState(null);
-  const [done, setDone] = useState(false);
-  const [serverStreak, setServerStreak] = useState(null);
+  const [notes, setNotes] = useState('');
+  const [phase, setPhase] = useState('asking'); // asking | review | saving | done
+  const [error, setError] = useState('');
+  const [alreadyToday, setAlreadyToday] = useState(false);
+  const [streak, setStreakState] = useState(null);
+  const startedAt = useRef(Date.now());
+  const advanceTimer = useRef(null);
 
-  const q = CHECKIN_QUESTIONS[currentIdx];
+  // Has the user already checked in today?
+  useEffect(() => {
+    checkinAPI.getHistory(2)
+      .then((d) => {
+        const today = localISODate();
+        const todays = (d?.logs || []).find((l) => l.checkin_date === today);
+        if (todays) setAlreadyToday(true);
+      })
+      .catch(() => {});
+    return () => clearTimeout(advanceTimer.current);
+  }, []);
+
+  const q = CHECKIN_QUESTIONS[idx];
   const total = CHECKIN_QUESTIONS.length;
-  const isLast = currentIdx === total - 1;
 
-  const selectOption = async (opt) => {
-    setSelectedVal(opt.value);
-    const updated = { ...answers, [q.id]: opt };
-    setAnswers(updated);
-
-    // Auto move on after slight feedback delay
-    setTimeout(async () => {
-      if (isLast) {
-        const log = {
-          date: new Date().toISOString(),
-          answers: updated,
-          score: Object.values(updated).reduce((s, a) => s + (a?.value || 0), 0),
-        };
-        dispatch(addDailyLog(log));
-        const newLocalStreak = calculateStreak([...state.dailyLogs, log]);
-        dispatch(setStreak(newLocalStreak));
-
-        if (isAuthenticated) {
-          try {
-            const data = await checkinAPI.submitDaily({
-              energyScore: updated.daily_energy?.value ?? 3,
-              fatigueScore: updated.daily_fatigue?.value ?? 3,
-              moodScore: updated.daily_mood?.value ?? 3,
-              sleepScore: updated.daily_sleep?.value ?? 3,
-              focusScore: updated.daily_focus?.value ?? 3,
-            });
-            if (data?.streak) {
-              setServerStreak(data.streak);
-              dispatch(setStreak(data.streak.current_streak));
-              dispatch({ type: 'SET_SERVER_STREAK', payload: data.streak });
-            }
-          } catch (e) {
-            console.warn('Checkin sync error:', e);
-          }
-        }
-
-        setDone(true);
-      } else {
-        setCurrentIdx(i => i + 1);
-        setSelectedVal(null);
-      }
-    }, 280);
+  const select = (opt) => {
+    if (phase !== 'asking') return;
+    setAnswers((prev) => ({ ...prev, [q.id]: opt.value }));
+    clearTimeout(advanceTimer.current);
+    advanceTimer.current = setTimeout(() => {
+      if (idx < total - 1) setIdx((i) => i + 1);
+      else setPhase('review');
+    }, 260);
   };
 
-  if (done) {
-    const finalStreak = serverStreak?.current_streak || (state.streak > 0 ? state.streak : 1);
+  const back = () => {
+    clearTimeout(advanceTimer.current);
+    if (phase === 'review') { setPhase('asking'); setIdx(total - 1); return; }
+    if (idx > 0) setIdx((i) => i - 1);
+  };
+
+  const save = async () => {
+    setError('');
+    setPhase('saving');
+    try {
+      const data = await checkinAPI.submitDaily({
+        ...answers,
+        notes: notes.trim() || undefined,
+        durationSeconds: Math.min(3600, Math.round((Date.now() - startedAt.current) / 1000)),
+        localDate: localISODate(),
+      });
+      if (data?.streak) {
+        setStreakState(data.streak);
+        dispatch(setStreak(data.streak));
+      }
+      setPhase('done');
+    } catch (err) {
+      setError(err.message || 'Could not save your check-in. Please try again.');
+      setPhase('review');
+    }
+  };
+
+  if (phase === 'done') {
+    const current = streak?.current_streak || 1;
     return (
       <AuthGuard>
         <AppShell>
           <div className={styles.checkinPage}>
             <div className={styles.completionCard}>
-              <h1 className={styles.compTitle}>Check-in Complete!</h1>
-              <p className={styles.compSubtitle}>
-                You&apos;re now on a {finalStreak}-day streak. Keep it going!
-              </p>
+              <div className={styles.doneIcon} aria-hidden="true">✓</div>
+              <h1 className={styles.compTitle}>{alreadyToday ? 'Check-in updated' : 'Check-in saved'}</h1>
               <div className={styles.streakPill}>
-                <span>🔥</span>
-                <span className={styles.streakNum}>{finalStreak} {finalStreak === 1 ? 'day' : 'days'}</span>
+                <span aria-hidden="true">🔥</span>
+                <span>{current}-day streak</span>
               </div>
+              <div className={styles.summaryRow}>
+                {CHECKIN_QUESTIONS.map((cq) => {
+                  const opt = cq.options.find((o) => o.value === answers[cq.id]);
+                  return (
+                    <div key={cq.id} className={styles.summaryItem}>
+                      <span aria-hidden="true">{opt?.emoji}</span>
+                      <small>{cq.icon} {opt?.label}</small>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className={styles.tip}>{tipFor(answers)}</p>
               <div className={styles.compActions}>
-                <button
-                  type="button"
-                  className={styles.viewProgressBtn}
-                  onClick={() => router.push('/progress')}
-                >
-                  View progress
+                <button type="button" className={styles.viewProgressBtn} onClick={() => router.push('/progress')}>
+                  View my trends
                 </button>
-                <button
-                  type="button"
-                  className={styles.backDashBtn}
-                  onClick={() => router.push('/dashboard')}
-                >
+                <button type="button" className={styles.backDashBtn} onClick={() => router.push('/dashboard')}>
                   Back to dashboard
                 </button>
               </div>
@@ -169,51 +193,104 @@ export default function CheckInPage() {
     );
   }
 
+  const isReview = phase === 'review' || phase === 'saving';
+
   return (
     <AuthGuard>
       <AppShell>
         <div className={styles.checkinPage}>
           <header className={styles.header}>
             <h1 className={styles.title}>Daily check-in</h1>
-            <p className={styles.subtitle}>One tap per question. It moves on by itself.</p>
+            <p className={styles.subtitle}>Five taps, about 30 seconds. Answer for how you feel today.</p>
           </header>
+
+          {alreadyToday && (
+            <div className={styles.notice}>
+              You&apos;ve already checked in today — submitting again will update today&apos;s entry.
+            </div>
+          )}
 
           <div className={styles.progressWrap}>
             <p className={styles.counterText}>
-              Question {currentIdx + 1} of {total}
+              {isReview ? 'Review' : `Question ${idx + 1} of ${total}`}
             </p>
             <div className={styles.segmentedTrack}>
-              {CHECKIN_QUESTIONS.map((item, idx) => (
+              {CHECKIN_QUESTIONS.map((item, i) => (
                 <span
                   key={item.id}
-                  className={`${styles.segmentDash} ${idx <= currentIdx ? styles.dashActive : ''}`}
+                  className={`${styles.segmentDash} ${(isReview || i <= idx) ? styles.dashActive : ''}`}
                 />
               ))}
             </div>
           </div>
 
-          <div className={styles.card}>
-            <h2 className={styles.questionText}>{q.title}</h2>
-
-            <div className={styles.ratingRow}>
-              {q.options.map((opt) => {
-                const isSelected = selectedVal === opt.value;
-                return (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    className={`${styles.ratingButton} ${isSelected ? styles.ratingActive : ''}`}
-                    onClick={() => selectOption(opt)}
-                  >
-                    <span className={styles.ratingNumber}>{opt.value}</span>
-                    <span className={styles.ratingLabel}>{opt.label}</span>
-                  </button>
-                );
-              })}
+          {!isReview ? (
+            <div className={styles.card}>
+              <h2 className={styles.questionText}>
+                <span aria-hidden="true">{q.icon}</span> {q.title}
+              </h2>
+              <div className={styles.ratingRow} role="radiogroup" aria-label={q.title}>
+                {q.options.map((opt) => {
+                  const isSel = answers[q.id] === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={isSel}
+                      className={`${styles.ratingButton} ${isSel ? styles.ratingActive : ''}`}
+                      onClick={() => select(opt)}
+                    >
+                      <span className={styles.ratingEmoji} aria-hidden="true">{opt.emoji}</span>
+                      <span className={styles.ratingLabel}>{opt.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className={styles.cardFooter}>
+                <button type="button" className={styles.textBtn} onClick={back} disabled={idx === 0}>
+                  ← Back
+                </button>
+                <span className={styles.nextHint}>Tap an answer to continue</span>
+              </div>
             </div>
-
-            <p className={styles.nextHint}>{q.nextText}</p>
-          </div>
+          ) : (
+            <div className={styles.card}>
+              <h2 className={styles.questionText}>Anything else today?</h2>
+              <ul className={styles.reviewList}>
+                {CHECKIN_QUESTIONS.map((cq, i) => {
+                  const opt = cq.options.find((o) => o.value === answers[cq.id]);
+                  return (
+                    <li key={cq.id}>
+                      <span>{cq.icon} {cq.title}</span>
+                      <button type="button" className={styles.reviewAnswer} onClick={() => { setPhase('asking'); setIdx(i); }}>
+                        {opt?.emoji} {opt?.label} <small>Edit</small>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+              <label htmlFor="notes" className={styles.notesLabel}>
+                Notes <span>(optional — e.g. headache, skipped meals, started a supplement)</span>
+              </label>
+              <textarea
+                id="notes"
+                className={styles.notes}
+                rows={3}
+                maxLength={500}
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="How was your day?"
+              />
+              {error && <p className={styles.error} role="alert">{error}</p>}
+              <div className={styles.cardFooter}>
+                <button type="button" className={styles.textBtn} onClick={back}>← Back</button>
+                <button type="button" className={styles.viewProgressBtn} onClick={save} disabled={phase === 'saving'}>
+                  {phase === 'saving' ? 'Saving…' : 'Save check-in'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </AppShell>
     </AuthGuard>

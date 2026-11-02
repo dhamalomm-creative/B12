@@ -1,367 +1,299 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useApp } from '@/context/AppContext';
+import Link from 'next/link';
+import { useApp, setStreak, setRiskResult } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { usersAPI } from '@/services/api';
+import { usersAPI, checkinAPI, questionnaireAPI, setToken } from '@/services/api';
+import { normalizeServerResult } from '@/utils/riskCalculator';
 import AppShell from '@/components/layout/AppShell';
 import AuthGuard from '@/components/auth/AuthGuard';
+import { toast } from '@/components/UI';
 import styles from './page.module.css';
+
+const DIETS = [
+  { id: 'vegan', label: 'Vegan' },
+  { id: 'vegetarian', label: 'Vegetarian' },
+  { id: 'pescatarian', label: 'Pescatarian' },
+  { id: 'omnivore', label: 'Non-vegetarian' },
+];
+const GENDERS = [
+  { id: 'female', label: 'Female' },
+  { id: 'male', label: 'Male' },
+  { id: 'other', label: 'Prefer not to say' },
+];
+const labelOf = (list, id) => list.find((x) => x.id === id)?.label || 'Not set';
+
+const passwordProblems = (pw) => {
+  if (pw.length < 8) return 'New password must be at least 8 characters.';
+  if (!/[A-Z]/.test(pw)) return 'New password needs at least one uppercase letter.';
+  if (!/[0-9]/.test(pw)) return 'New password needs at least one number.';
+  return '';
+};
 
 export default function ProfilePage() {
   const { state, dispatch } = useApp();
-  const { user: authUser, logout, updateUser } = useAuth();
+  const { user, logout, updateProfile } = useAuth();
   const router = useRouter();
 
-  const { user, guestName, riskResult, serverStreak, dailyLogs } = state;
-  const displayName = authUser?.name || user?.name || guestName || authUser?.email?.split('@')[0] || 'Friend';
-  const email = authUser?.email || '—';
-  const streak = serverStreak?.current_streak ?? state.streak ?? 0;
-  const totalCheckins = serverStreak?.total_checkins ?? dailyLogs.length ?? 0;
-  const hasAssessment = !!riskResult;
-  const riskPct = hasAssessment ? (riskResult.percentage ?? 0) : null;
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [form, setForm] = useState({ name: '', age: '', gender: '', dietType: '' });
+  const [formError, setFormError] = useState('');
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const [editName, setEditName] = useState(displayName);
-  const [editAge, setEditAge] = useState(user?.age || authUser?.age || '');
-  const [editDiet, setEditDiet] = useState(user?.dietType || authUser?.dietType || 'vegetarian');
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pw, setPw] = useState({ current: '', next: '', confirm: '' });
+  const [pwMsg, setPwMsg] = useState({ type: '', text: '' });
+  const [pwSaving, setPwSaving] = useState(false);
 
-  // Change password state
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [passwordMsg, setPasswordMsg] = useState({ type: '', text: '' });
-  const [savingPassword, setSavingPassword] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deletePw, setDeletePw] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
-    setEditName(authUser?.name || user?.name || '');
-    setEditAge(authUser?.age || user?.age || '');
-    setEditDiet(authUser?.dietType || user?.dietType || 'vegetarian');
-  }, [authUser, user]);
+    if (!user) return;
+    setForm({
+      name: user.name || '',
+      age: user.age ? String(user.age) : '',
+      gender: user.gender || '',
+      dietType: user.dietType || '',
+    });
+  }, [user]);
 
-  const handleSignOut = async () => {
+  // Make sure stats are fresh even when this is the first page opened
+  useEffect(() => {
+    checkinAPI.getHistory(1).then((d) => { if (d?.streak) dispatch(setStreak(d.streak)); }).catch(() => {});
+    questionnaireAPI.getLatest().then((d) => {
+      if (d?.assessment) dispatch(setRiskResult(normalizeServerResult(d.assessment)));
+    }).catch(() => {});
+  }, [dispatch]);
+
+  const displayName = user?.name || user?.email?.split('@')[0] || 'Your profile';
+  const streak = state.serverStreak?.current_streak ?? 0;
+  const risk = state.riskResult;
+
+  const saveProfile = async (e) => {
+    e.preventDefault();
+    setFormError('');
+    const ageNum = form.age ? parseInt(form.age, 10) : null;
+    if (form.age && (Number.isNaN(ageNum) || ageNum < 1 || ageNum > 120)) {
+      setFormError('Please enter an age between 1 and 120.');
+      return;
+    }
+    setSaving(true);
+    try {
+      await updateProfile({
+        name: form.name.trim(),
+        ...(ageNum ? { age: ageNum } : {}),
+        ...(form.gender ? { gender: form.gender } : {}),
+        ...(form.dietType ? { dietType: form.dietType } : {}),
+      });
+      toast('Profile updated', 'success');
+      setEditing(false);
+    } catch (err) {
+      setFormError(err.message || 'Could not save your profile.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const changePassword = async (e) => {
+    e.preventDefault();
+    setPwMsg({ type: '', text: '' });
+    const problem = passwordProblems(pw.next);
+    if (!pw.current) { setPwMsg({ type: 'error', text: 'Enter your current password.' }); return; }
+    if (problem) { setPwMsg({ type: 'error', text: problem }); return; }
+    if (pw.next !== pw.confirm) { setPwMsg({ type: 'error', text: 'New passwords do not match.' }); return; }
+    setPwSaving(true);
+    try {
+      await usersAPI.changePassword(pw.current, pw.next);
+      setPw({ current: '', next: '', confirm: '' });
+      setPwOpen(false);
+      toast('Password updated', 'success');
+    } catch (err) {
+      setPwMsg({ type: 'error', text: err.message || 'Could not update password.' });
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
+  const deleteAccount = async (e) => {
+    e.preventDefault();
+    setDeleteError('');
+    if (deleteConfirm.trim().toUpperCase() !== 'DELETE') {
+      setDeleteError('Type DELETE to confirm.');
+      return;
+    }
+    setDeleting(true);
+    try {
+      await usersAPI.deleteAccount(deletePw);
+      // Wipe everything stored on this device, then hard-navigate (a full reload
+      // guarantees no in-memory health data survives).
+      setToken(null);
+      try {
+        localStorage.removeItem('b12_app_state');
+        localStorage.removeItem('b12_questionnaire_progress');
+      } catch { /* ignore */ }
+      window.location.replace('/?deleted=1');
+    } catch (err) {
+      setDeleteError(err.message || 'Could not delete your account.');
+      setDeleting(false);
+    }
+  };
+
+  const signOut = async () => {
     await logout();
-    dispatch({ type: 'RESET' });
     router.replace('/auth?mode=login');
   };
-
-  const handleSaveProfile = async () => {
-    setIsSaving(true);
-    const parsedAge = parseInt(editAge);
-    const validAge = !isNaN(parsedAge) && parsedAge > 0 && parsedAge <= 120 ? parsedAge : undefined;
-    const cleanDiet = (editDiet || 'vegetarian').trim().toLowerCase();
-
-    const profilePayload = {
-      name: editName.trim(),
-      ...(validAge ? { age: validAge } : {}),
-      ...(cleanDiet ? { dietType: cleanDiet } : {}),
-    };
-
-    try {
-      await usersAPI.updateProfile(profilePayload);
-    } catch (e) {
-      console.warn('Backend profile update note:', e.message);
-    }
-
-    dispatch({
-      type: 'SET_USER',
-      payload: {
-        ...state.user,
-        name: editName.trim(),
-        age: editAge,
-        dietType: cleanDiet,
-      },
-    });
-
-    if (updateUser) {
-      updateUser({
-        name: editName.trim(),
-        age: editAge,
-        dietType: cleanDiet,
-      });
-    }
-
-    setIsSaving(false);
-    setIsEditing(false);
-  };
-
-  const handleChangePassword = async (e) => {
-    e.preventDefault();
-    setPasswordMsg({ type: '', text: '' });
-
-    if (!currentPassword) {
-      setPasswordMsg({ type: 'error', text: 'Current password is required.' });
-      return;
-    }
-    if (newPassword.length < 8) {
-      setPasswordMsg({ type: 'error', text: 'New password must be at least 8 characters.' });
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setPasswordMsg({ type: 'error', text: 'New passwords do not match.' });
-      return;
-    }
-
-    setSavingPassword(true);
-    try {
-      await usersAPI.changePassword(currentPassword, newPassword);
-      setPasswordMsg({ type: 'success', text: 'Password successfully updated!' });
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
-      setTimeout(() => {
-        setShowPasswordModal(false);
-        setPasswordMsg({ type: '', text: '' });
-      }, 1800);
-    } catch (err) {
-      setPasswordMsg({ type: 'error', text: err.message || 'Failed to update password.' });
-    } finally {
-      setSavingPassword(false);
-    }
-  };
-
-  const formatAge = (a) => {
-    if (!a) return 'Not set';
-    if (a === '18-24' || a === '18 to 24') return '18 to 24';
-    if (a === 'under18' || a === '<18') return 'Under 18';
-    if (a === '25-40') return '25 to 40';
-    if (a === '41-60') return '41 to 60';
-    if (a === '60+') return '60+';
-    return String(a);
-  };
-
-  const formatDiet = (d) => {
-    if (!d) return 'Not set';
-    return d.charAt(0).toUpperCase() + d.slice(1);
-  };
-
-  const initialLetter = (displayName || 'U').trim().charAt(0).toUpperCase();
 
   return (
     <AuthGuard>
       <AppShell>
-        <div className={styles.profilePage}>
-          {/* User Identity Header */}
-          <div className={styles.userHeader}>
-            <div className={styles.avatarCircle}>
-              <span>{initialLetter}</span>
+        <div className={styles.page}>
+          <header className={styles.identity}>
+            <div className={styles.avatar} aria-hidden="true">{displayName.charAt(0).toUpperCase()}</div>
+            <div>
+              <h1 className={styles.name}>{displayName}</h1>
+              <p className={styles.email}>{user?.email}</p>
             </div>
-            <div className={styles.userInfo}>
-              <h1 className={styles.userName}>{displayName}</h1>
-              <p className={styles.userEmail}>{email}</p>
-            </div>
-          </div>
+          </header>
 
-          {/* 3 Top Stat Cards */}
-          <div className={styles.statCardsRow}>
-            {/* Streak */}
-            <div className={styles.statCardGreen}>
+          <div className={styles.stats}>
+            <div className={`${styles.stat} ${styles.statGreen}`}>
               <p className={styles.statLabel}>Streak</p>
-              <h3 className={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</h3>
-              <p className={styles.statFoot}>{streak > 0 ? 'Active streak' : 'No streak yet'}</p>
+              <p className={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</p>
             </div>
-
-            {/* Check-ins */}
-            <div className={styles.statCardYellow}>
-              <p className={styles.statLabel}>Check-ins</p>
-              <h3 className={styles.statValue}>{totalCheckins}</h3>
-              <p className={styles.statFoot}>Total recorded</p>
+            <div className={`${styles.stat} ${styles.statBlue}`}>
+              <p className={styles.statLabel}>Latest B12 risk</p>
+              <p className={styles.statValue}>{risk ? `${risk.percentage}%` : '—'}</p>
             </div>
-
-            {/* B12 score */}
-            <div className={styles.statCardBlue}>
-              <p className={styles.statLabel}>B12 score</p>
-              <h3 className={styles.statValue}>
-                {riskPct !== null ? `${riskPct}%` : 'N/A'}
-              </h3>
-              <p className={styles.statFoot}>
-                {hasAssessment ? `${riskResult.level || 'Low'} risk` : 'Assessment pending'}
+            <div className={`${styles.stat} ${styles.statYellow}`}>
+              <p className={styles.statLabel}>Member since</p>
+              <p className={styles.statValue}>
+                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '—'}
               </p>
             </div>
           </div>
 
-          {/* Profile Details Card */}
-          <div className={styles.detailsCard}>
-            <h3 className={styles.detailsTitle}>Profile details</h3>
-
-            {isEditing ? (
-              <div className={styles.editForm}>
-                <div className={styles.editRow}>
-                  <label className={styles.editLabel}>Name</label>
-                  <input
-                    type="text"
-                    className={styles.editInput}
-                    value={editName}
-                    placeholder="Your name"
-                    onChange={(e) => setEditName(e.target.value)}
-                  />
-                </div>
-
-                <div className={styles.editRow}>
-                  <label className={styles.editLabel}>Age range or numeric age</label>
-                  <input
-                    type="text"
-                    className={styles.editInput}
-                    value={editAge}
-                    placeholder="e.g. 24 or 18-24"
-                    onChange={(e) => setEditAge(e.target.value)}
-                  />
-                </div>
-
-                <div className={styles.editRow}>
-                  <label className={styles.editLabel}>Diet</label>
-                  <select
-                    className={styles.editInput}
-                    value={editDiet}
-                    onChange={(e) => setEditDiet(e.target.value)}
-                  >
-                    <option value="vegan">Vegan</option>
-                    <option value="vegetarian">Vegetarian</option>
-                    <option value="pescatarian">Pescatarian</option>
-                    <option value="omnivore">Omnivore</option>
-                  </select>
-                </div>
-
-                <div className={styles.editActions}>
-                  <button
-                    type="button"
-                    className={styles.saveProfileBtn}
-                    onClick={handleSaveProfile}
-                    disabled={isSaving}
-                  >
-                    {isSaving ? 'Saving…' : 'Save changes'}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.cancelBtn}
-                    onClick={() => setIsEditing(false)}
-                    disabled={isSaving}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <div className={styles.detailsList}>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Name</span>
-                  <span className={styles.detailValue}>{displayName}</span>
-                </div>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Email</span>
-                  <span className={styles.detailValue}>{email}</span>
-                </div>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Age</span>
-                  <span className={styles.detailValue}>{formatAge(authUser?.age || user?.age)}</span>
-                </div>
-                <div className={styles.detailRow}>
-                  <span className={styles.detailLabel}>Diet</span>
-                  <span className={styles.detailValue}>{formatDiet(authUser?.dietType || user?.dietType)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Change Password Box (when active) */}
-          {showPasswordModal && (
-            <div className={styles.detailsCard} style={{ borderLeft: '4px solid var(--primary)' }}>
-              <h3 className={styles.detailsTitle}>Change password</h3>
-              {passwordMsg.text && (
-                <p style={{
-                  fontSize: '13.5px',
-                  padding: '8px 12px',
-                  borderRadius: '8px',
-                  backgroundColor: passwordMsg.type === 'error' ? '#FCECE3' : '#E5EFE7',
-                  color: passwordMsg.type === 'error' ? '#D95338' : '#2E7D4E',
-                  fontWeight: 500,
-                }}>
-                  {passwordMsg.text}
-                </p>
+          {/* Profile details */}
+          <section className={styles.card} aria-labelledby="details-h">
+            <div className={styles.cardHead}>
+              <h2 id="details-h" className={styles.cardTitle}>Profile details</h2>
+              {!editing && (
+                <button type="button" className={styles.linkBtn} onClick={() => setEditing(true)}>Edit</button>
               )}
-              <form onSubmit={handleChangePassword} className={styles.editForm}>
-                <div className={styles.editRow}>
-                  <label className={styles.editLabel}>Current password</label>
-                  <input
-                    type="password"
-                    className={styles.editInput}
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    required
-                  />
+            </div>
+            <p className={styles.cardSub}>Used to personalise your questions and food suggestions.</p>
+
+            {editing ? (
+              <form className={styles.form} onSubmit={saveProfile}>
+                <label className={styles.field}>
+                  <span>Name</span>
+                  <input value={form.name} maxLength={80} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                </label>
+                <label className={styles.field}>
+                  <span>Age</span>
+                  <input type="number" inputMode="numeric" min={1} max={120} value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
+                </label>
+                <label className={styles.field}>
+                  <span>Gender</span>
+                  <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
+                    <option value="">Select…</option>
+                    {GENDERS.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+                  </select>
+                </label>
+                <label className={styles.field}>
+                  <span>Diet</span>
+                  <select value={form.dietType} onChange={(e) => setForm({ ...form, dietType: e.target.value })}>
+                    <option value="">Select…</option>
+                    {DIETS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+                  </select>
+                </label>
+                {formError && <p className={styles.error} role="alert">{formError}</p>}
+                <div className={styles.formActions}>
+                  <button type="submit" className={styles.primaryBtn} disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
+                  <button type="button" className={styles.ghostBtn} onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
                 </div>
-                <div className={styles.editRow}>
-                  <label className={styles.editLabel}>New password</label>
-                  <input
-                    type="password"
-                    className={styles.editInput}
-                    value={newPassword}
-                    placeholder="At least 8 characters"
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className={styles.editRow}>
-                  <label className={styles.editLabel}>Confirm new password</label>
-                  <input
-                    type="password"
-                    className={styles.editInput}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className={styles.editActions}>
-                  <button
-                    type="submit"
-                    className={styles.saveProfileBtn}
-                    disabled={savingPassword}
-                  >
-                    {savingPassword ? 'Updating…' : 'Update password'}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.cancelBtn}
-                    onClick={() => {
-                      setShowPasswordModal(false);
-                      setPasswordMsg({ type: '', text: '' });
-                    }}
-                  >
-                    Cancel
-                  </button>
+                <p className={styles.hint}>Changing age, gender or diet updates the questions in your next assessment.</p>
+              </form>
+            ) : (
+              <dl className={styles.details}>
+                <div><dt>Name</dt><dd>{user?.name || 'Not set'}</dd></div>
+                <div><dt>Email</dt><dd>{user?.email}</dd></div>
+                <div><dt>Age</dt><dd>{user?.age || 'Not set'}</dd></div>
+                <div><dt>Gender</dt><dd>{labelOf(GENDERS, user?.gender)}</dd></div>
+                <div><dt>Diet</dt><dd>{labelOf(DIETS, user?.dietType)}</dd></div>
+              </dl>
+            )}
+          </section>
+
+          {/* Security */}
+          <section className={styles.card} aria-labelledby="security-h">
+            <div className={styles.cardHead}>
+              <h2 id="security-h" className={styles.cardTitle}>Password & security</h2>
+              {!pwOpen && (
+                <button type="button" className={styles.linkBtn} onClick={() => setPwOpen(true)}>Change password</button>
+              )}
+            </div>
+            {pwOpen && (
+              <form className={styles.form} onSubmit={changePassword}>
+                <label className={styles.field}>
+                  <span>Current password</span>
+                  <input type="password" autoComplete="current-password" value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} />
+                </label>
+                <label className={styles.field}>
+                  <span>New password</span>
+                  <input type="password" autoComplete="new-password" maxLength={128} value={pw.next} onChange={(e) => setPw({ ...pw, next: e.target.value })} />
+                  <small>8+ characters with an uppercase letter and a number.</small>
+                </label>
+                <label className={styles.field}>
+                  <span>Confirm new password</span>
+                  <input type="password" autoComplete="new-password" maxLength={128} value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} />
+                </label>
+                {pwMsg.text && <p className={pwMsg.type === 'error' ? styles.error : styles.success} role="alert">{pwMsg.text}</p>}
+                <div className={styles.formActions}>
+                  <button type="submit" className={styles.primaryBtn} disabled={pwSaving}>{pwSaving ? 'Updating…' : 'Update password'}</button>
+                  <button type="button" className={styles.ghostBtn} onClick={() => { setPwOpen(false); setPwMsg({ type: '', text: '' }); }}>Cancel</button>
                 </div>
               </form>
-            </div>
-          )}
+            )}
+            <button type="button" className={styles.signOut} onClick={signOut}>Sign out</button>
+          </section>
 
-          {/* Action Buttons Row */}
-          {!isEditing && (
-            <div className={styles.actionButtonsRow}>
-              <button
-                type="button"
-                className={styles.editBtn}
-                onClick={() => setIsEditing(true)}
-              >
-                Edit profile
+          {/* Privacy */}
+          <section className={styles.card} aria-labelledby="privacy-h">
+            <h2 id="privacy-h" className={styles.cardTitle}>Your data & privacy</h2>
+            <p className={styles.cardSub}>
+              Your health answers are private to your account and never sold. Read our{' '}
+              <Link href="/privacy">Privacy Policy</Link> and <Link href="/terms">Terms</Link>.
+            </p>
+            {!deleteOpen ? (
+              <button type="button" className={styles.dangerLink} onClick={() => setDeleteOpen(true)}>
+                Delete my account and data
               </button>
-              <button
-                type="button"
-                className={styles.outlineBtn}
-                onClick={() => setShowPasswordModal(prev => !prev)}
-              >
-                {showPasswordModal ? 'Close password form' : 'Change password'}
-              </button>
-              <button
-                type="button"
-                className={styles.outlineBtn}
-                onClick={handleSignOut}
-              >
-                Sign out
-              </button>
-            </div>
-          )}
+            ) : (
+              <form className={styles.dangerZone} onSubmit={deleteAccount}>
+                <p>
+                  This permanently deletes your account, assessments, check-ins and BMI history. This can&apos;t be undone.
+                </p>
+                <label className={styles.field}>
+                  <span>Your password</span>
+                  <input type="password" autoComplete="current-password" value={deletePw} onChange={(e) => setDeletePw(e.target.value)} required />
+                </label>
+                <label className={styles.field}>
+                  <span>Type DELETE to confirm</span>
+                  <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} autoComplete="off" />
+                </label>
+                {deleteError && <p className={styles.error} role="alert">{deleteError}</p>}
+                <div className={styles.formActions}>
+                  <button type="submit" className={styles.dangerBtn} disabled={deleting}>{deleting ? 'Deleting…' : 'Permanently delete'}</button>
+                  <button type="button" className={styles.ghostBtn} onClick={() => { setDeleteOpen(false); setDeleteError(''); }}>Cancel</button>
+                </div>
+              </form>
+            )}
+          </section>
         </div>
       </AppShell>
     </AuthGuard>

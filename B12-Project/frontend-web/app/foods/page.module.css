@@ -1,166 +1,130 @@
-.foodsPage {
-  max-width: 1040px;
+.page {
+  max-width: 1080px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
+  gap: 18px;
 }
 
-.header {
-  margin-bottom: 24px;
-}
+.title { font-size: clamp(26px, 3vw, 34px); letter-spacing: -0.6px; }
+.subtitle { color: var(--text-secondary); font-size: 15px; margin-top: 6px; max-width: 680px; }
 
-.title {
-  font-family: var(--font-headline);
-  font-size: 32px;
-  font-weight: 750;
-  letter-spacing: -0.5px;
-  color: var(--text-primary);
-  margin-bottom: 6px;
-}
+.controls { display: flex; flex-direction: column; gap: 12px; }
 
-.subtitle {
-  font-size: 14.5px;
-  color: var(--text-secondary);
-}
-
-.filterRow {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-bottom: 24px;
-}
-
+.filterRow { display: flex; gap: 8px; flex-wrap: wrap; }
 .filterPill {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 20px;
+  padding: 8px 16px;
   border-radius: var(--radius-full);
-  border: 1px solid #DFD7CB;
-  background-color: #FFFFFF;
-  color: var(--text-primary);
+  border: 1px solid var(--border);
+  background: #fff;
   font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.filterPill:hover {
-  background-color: #F8F5EE;
-}
-
-.filterPillActive {
-  background-color: var(--primary, #1E3A2B) !important;
-  border-color: var(--primary, #1E3A2B) !important;
-  color: #FFFFFF !important;
   font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.filterPill:hover { background: var(--bg-deep); }
+.filterPillActive, .filterPillActive:hover { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+.searchRow { display: flex; gap: 10px; }
+.search, .sort {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 11px 14px;
+  font: inherit;
+  font-size: 14.5px;
+  background: #fff;
+  color: var(--text-primary);
+}
+.search { flex: 1; min-width: 0; }
+.search:focus, .sort:focus { outline: none; border-color: var(--primary); }
+
+.callout {
+  padding: 14px 18px;
+  border-radius: 16px;
+  background: var(--pastel-yellow);
+  font-size: 14px;
+  line-height: 1.55;
 }
 
-.bmiStatusRow {
+.bmiRow {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  margin-bottom: 24px;
-  padding: 4px 0;
-}
-
-.bmiText {
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--border);
   font-size: 14px;
   color: var(--text-secondary);
 }
+.bmiLink { font-weight: 700; white-space: nowrap; }
 
-.updateBmiBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1.5px solid var(--text-primary);
-  color: var(--text-primary);
-  padding: 8px 20px;
-  border-radius: var(--radius-full);
-  font-size: 13.5px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.15s ease;
-}
-
-.updateBmiBtn:hover {
-  background-color: rgba(30, 58, 43, 0.05);
-}
-
-/* ── 3 Column Food Grid ── */
-.foodGrid {
+.grid {
+  list-style: none;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 14px;
 }
 
-.foodCard {
+.card {
   border-radius: 20px;
-  padding: 24px 22px;
+  padding: 18px;
   display: flex;
   flex-direction: column;
-  transition: transform 0.15s ease;
+  gap: 4px;
+  border: 1px solid transparent;
 }
+.tone_green { background: var(--pastel-green); }
+.tone_yellow { background: var(--pastel-yellow); }
+.tone_blue { background: var(--pastel-blue); }
+.tone_peach { background: var(--pastel-peach); }
 
-.cardSage {
-  background-color: var(--pastel-green, #E5EFE7);
+.cardTop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.emoji { font-size: 28px; }
+.typeBadge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary);
 }
+.foodName { font-size: 17px; font-weight: 700; }
+.serving { font-size: 12.5px; color: var(--text-secondary); }
+.amountRow { display: flex; align-items: baseline; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.amount { font-size: 22px; font-weight: 800; color: var(--primary); }
+.dv { font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+.dvTrack { height: 6px; border-radius: var(--radius-full); background: rgba(255, 255, 255, 0.75); overflow: hidden; margin: 4px 0 8px; }
+.dvFill { height: 100%; background: var(--secondary-dim); border-radius: var(--radius-full); }
+.desc { font-size: 13.5px; color: var(--text-primary); line-height: 1.5; }
+.kcal { font-size: 12px; color: var(--text-muted); margin-top: auto; padding-top: 6px; }
 
-.cardYellow {
-  background-color: var(--pastel-yellow, #FDF1D8);
-}
+.empty { text-align: center; color: var(--text-secondary); padding: 40px 0; }
 
-.cardBlue {
-  background-color: var(--pastel-blue, #E1EDF7);
-}
+.disclaimer { font-size: 12.5px; color: var(--text-muted); line-height: 1.55; }
 
-.cardPeach {
-  background-color: var(--pastel-peach, #FCECE3);
-}
-
-.cardTop {
+/* Public (signed-out) layout */
+.publicWrap { min-height: 100vh; background: var(--bg); }
+.publicHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 12px;
+  padding: 22px 32px;
+  max-width: 1140px;
+  margin: 0 auto;
 }
+.publicBrand { font-size: 18px; font-weight: 700; color: var(--text-primary); }
+.publicNav { display: flex; align-items: center; gap: 18px; font-size: 14px; }
+.publicNav a { color: var(--text-secondary); }
+.publicNav .publicCta { background: var(--primary); color: #fff; padding: 8px 18px; border-radius: var(--radius-full); font-weight: 600; }
+.publicMain { padding: 8px 32px 60px; }
 
-.foodName {
-  font-family: var(--font-headline);
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.3;
-}
-
-.calBadge {
-  background-color: rgba(255, 255, 255, 0.7);
-  padding: 4px 10px;
-  border-radius: var(--radius-full);
-  font-size: 11.5px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.foodAmount {
-  font-size: 22px;
-  font-weight: 750;
-  letter-spacing: -0.5px;
-  color: var(--text-primary);
-  margin-bottom: 8px;
-}
-
-.foodDesc {
-  font-size: 13px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-}
-
-@media (max-width: 860px) {
-  .foodGrid {
-    grid-template-columns: 1fr;
-  }
+@media (max-width: 640px) {
+  .publicHeader { padding: 16px 18px; }
+  .publicNav a:not(.publicCta) { display: none; }
+  .publicMain { padding: 4px 18px 40px; }
+  .searchRow { flex-direction: column; }
+  .bmiRow { flex-direction: column; align-items: flex-start; }
 }

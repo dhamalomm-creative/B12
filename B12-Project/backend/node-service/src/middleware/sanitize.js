@@ -12,12 +12,34 @@
  * All middleware exported for use in server.js
  */
 
-const xss = require('xss-clean');
+const { clean: xssCleanValue } = require('xss-clean/lib/xss');
 const hpp = require('hpp');
 const mongoSanitize = require('express-mongo-sanitize');
 
-// ── [1] XSS Clean: strips HTML tags and script injection from req.body, req.query ──
-const xssClean = xss();
+// ── [1] XSS Clean: encodes HTML / script injection in req.body, req.query, req.params ──
+// Password fields are deliberately left untouched: encoding characters such as
+// '<' or '&' would silently change the user's password and lock them out.
+const SKIP_XSS_KEYS = /password/i;
+
+const cleanDeep = (value, depth = 0) => {
+  if (depth > 10 || value === null || value === undefined) return value;
+  if (typeof value === 'string') return xssCleanValue(value);
+  if (Array.isArray(value)) return value.map((v) => cleanDeep(v, depth + 1));
+  if (typeof value === 'object') {
+    for (const key of Object.keys(value)) {
+      if (SKIP_XSS_KEYS.test(key)) continue;
+      value[key] = cleanDeep(value[key], depth + 1);
+    }
+  }
+  return value;
+};
+
+const xssClean = (req, res, next) => {
+  if (req.body)   req.body = cleanDeep(req.body);
+  if (req.params) cleanDeep(req.params);
+  if (req.query && typeof req.query === 'object') cleanDeep(req.query);
+  next();
+};
 
 // ── [2] NoSQL Injection: replaces $ and . in keys (blocks MongoDB operator injection) ──
 const noSqlSanitize = mongoSanitize({ replaceWith: '_' });
@@ -54,8 +76,15 @@ const prototypePollutionGuard = (req, res, next) => {
 // Prevents CSRF-style attacks with form-encoded payloads.
 const MUTATING_METHODS = new Set(['POST', 'PUT', 'PATCH']);
 
+const hasBody = (req) => {
+  const len = req.headers['content-length'];
+  if (req.headers['transfer-encoding']) return true;
+  return len !== undefined && Number(len) > 0;
+};
+
 const contentTypeGuard = (req, res, next) => {
-  if (MUTATING_METHODS.has(req.method)) {
+  // Body-less mutations (e.g. POST /api/auth/logout) are allowed without a Content-Type.
+  if (MUTATING_METHODS.has(req.method) && hasBody(req)) {
     const contentType = req.headers['content-type'] || '';
     if (!contentType.includes('application/json')) {
       return res.status(415).json({

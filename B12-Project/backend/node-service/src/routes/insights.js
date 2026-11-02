@@ -26,14 +26,14 @@ router.get('/', async (req, res, next) => {
           type: 'risk_alert',
           priority: 'high',
           title: '⚠️ High B12 Deficiency Risk Detected',
-          message: `Your last assessment scored ${latest.risk_percentage?.toFixed(0)}%. Consider consulting a healthcare provider and getting a blood test.`,
+          message: `Your last assessment scored ${Math.round(Number(latest.risk_percentage) || 0)}%. Consider consulting a healthcare provider and getting a blood test.`,
         });
       } else if (latest.risk_level === 'medium') {
         insights.push({
           type: 'risk_moderate',
           priority: 'medium',
           title: '🔶 Moderate Risk — Take Action',
-          message: `Your score was ${latest.risk_percentage?.toFixed(0)}%. Small dietary changes can reduce your B12 risk significantly.`,
+          message: `Your score was ${Math.round(Number(latest.risk_percentage) || 0)}%. Small dietary changes can reduce your B12 risk significantly.`,
         });
       } else {
         insights.push({

@@ -11,7 +11,7 @@
  *  [7]  NoSQL sanitize   — Strip $ and . operators (NoSQL injection)
  *  [8]  HPP guard        — Block HTTP parameter pollution
  *  [9]  Prototype guard  — Strip __proto__, constructor, prototype keys
- *  [10] Body size limit  — 1mb max (down from 10mb) — prevents DoS
+ *  [10] Body size limit  — 100kb max — prevents DoS
  *  [11] Morgan logging   — Combined format, no body logged, health skipped
  *  [12] API rate limiter — 100 req/15 min per IP
  *  [13] Auth slow-down   — Progressive delays on auth endpoints
@@ -52,7 +52,8 @@ const insightsRoutes      = require('./src/routes/insights');
 const notificationsRoutes = require('./src/routes/notifications');
 
 const app  = express();
-const PORT = process.env.NODE_PORT || 3000;
+// Hosting platforms (Railway, Render, Heroku) inject PORT — honour it first.
+const PORT = process.env.PORT || process.env.NODE_PORT || 3000;
 
 // ── [2] Trust proxy (1 hop) ──
 // Ensures req.ip is the real client IP when behind Nginx/Docker/AWS ALB
@@ -85,43 +86,54 @@ app.use(helmet({
   hidePoweredBy:  true,   // Remove X-Powered-By: Express header
 }));
 
-// ── [4] CORS — origin whitelist with automatic Vercel & localhost support ──
+// ── [4] CORS — origin whitelist ──
+// Bearer tokens (not cookies) are used, but we still keep the origin list tight.
+//  - ALLOWED_ORIGINS: comma-separated exact origins (e.g. https://b12health.app)
+//  - ALLOW_VERCEL_PREVIEWS: 'true' (default) also allows *.vercel.app preview URLs
+//  - localhost is only auto-allowed outside production
 const rawOrigins = process.env.ALLOWED_ORIGINS || '*';
-const allowedOrigins = rawOrigins.split(',').map((o) => o.trim()).filter(Boolean);
+const allowedOrigins = rawOrigins.split(',').map((o) => o.trim().replace(/\/$/, '')).filter(Boolean);
+const allowVercelPreviews = (process.env.ALLOW_VERCEL_PREVIEWS || 'true') !== 'false';
+const isProduction = process.env.NODE_ENV === 'production';
+
+const isOriginAllowed = (origin) => {
+  if (allowedOrigins.length === 0 || allowedOrigins.includes('*')) return true;
+  if (allowedOrigins.includes(origin)) return true;
+  let hostname = '';
+  try { hostname = new URL(origin).hostname; } catch { return false; }
+  if (allowVercelPreviews && hostname.endsWith('.vercel.app')) return true;
+  if (!isProduction && (hostname === 'localhost' || hostname === '127.0.0.1')) return true;
+  return false;
+};
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Requests with no Origin (mobile apps, Postman, curl) are always allowed
+    // Requests with no Origin (mobile apps, server-to-server, curl) are allowed —
+    // they are still subject to JWT auth on every protected route.
     if (!origin) return callback(null, true);
-    // Allow if wildcard '*' is configured or origins list is empty
-    if (allowedOrigins.length === 0 || allowedOrigins.includes('*')) return callback(null, true);
-    // Automatically allow all Vercel deployments (production, branch, preview)
-    if (origin.endsWith('.vercel.app')) return callback(null, true);
-    // Automatically allow local development
-    if (origin.includes('localhost') || origin.includes('127.0.0.1')) return callback(null, true);
-    // Check explicit domain whitelist
-    if (allowedOrigins.includes(origin)) return callback(null, true);
-
+    if (isOriginAllowed(origin)) return callback(null, true);
     logger.warn('CORS blocked request from unknown origin', { origin });
     return callback(new Error('Not allowed by CORS'));
   },
   methods:        ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  credentials:    true,
+  credentials:    false,
+  maxAge:         600,
 }));
 
 // ── [5] Content-Type enforcement (reject non-JSON mutations) ──
 app.use(contentTypeGuard);
 
-// ── [6-9] Input sanitization ──
-app.use(xssClean);              // Strip <script> and HTML injection
-app.use(noSqlSanitize);         // Block MongoDB $ operator injection
-app.use(hppGuard);              // Block HTTP parameter pollution
-app.use(prototypePollutionGuard); // Strip __proto__, constructor, prototype
+// ── [6] Body parsing — strict 100kb limit (prevents request payload DoS) ──
+// NOTE: body parsing MUST run before the sanitizers below, otherwise req.body
+// is still undefined when they execute and nothing gets sanitized.
+app.use(express.json({ limit: '100kb' }));
 
-// ── [10] Body parsing — strict 1mb limit (prevents request payload DoS) ──
-app.use(express.json({ limit: '1mb' }));
-app.use(express.urlencoded({ extended: true, limit: '1mb' }));
+// ── [7-10] Input sanitization (runs on the parsed body) ──
+app.use(xssClean);                // Encode HTML / script injection (password fields are skipped)
+app.use(noSqlSanitize);           // Block $ / . operator injection
+app.use(hppGuard);                // Block HTTP parameter pollution
+app.use(prototypePollutionGuard); // Strip __proto__, constructor, prototype
 
 // ── [11] Request logging — combined format (does NOT log request body) ──
 // Combined format logs: IP, timestamp, method, path, status, size, referrer, user-agent
@@ -136,9 +148,10 @@ if (process.env.NODE_ENV !== 'test') {
 // ── [12] General API rate limiter ──
 app.use('/api/', apiLimiter);
 
-// ── [13-14] Auth routes — extra slow-down + strict rate limit ──
-// Order: slowDown first (add delays) → authLimiter (hard block)
-app.use('/api/auth', authSlowDown, authLimiter, authRoutes);
+// ── [13-14] Auth routes — slow-down + strict limiter on credential endpoints only ──
+// (Applying them to /logout or /refresh would throttle normal app usage.)
+app.use(['/api/auth/login', '/api/auth/register'], authSlowDown, authLimiter);
+app.use('/api/auth', authRoutes);
 
 // ── Standard API routes ──
 app.use('/api/users',         userRoutes);
@@ -199,6 +212,9 @@ const startServer = async () => {
 
 if (process.env.VERCEL) {
   connectDB().catch((err) => console.error('Database connection error in Vercel:', err.message));
+} else if (process.env.NODE_ENV === 'test') {
+  // Tests drive the app through supertest — no need to bind a port.
+  connectDB().catch((err) => console.error('Database connection error in tests:', err.message));
 } else {
   startServer();
 }

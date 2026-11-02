@@ -133,7 +133,7 @@ PORT=3000
 NODE_ENV=development
 DATABASE_URL=postgresql://postgres.[REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
 DATABASE_SSL=true
-JWT_SECRET=5f7a0fd5ccc99d4cd7e14a0e235ebc646ec23eaf71a97c13a95062fbcaeb4907
+JWT_SECRET=REPLACE_WITH_64_CHAR_RANDOM_HEX  # node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 JWT_EXPIRES_IN=7d
 ALLOWED_ORIGINS=http://localhost:3001
 ```

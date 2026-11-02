@@ -1,7 +1,9 @@
 'use client';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp } from '@/context/AppContext';
+import { useAuth } from '@/context/AuthContext';
 import { RiskGauge } from '@/components/UI';
 import styles from './page.module.css';
 
@@ -13,8 +15,16 @@ const DEFAULT_SUGGESTIONS = [
 
 export default function ScorePreviewPage() {
   const { state } = useApp();
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const { riskResult } = state;
+
+  // Signed-in users get the full report
+  useEffect(() => {
+    if (!isLoading && isAuthenticated) router.replace('/results');
+  }, [isLoading, isAuthenticated, router]);
+
+  if (!state.hydrated) return null;
 
   const hasAssessment = !!riskResult;
   const percentage = riskResult?.percentage ?? 0;
@@ -90,6 +100,7 @@ export default function ScorePreviewPage() {
                   <span className={styles.featurePill}>🔒 Category breakdown</span>
                   <span className={styles.featurePill}>🔒 Daily check-in tracking</span>
                   <span className={styles.featurePill}>🔒 14-day progress trends</span>
+                  <span className={styles.featurePill}>🔒 Doctor-ready summary</span>
                 </div>
 
                 <button
@@ -130,7 +141,7 @@ export default function ScorePreviewPage() {
             <button
               type="button"
               className={styles.createAccountBtn}
-              onClick={() => router.push('/questionnaire')}
+              onClick={() => router.push('/onboarding')}
             >
               Start assessment
             </button>

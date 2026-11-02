@@ -8,6 +8,8 @@ import styles from './page.module.css';
 
 function AuthForm() {
   const { register, login, isLoading, isAuthenticated, error, clearError } = useAuth();
+  const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const { state } = useApp();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -20,10 +22,17 @@ function AuthForm() {
   const [dupEmail, setDupEmail] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated) {
+    if (!isLoading && isAuthenticated && !submitting) {
       router.replace('/dashboard');
     }
-  }, [isLoading, isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, submitting, router]);
+
+  const hasPendingResult = !!(state.pendingAnswers?.length && state.riskResult);
+  const pwChecks = [
+    { ok: password.length >= 8, label: '8+ characters' },
+    { ok: /[A-Z]/.test(password), label: 'One uppercase letter' },
+    { ok: /[0-9]/.test(password), label: 'One number' },
+  ];
 
   useEffect(() => {
     const requestedMode = searchParams.get('mode');
@@ -68,15 +77,17 @@ function AuthForm() {
     }
 
     let result;
+    setSubmitting(true);
     if (mode === 'register') {
       const extraProfile = {
-        name: state.user?.name || state.guestName || 'Friend',
-        age: state.user?.age || undefined,
+        name: state.user?.name || state.guestName || undefined,
+        age: state.user?.age ? parseInt(state.user.age, 10) : undefined,
         gender: state.user?.gender || undefined,
         dietType: state.user?.dietType || undefined,
       };
       result = await register(email.trim().toLowerCase(), password, extraProfile);
       if (!result?.success) {
+        setSubmitting(false);
         const msg = (result?.error || '').toLowerCase();
         if (msg.includes('already') || msg.includes('registered') || msg.includes('exists')) {
           setDupEmail(true);
@@ -89,14 +100,18 @@ function AuthForm() {
     } else {
       result = await login(email.trim().toLowerCase(), password);
       if (!result?.success) {
+        setSubmitting(false);
         setLocalError(result?.error || 'Invalid email or password.');
         return;
       }
     }
 
     if (result?.success) {
-      if (state.riskResult) {
-        router.replace('/results');
+      const u = result.user || {};
+      if (result.syncedAssessment) {
+        router.replace('/results?new=1');
+      } else if (!u.age || !u.gender || !u.dietType) {
+        router.replace('/onboarding?next=dashboard');
       } else {
         router.replace('/dashboard');
       }
@@ -163,8 +178,14 @@ function AuthForm() {
             {mode === 'register' ? 'Create your account' : 'Log in to your account'}
           </h2>
 
+          {hasPendingResult && mode === 'register' && (
+            <div className={styles.infoBox}>
+              Your {state.riskResult.percentage}% risk score will be saved to your new account.
+            </div>
+          )}
+
           {displayError && (
-            <div className={styles.errorBox}>
+            <div className={styles.errorBox} role="alert">
               <p>{displayError}</p>
               {dupEmail && (
                 <button
@@ -180,8 +201,9 @@ function AuthForm() {
 
           <form onSubmit={handleSubmit} className={styles.authForm}>
             <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Email</label>
+              <label className={styles.fieldLabel} htmlFor="email">Email</label>
               <input
+                id="email"
                 type="email"
                 className={styles.inputField}
                 placeholder="name@email.com"
@@ -193,20 +215,36 @@ function AuthForm() {
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel}>Password</label>
-              <input
-                type="password"
-                className={styles.inputField}
-                placeholder="At least 8 characters"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
-                required
-              />
+              <label className={styles.fieldLabel} htmlFor="password">Password</label>
+              <div className={styles.passwordWrap}>
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  className={styles.inputField}
+                  placeholder={mode === 'register' ? 'Create a password' : 'Your password'}
+                  value={password}
+                  maxLength={128}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={mode === 'register' ? 'new-password' : 'current-password'}
+                  required
+                />
+                <button
+                  type="button"
+                  className={styles.showPwBtn}
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? 'Hide' : 'Show'}
+                </button>
+              </div>
               {mode === 'register' && (
-                <p className={styles.helperText}>
-                  8+ characters, one uppercase letter, one number.
-                </p>
+                <ul className={styles.pwChecks} aria-label="Password requirements">
+                  {pwChecks.map((c) => (
+                    <li key={c.label} className={c.ok ? styles.pwOk : ''}>
+                      <span aria-hidden="true">{c.ok ? '✓' : '○'}</span> {c.label}
+                    </li>
+                  ))}
+                </ul>
               )}
             </div>
 
@@ -227,10 +265,10 @@ function AuthForm() {
             <button
               type="submit"
               className={styles.submitBtn}
-              disabled={isLoading}
+              disabled={submitting}
             >
-              {isLoading
-                ? 'Processing…'
+              {submitting
+                ? (mode === 'register' ? 'Creating account…' : 'Logging in…')
                 : mode === 'register'
                 ? 'Create account'
                 : 'Log in'}

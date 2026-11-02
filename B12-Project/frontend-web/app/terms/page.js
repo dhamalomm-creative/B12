@@ -26,7 +26,24 @@ const SECTIONS = [
     num: 3,
     title: 'Security and your account',
     paragraphs: [
-      'Keep your password private and use a strong one. You are responsible for activity on your account. We may lock an account after repeated failed sign-ins to protect it.',
+      'Keep your password private and use a strong one. You are responsible for activity on your account. Sign-in may be temporarily blocked after repeated failed attempts to protect it.',
+    ],
+  },
+  {
+    id: 'emergencies',
+    num: 4,
+    title: 'Not for emergencies',
+    paragraphs: [
+      'Do not use this app for urgent medical problems. If you have severe or sudden symptoms — such as difficulty walking, chest pain, fainting or confusion — contact emergency services or a doctor immediately.',
+    ],
+  },
+  {
+    id: 'acceptable-use',
+    num: 5,
+    title: 'Fair use',
+    paragraphs: [
+      'Please use the service for your own personal wellness tracking. Do not attempt to access other people\'s data, overload the service, or reverse-engineer security controls.',
+      'We may update these terms as the product evolves; significant changes will be shown in the app.',
     ],
   },
 ];
@@ -54,7 +71,7 @@ export default function TermsPage() {
       <main className={styles.container}>
         <h1 className={styles.title}>Terms of Service</h1>
         <p className={styles.subtitle}>
-          Last updated: October 2026. Please read before using B12 Health Tracker.
+          Last updated: November 2026. Please read before using B12 Health Tracker.
         </p>
 
         <div className={styles.layoutGrid}>

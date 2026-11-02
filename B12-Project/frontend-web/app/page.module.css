@@ -376,3 +376,51 @@
     padding-right: 24px;
   }
 }
+
+/* ── Additions ── */
+.deletedBanner {
+  max-width: 1100px;
+  margin: 0 auto 12px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: var(--pastel-green);
+  color: var(--primary);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.faqSection {
+  max-width: 860px;
+  margin: 0 auto 56px;
+  padding: 0 24px;
+}
+
+.faqTitle {
+  font-size: 26px;
+  letter-spacing: -0.4px;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.faqList { display: flex; flex-direction: column; gap: 10px; }
+
+.faqItem {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 20px;
+}
+
+.faqItem summary {
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15.5px;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+.faqItem summary::-webkit-details-marker { display: none; }
+.faqItem summary::after { content: '+'; font-size: 20px; line-height: 1; color: var(--text-muted); }
+.faqItem[open] summary::after { content: '–'; }
+.faqItem p { margin-top: 10px; font-size: 14.5px; color: var(--text-secondary); line-height: 1.6; }

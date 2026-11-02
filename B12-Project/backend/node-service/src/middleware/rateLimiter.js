@@ -3,7 +3,7 @@
  *
  * Defence layers:
  *  1. authLimiter   — 5 failed requests / 15 min per IP+email (brute-force, credential stuffing)
- *  2. apiLimiter    — 100 requests / 15 min per IP (general API abuse)
+ *  2. apiLimiter    — 300 requests / 15 min per IP (general API abuse; env RATE_LIMIT_MAX)
  *  3. authSlowDown  — progressive delays after 3 auth requests (makes automation expensive)
  *
  * Key-generator for auth: IP + email combo
@@ -40,7 +40,7 @@ const authLimiter = rateLimit({
 // Defends against: API scraping, automated scanning, general abuse
 const apiLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || String(15 * 60 * 1000)),
-  max: parseInt(process.env.RATE_LIMIT_MAX || '100'),
+  max: parseInt(process.env.RATE_LIMIT_MAX || '300'),
   standardHeaders: true,
   legacyHeaders: false,
   validate: false,

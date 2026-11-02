@@ -1,0 +1,817 @@
+{
+  "fatigue_frequency": {
+    "category": "Energy & Fatigue",
+    "weight": 3,
+    "question": "How often do you feel tired without doing heavy work?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "weakness_after_rest": {
+    "category": "Energy & Fatigue",
+    "weight": 3,
+    "question": "Do you feel weak or drained even after a full night of rest?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "low_energy_day": {
+    "category": "Energy & Fatigue",
+    "weight": 2,
+    "question": "Do you experience low energy during the day?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "tingling_numbness": {
+    "category": "Neurological",
+    "weight": 4,
+    "question": "Do you feel tingling or numbness in your hands or feet?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "concentration": {
+    "category": "Neurological",
+    "weight": 3,
+    "question": "Do you face difficulty concentrating or staying focused?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "memory_issues": {
+    "category": "Neurological",
+    "weight": 3,
+    "question": "Do you experience memory problems or brain fog?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "mood": {
+    "category": "Mood",
+    "weight": 2,
+    "question": "Do you frequently feel low mood or irritability without clear reason?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "sleep_quality": {
+    "category": "Lifestyle",
+    "weight": 2,
+    "question": "How would you rate your overall sleep quality?",
+    "options": {
+      "great": {
+        "score": 0,
+        "label": "😴 Great"
+      },
+      "good": {
+        "score": 1,
+        "label": "🙂 Good"
+      },
+      "fair": {
+        "score": 2,
+        "label": "😐 Fair"
+      },
+      "poor": {
+        "score": 3,
+        "label": "😫 Poor"
+      }
+    }
+  },
+  "dizziness": {
+    "category": "Lifestyle",
+    "weight": 3,
+    "question": "Do you experience dizziness or lightheadedness?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "b12_food_intake": {
+    "category": "Diet",
+    "weight": 4,
+    "question": "How often do you eat B12-rich foods? (meat, fish, eggs, dairy, fortified cereals)",
+    "options": {
+      "daily": {
+        "score": 0,
+        "label": "Daily"
+      },
+      "weekly": {
+        "score": 1,
+        "label": "A few/week"
+      },
+      "monthly": {
+        "score": 2,
+        "label": "A few/month"
+      },
+      "rarely": {
+        "score": 3,
+        "label": "Rarely/Never"
+      }
+    }
+  },
+  "supplement_use": {
+    "category": "Diet",
+    "weight": 3,
+    "question": "Do you take a vitamin B12 supplement (tablet, drops, spray or injection)?",
+    "options": {
+      "yes_regular": {
+        "score": 0,
+        "label": "Yes, most days"
+      },
+      "yes_occasional": {
+        "score": 1,
+        "label": "Sometimes"
+      },
+      "multivitamin": {
+        "score": 1,
+        "label": "Only a multivitamin"
+      },
+      "no": {
+        "score": 3,
+        "label": "No"
+      }
+    }
+  },
+  "tongue_mouth": {
+    "category": "Physical",
+    "weight": 2,
+    "question": "Do you notice a sore, smooth or unusually red tongue, or frequent mouth ulcers?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      }
+    }
+  },
+  "breathless_pale": {
+    "category": "Physical",
+    "weight": 2,
+    "question": "Do you get short of breath, a racing heartbeat, or look pale during light activity?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      }
+    }
+  },
+  "absorption_conditions": {
+    "category": "Medical",
+    "weight": 4,
+    "question": "Have you been diagnosed with pernicious anaemia, Crohn's disease, coeliac disease, or had stomach / bowel surgery (including weight-loss surgery)?",
+    "options": {
+      "no": {
+        "score": 0,
+        "label": "No"
+      },
+      "unsure": {
+        "score": 1,
+        "label": "Not sure"
+      },
+      "yes": {
+        "score": 4,
+        "label": "Yes"
+      }
+    }
+  },
+  "medications": {
+    "category": "Medical",
+    "weight": 4,
+    "question": "Do you regularly take metformin (for diabetes) or acid-reducing medicines like omeprazole, pantoprazole or ranitidine?",
+    "options": {
+      "none": {
+        "score": 0,
+        "label": "Neither"
+      },
+      "unsure": {
+        "score": 1,
+        "label": "Not sure"
+      },
+      "one": {
+        "score": 3,
+        "label": "Yes, one of them"
+      },
+      "both": {
+        "score": 4,
+        "label": "Yes, both"
+      }
+    }
+  },
+  "alcohol": {
+    "category": "Lifestyle",
+    "weight": 2,
+    "question": "How often do you drink alcohol?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "occasional": {
+        "score": 1,
+        "label": "Occasionally"
+      },
+      "weekly": {
+        "score": 2,
+        "label": "Most weeks"
+      },
+      "daily": {
+        "score": 3,
+        "label": "Daily or almost daily"
+      }
+    }
+  },
+  "skip_meals_young": {
+    "category": "Diet Habits",
+    "weight": 2,
+    "question": "How often do you skip meals during the day?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      }
+    }
+  },
+  "junk_food": {
+    "category": "Diet Habits",
+    "weight": 2,
+    "question": "How often do you rely on junk or processed food?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      }
+    }
+  },
+  "irregular_sleep_young": {
+    "category": "Sleep",
+    "weight": 2,
+    "question": "How often do you have irregular sleep patterns? (sleeping at different times each night)",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      }
+    }
+  },
+  "skip_meals_work": {
+    "category": "Work Lifestyle",
+    "weight": 2,
+    "question": "Do you skip meals due to a busy work schedule?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "caffeine_reliance": {
+    "category": "Work Lifestyle",
+    "weight": 2,
+    "question": "Do you rely on caffeine (coffee/energy drinks) to get through the day?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "drained_after_work": {
+    "category": "Work Lifestyle",
+    "weight": 3,
+    "question": "Do you feel completely drained after a regular workday?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "tired_after_rest_mid": {
+    "category": "Fatigue",
+    "weight": 3,
+    "question": "Do you frequently feel tired even after resting?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "digestive_issues": {
+    "category": "Digestive Health",
+    "weight": 2,
+    "question": "Do you experience digestive issues like bloating or indigestion?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "balance_issues": {
+    "category": "Neurological",
+    "weight": 4,
+    "question": "Do you experience balance problems or unsteadiness when walking?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "frequent_numbness": {
+    "category": "Neurological",
+    "weight": 4,
+    "question": "Do you frequently experience numbness or tingling in your limbs?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "heavy_bleeding": {
+    "category": "Female Health",
+    "weight": 3,
+    "question": "How often do you experience heavy menstrual bleeding?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      }
+    }
+  },
+  "period_fatigue": {
+    "category": "Female Health",
+    "weight": 2,
+    "question": "How often do you feel significantly more fatigued during your periods?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      }
+    }
+  },
+  "irregular_periods": {
+    "category": "Female Health",
+    "weight": 2,
+    "question": "How often are your periods irregular?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      }
+    }
+  },
+  "period_dizziness": {
+    "category": "Female Health",
+    "weight": 3,
+    "question": "How often do you feel dizzy during or after your period?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      }
+    }
+  },
+  "pregnant_postpartum": {
+    "category": "Female Health",
+    "weight": 4,
+    "question": "Are you currently pregnant or in the postpartum period?",
+    "options": {
+      "yes": {
+        "score": 3,
+        "label": "Yes"
+      },
+      "no": {
+        "score": 0,
+        "label": "No"
+      }
+    }
+  },
+  "low_energy_rest_male": {
+    "category": "Energy",
+    "weight": 3,
+    "question": "Do you experience consistently low energy despite adequate rest?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  },
+  "unexplained_weakness": {
+    "category": "Physical",
+    "weight": 3,
+    "question": "Do you experience unexplained physical weakness or reduced strength?",
+    "options": {
+      "never": {
+        "score": 0,
+        "label": "Never"
+      },
+      "rarely": {
+        "score": 1,
+        "label": "Rarely"
+      },
+      "sometimes": {
+        "score": 2,
+        "label": "Sometimes"
+      },
+      "often": {
+        "score": 3,
+        "label": "Often"
+      },
+      "always": {
+        "score": 4,
+        "label": "Always"
+      }
+    }
+  }
+}

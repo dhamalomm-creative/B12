@@ -1,5 +1,5 @@
 'use client';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
@@ -9,6 +9,11 @@ import styles from './page.module.css';
 export default function RootPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
+  const [deleted, setDeleted] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('deleted')) setDeleted(true);
+  }, []);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
@@ -38,11 +43,17 @@ export default function RootPage() {
         </nav>
       </header>
 
+      {deleted && (
+        <div className={styles.deletedBanner} role="status">
+          Your account and health data have been permanently deleted.
+        </div>
+      )}
+
       {/* ── Hero Section ── */}
       <section className={styles.heroSection}>
         <div className={styles.heroLeft}>
           <div className={styles.kickerBadge}>
-            Free, private, takes 5 minutes
+            Free · Private · About 4 minutes
           </div>
           <h1 className={styles.heroHeading}>
             Tired lately?<br />
@@ -98,7 +109,7 @@ export default function RootPage() {
           <p className={styles.stepNumber}>Step 1</p>
           <h3 className={styles.stepTitle}>Answer a few questions</h3>
           <p className={styles.stepDesc}>
-            20 to 25 questions, picked for your age, gender and diet. No account needed to see your score.
+            About 20 questions picked for your age, gender and diet — each one explains why it matters. No account needed to see your score.
           </p>
         </div>
 
@@ -131,9 +142,32 @@ export default function RootPage() {
         </div>
       </section>
 
+      {/* ── FAQ ── */}
+      <section className={styles.faqSection} aria-labelledby="faq-heading">
+        <h2 id="faq-heading" className={styles.faqTitle}>Common questions</h2>
+        <div className={styles.faqList}>
+          <details className={styles.faqItem}>
+            <summary>Is this a medical test?</summary>
+            <p>No. It&apos;s an educational screening based on well-known B12 risk factors and symptoms. It can tell you whether it&apos;s worth asking your doctor for a blood test — only a blood test can confirm a deficiency.</p>
+          </details>
+          <details className={styles.faqItem}>
+            <summary>Who is most at risk of low B12?</summary>
+            <p>Vegans and many vegetarians, adults over 50, people taking metformin or acid-reducing medicines for a long time, and people with pernicious anaemia, coeliac or Crohn&apos;s disease, or stomach / bowel surgery.</p>
+          </details>
+          <details className={styles.faqItem}>
+            <summary>What happens to my answers?</summary>
+            <p>If you don&apos;t create an account, your answers stay on your device. If you do, they&apos;re stored securely in your account so you can track changes — you can delete everything at any time from your profile. We never sell your data.</p>
+          </details>
+          <details className={styles.faqItem}>
+            <summary>How often should I retake it?</summary>
+            <p>Every 4–8 weeks, or after changing your diet, starting a supplement or new medicine. Daily check-ins in between help you spot patterns.</p>
+          </details>
+        </div>
+      </section>
+
       {/* ── Footer ── */}
       <footer className={styles.footer}>
-        <span className={styles.footerBrand}>B12 Health Tracker</span>
+        <span className={styles.footerBrand}>© {new Date().getFullYear()} B12 Health Tracker · Educational tool, not a medical diagnosis.</span>
         <div className={styles.footerLinks}>
           <Link href="/privacy" className={styles.footerLink}>Privacy</Link>
           <Link href="/terms" className={styles.footerLink}>Terms</Link>

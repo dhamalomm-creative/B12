@@ -165,3 +165,7 @@
     justify-content: center;
   }
 }
+
+@media print {
+  .sidebar, .mobileTabBar { display: none !important; }
+}

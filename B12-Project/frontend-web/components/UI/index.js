@@ -8,10 +8,12 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
   useEffect(() => {
+    let counter = 0;
     addToastGlobal = (msg, type = 'success') => {
-      const id = Date.now();
-      setToasts(t => [...t, { id, msg, type }]);
-      setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3000);
+      counter += 1;
+      const id = `${Date.now()}-${counter}`;
+      setToasts(t => [...t.slice(-2), { id, msg, type }]);
+      setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
     };
     return () => { addToastGlobal = null; };
   }, []);
@@ -19,10 +21,11 @@ export function ToastProvider({ children }) {
   return (
     <>
       {children}
-      <div className={styles.container}>
+      <div className={styles.container} role="status" aria-live="polite">
         {toasts.map(t => (
           <div key={t.id} className={`${styles.toast} ${styles[t.type] || ''}`}>
-            {type === 'success' ? '✓ ' : 'ℹ '}{t.msg}
+            <span aria-hidden="true">{t.type === 'success' ? '✓' : t.type === 'error' ? '!' : 'ℹ'}</span>
+            <span>{t.msg}</span>
           </div>
         ))}
       </div>
@@ -79,13 +82,21 @@ export function ProgressBar({ progress = 0, total = 1, color }) {
   );
 }
 
-export function RiskGauge({ percentage = 0, level = 'Low', className = '' }) {
+export function RiskGauge({ percentage = 0, className = '' }) {
   const num = Number(percentage);
   const safePct = isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
   // Clamp between 5% and 95% for the circle marker
   const markerPos = Math.min(95, Math.max(5, safePct));
   return (
-    <div className={`risk-gauge-container ${className}`} style={{ width: '100%' }}>
+    <div
+      className={`risk-gauge-container ${className}`}
+      style={{ width: '100%' }}
+      role="meter"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(safePct)}
+      aria-label="B12 risk score"
+    >
       <div className="risk-gauge-track">
         <div className="risk-gauge-marker" style={{ left: `${markerPos}%` }} />
       </div>
@@ -159,8 +170,8 @@ export function LoadingScreen() {
       justifyContent: 'center', minHeight: '100vh', gap: '16px',
       background: 'var(--bg)',
     }}>
-      <span className="spinner" style={{ width: 32, height: 32 }} />
-      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', fontFamily: 'var(--font)' }}>Loading…</p>
+      <span className="spinner" style={{ width: 32, height: 32 }} aria-hidden="true" />
+      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', fontFamily: 'var(--font)' }} role="status">Loading…</p>
     </div>
   );
 }

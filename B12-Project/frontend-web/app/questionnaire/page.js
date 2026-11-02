@@ -1,260 +1,507 @@
 'use client';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useApp, setRiskResult } from '@/context/AppContext';
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { useApp, setRiskResult, setPendingAnswers } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { buildQuestionSet } from '@/data/questions';
-import { calculateRisk } from '@/utils/riskCalculator';
+import { buildQuestionSet, getAgeGroup } from '@/data/questions';
+import { SECTIONS, SECTION_FACTS, getSectionId } from '@/data/questionnaireSections';
+import { calculateRisk, toServerAnswers, normalizeServerResult } from '@/utils/riskCalculator';
 import { questionnaireAPI } from '@/services/api';
+import QuestionVisual from '@/components/questionnaire/QuestionVisual';
+import { LoadingScreen, toast } from '@/components/UI';
 import styles from './page.module.css';
+
+const PROGRESS_KEY = 'b12_questionnaire_progress';
+const PROGRESS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+const SECONDS_PER_QUESTION = 12;
+
+const cleanLabel = (label) => label.replace(/^[^\p{L}\p{N}]+\s*/u, '');
+
+const readProgress = () => {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch { return null; }
+};
+const writeProgress = (data) => {
+  try { localStorage.setItem(PROGRESS_KEY, JSON.stringify({ ...data, updatedAt: Date.now() })); } catch { /* ignore */ }
+};
+const clearProgress = () => {
+  try { localStorage.removeItem(PROGRESS_KEY); } catch { /* ignore */ }
+};
 
 export default function QuestionnairePage() {
   const { state, dispatch } = useApp();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
   const router = useRouter();
-  const { user } = state;
+  const reduceMotion = useReducedMotion();
 
-  const questions = useMemo(() => {
-    return buildQuestionSet(
-      user?.age || '18-24',
-      user?.gender || 'male',
-      user?.dietType || 'vegetarian'
-    );
-  }, [user?.age, user?.gender, user?.dietType]);
+  // Profile used to personalise the question set
+  const profile = useMemo(() => {
+    if (isAuthenticated) {
+      return {
+        age: authUser?.age || state.user?.age,
+        gender: authUser?.gender || state.user?.gender,
+        dietType: authUser?.dietType || state.user?.dietType,
+      };
+    }
+    return state.user || {};
+  }, [isAuthenticated, authUser, state.user]);
 
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const [answers, setAnswers] = useState({});
-  const [selectedOption, setSelectedOption] = useState(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [serverQuestions, setServerQuestions] = useState([]);
+  const ready = state.hydrated && !authLoading && (!isAuthenticated || authUser);
+  const profileComplete = !!(profile?.age && profile?.gender && profile?.dietType);
 
   useEffect(() => {
-    questionnaireAPI.getQuestions().then(d => {
-      if (d?.questions) setServerQuestions(d.questions);
-    }).catch(() => {});
-  }, []);
+    if (ready && !profileComplete) router.replace('/onboarding?next=questionnaire');
+  }, [ready, profileComplete, router]);
 
-  const q = questions[currentIdx] || questions[0];
+  const questions = useMemo(
+    () => (profileComplete ? buildQuestionSet(profile.age, profile.gender, profile.dietType) : []),
+    [profileComplete, profile.age, profile.gender, profile.dietType],
+  );
+  const setKey = profileComplete ? `${getAgeGroup(profile.age)}|${profile.gender}|${profile.dietType}` : '';
+
+  const [idx, setIdx] = useState(0);
+  const [answers, setAnswers] = useState({});      // { questionId: option }
+  const [direction, setDirection] = useState(1);
+  const [breakFor, setBreakFor] = useState(null);  // section id whose fact card is showing
+  const [seenBreaks, setSeenBreaks] = useState([]);
+  const [phase, setPhase] = useState('loading');   // loading | asking | analysing
+  const [resumed, setResumed] = useState(false);
+  const [showWhyMobile, setShowWhyMobile] = useState(false);
+  const submittingRef = useRef(false);
+
+  // Restore saved progress once the question set is known
+  useEffect(() => {
+    if (!questions.length || phase !== 'loading') return;
+    const saved = readProgress();
+    if (saved && saved.setKey === setKey && Date.now() - (saved.updatedAt || 0) < PROGRESS_TTL_MS) {
+      const restored = {};
+      Object.entries(saved.answers || {}).forEach(([qid, optId]) => {
+        const q = questions.find((x) => x.id === qid);
+        const opt = q?.options.find((o) => o.id === optId);
+        if (opt) restored[qid] = opt;
+      });
+      const count = Object.keys(restored).length;
+      if (count > 0 && count < questions.length) {
+        setAnswers(restored);
+        // Resume at the first question that hasn't been answered yet
+        const firstOpen = questions.findIndex((x) => !restored[x.id]);
+        setIdx(firstOpen === -1 ? questions.length - 1 : firstOpen);
+        setSeenBreaks(saved.seenBreaks || []);
+        setResumed(true);
+      }
+    }
+    setPhase('asking');
+  }, [questions, setKey, phase]);
+
+  // Persist progress as the user goes
+  useEffect(() => {
+    if (phase !== 'asking' || !setKey) return;
+    const plain = {};
+    Object.entries(answers).forEach(([k, v]) => { plain[k] = v.id; });
+    if (Object.keys(plain).length) writeProgress({ setKey, answers: plain, idx, seenBreaks });
+  }, [answers, idx, seenBreaks, setKey, phase]);
+
   const total = questions.length;
+  const q = questions[idx];
+  const selected = q ? answers[q.id] : null;
+  const answeredCount = Object.keys(answers).length;
+  const progressPct = total ? Math.round((answeredCount / total) * 100) : 0;
+  const minutesLeft = Math.max(1, Math.ceil(((total - answeredCount) * SECONDS_PER_QUESTION) / 60));
+  const currentSection = q ? getSectionId(q.id) : null;
 
-  // Sync selectedOption with existing answers for this question
-  useEffect(() => {
-    if (q && answers[q.id]) {
-      setSelectedOption(answers[q.id]);
+  const sectionsInSet = useMemo(() => {
+    const present = new Set(questions.map((x) => getSectionId(x.id)));
+    return SECTIONS.filter((s) => present.has(s.id)).map((s) => {
+      const qs = questions.filter((x) => getSectionId(x.id) === s.id);
+      const done = qs.every((x) => answers[x.id]);
+      return { ...s, done, count: qs.length };
+    });
+  }, [questions, answers]);
+
+  // ── Submit ────────────────────────────────────────────────────────────────
+  const finish = useCallback(async (finalAnswers) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setPhase('analysing');
+
+    const local = calculateRisk(finalAnswers, questions, profile.dietType);
+    const serverAnswers = toServerAnswers(finalAnswers, questions);
+    let result = { ...local, completedAt: new Date().toISOString(), synced: false };
+
+    // Give the "analysing" screen a moment so the transition feels intentional
+    const minDelay = new Promise((r) => setTimeout(r, reduceMotion ? 300 : 1600));
+
+    if (isAuthenticated) {
+      try {
+        const data = await questionnaireAPI.submit(serverAnswers);
+        const serverResult = normalizeServerResult(data);
+        if (serverResult) result = serverResult;
+        dispatch(setPendingAnswers(null));
+      } catch (err) {
+        dispatch(setPendingAnswers(serverAnswers));
+        toast("We couldn't save to your account just now — your result is kept on this device and will sync automatically.", 'info');
+      }
     } else {
-      setSelectedOption(null);
+      dispatch(setPendingAnswers(serverAnswers));
     }
-  }, [currentIdx, q, answers]);
 
-  const mapToServer = (localAnswers) => {
-    const list = [];
-    const diet = user?.dietType || 'vegetarian';
+    await minDelay;
+    dispatch(setRiskResult(result));
+    clearProgress();
+    router.replace(isAuthenticated ? '/results?new=1' : '/score-preview');
+  }, [questions, profile.dietType, isAuthenticated, dispatch, router, reduceMotion]);
 
-    const foodAns = localAnswers.b12_food_intake?.id;
-    const foodMap = { daily: 'daily', weekly: 'few_week', monthly: 'rarely', rarely: 'never' };
-    list.push({ questionId: 1, answerValue: foodMap[foodAns] || (diet === 'vegan' ? 'never' : diet === 'vegetarian' ? 'rarely' : 'few_week') });
-
-    const suppAns = localAnswers.supplements?.id;
-    const suppMap = { yes: 'yes_regular', occasionally: 'yes_occasional', sometimes: 'yes_occasional', no: 'no' };
-    list.push({ questionId: 2, answerValue: suppMap[suppAns] || 'no' });
-
-    const fatAns = localAnswers.fatigue_frequency?.id || localAnswers.general_tiredness?.id;
-    const fatMap = { never: 'never', rarely: 'never', sometimes: 'sometimes', often: 'often', always: 'always' };
-    list.push({ questionId: 3, answerValue: fatMap[fatAns] || 'sometimes' });
-
-    const tingAns = localAnswers.tingling_numbness?.id || localAnswers.pins_needles?.id;
-    const tingMap = { never: 'never', rarely: 'occasionally', sometimes: 'occasionally', often: 'frequently', always: 'daily' };
-    list.push({ questionId: 4, answerValue: tingMap[tingAns] || 'occasionally' });
-
-    const concAns = localAnswers.concentration?.id || localAnswers.memory_issues?.id || localAnswers.brain_fog?.id;
-    const concMap = { never: 'never', rarely: 'occasionally', sometimes: 'occasionally', often: 'frequently', always: 'very_often' };
-    list.push({ questionId: 5, answerValue: concMap[concAns] || 'occasionally' });
-
-    const breathAns = localAnswers.breathlessness?.id || localAnswers.shortness_of_breath?.id;
-    const breathMap = { never: 'never', rarely: 'rarely', sometimes: 'sometimes', often: 'frequently', always: 'frequently' };
-    list.push({ questionId: 6, answerValue: breathMap[breathAns] || 'rarely' });
-
-    const moodAns = localAnswers.mood?.id || localAnswers.mood_changes?.id;
-    const moodMap = { happy: 'positive', neutral: 'occasional_low', low: 'frequent_low', irritable: 'persistent_low', never: 'positive', rarely: 'occasional_low', sometimes: 'frequent_low', often: 'persistent_low', always: 'persistent_low' };
-    list.push({ questionId: 7, answerValue: moodMap[moodAns] || 'occasional_low' });
-
-    const digAns = localAnswers.digestive?.id || localAnswers.digestive_issues?.id;
-    const digMap = { never: 'never', rarely: 'occasionally', sometimes: 'occasionally', often: 'frequently', always: 'always' };
-    list.push({ questionId: 8, answerValue: digMap[digAns] || 'never' });
-
-    const anAns = localAnswers.anemia?.id || localAnswers.anemia_history?.id;
-    const anMap = { no: 'no', past: 'past', current: 'current', yes: 'current' };
-    list.push({ questionId: 9, answerValue: anMap[anAns] || 'no' });
-
-    const tongAns = localAnswers.tongue_symptoms?.id || localAnswers.tongue_soreness?.id;
-    const tongMap = { no: 'no', occasionally: 'occasionally', yes: 'yes', never: 'no', rarely: 'occasionally', sometimes: 'occasionally', often: 'yes', always: 'yes' };
-    list.push({ questionId: 10, answerValue: tongMap[tongAns] || 'no' });
-
-    return list;
-  };
-
-  const submitToServer = async (allAnswers) => {
-    if (!isAuthenticated) return null;
-    const sa = mapToServer(allAnswers);
-    if (!sa || !sa.length) return null;
-    try {
-      const data = await questionnaireAPI.submit(sa);
-      if (data?.percentage !== undefined) {
-        return {
-          score: Math.round(data.percentage || 0),
-          maxPossible: 100,
-          percentage: Math.round(data.percentage || 0),
-          level: (data.risk_level || 'low').toUpperCase(),
-          breakdown: data.breakdown || {},
-          suggestions: data.suggestions || [],
-        };
-      }
-      return null;
-    } catch (e) {
-      console.warn('Server assessment sync note:', e.message);
-      return null;
-    }
-  };
-
-  const handleSelect = (opt) => {
-    setSelectedOption(opt);
-    setAnswers(prev => ({ ...prev, [q.id]: opt }));
-  };
-
-  const handleNext = async () => {
-    const chosen = selectedOption || answers[q.id] || q.options?.[0];
-    const updated = { ...answers, [q.id]: chosen };
-    setAnswers(updated);
-
-    if (currentIdx === total - 1) {
-      setSubmitting(true);
-      let result = await submitToServer(updated);
-      if (!result) {
-        result = calculateRisk(updated, questions, user?.dietType || 'vegetarian');
-      }
-      dispatch(setRiskResult(result));
-      setSubmitting(false);
-      router.replace(isAuthenticated ? '/results' : '/score-preview');
+  // ── Navigation ────────────────────────────────────────────────────────────
+  const goNext = useCallback(() => {
+    if (!q || !answers[q.id]) return;
+    if (idx === total - 1) {
+      finish(answers);
       return;
     }
-
-    setCurrentIdx(i => i + 1);
-  };
-
-  const handleBack = () => {
-    if (currentIdx > 0) {
-      setCurrentIdx(i => i - 1);
-    } else {
-      router.back();
+    const nextSection = getSectionId(questions[idx + 1].id);
+    if (nextSection !== currentSection && SECTION_FACTS[currentSection] && !seenBreaks.includes(currentSection)) {
+      setDirection(1);
+      setBreakFor(currentSection);
+      setSeenBreaks((s) => [...s, currentSection]);
+      return;
     }
+    setDirection(1);
+    setIdx((i) => i + 1);
+    setShowWhyMobile(false);
+  }, [q, answers, idx, total, questions, currentSection, seenBreaks, finish]);
+
+  const continueFromBreak = useCallback(() => {
+    setBreakFor(null);
+    setDirection(1);
+    setIdx((i) => Math.min(i + 1, total - 1));
+    setShowWhyMobile(false);
+  }, [total]);
+
+  const goBack = useCallback(() => {
+    if (breakFor) { setBreakFor(null); return; }
+    if (idx === 0) { router.push(isAuthenticated ? '/dashboard' : '/onboarding'); return; }
+    setDirection(-1);
+    setIdx((i) => i - 1);
+    setShowWhyMobile(false);
+  }, [breakFor, idx, router, isAuthenticated]);
+
+  const choose = useCallback((opt) => {
+    if (!q) return;
+    setAnswers((prev) => ({ ...prev, [q.id]: opt }));
+  }, [q]);
+
+  const startOver = () => {
+    clearProgress();
+    setAnswers({});
+    setIdx(0);
+    setSeenBreaks([]);
+    setResumed(false);
   };
 
-  // Plain English & Why it matters extraction
-  const plainEnglish =
-    q?.explanation?.simpleText ||
-    q?.insight ||
-    'This question spots subtle signals of how your body absorbs and utilizes vitamin B12.';
+  const saveAndExit = () => {
+    if (answeredCount > 0) toast('Progress saved — pick up where you left off any time.', 'success');
+    router.push(isAuthenticated ? '/dashboard' : '/');
+  };
 
-  const whyItMatters =
-    q?.explanation?.whyItMatters ||
-    (q?.weight >= 3
-      ? 'This symptom is strongly correlated with early neurological or energy signaling and has extra weight in your score.'
-      : 'B12 is essential for cellular red blood cell formation and nervous system balance.');
+  // ── Keyboard shortcuts: 1–9 choose, Enter continue, ← back ────────────────
+  useEffect(() => {
+    if (phase !== 'asking') return undefined;
+    const onKey = (e) => {
+      if (e.target instanceof HTMLElement && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (breakFor) {
+        if (e.key === 'Enter') { e.preventDefault(); continueFromBreak(); }
+        return;
+      }
+      const n = parseInt(e.key, 10);
+      if (!Number.isNaN(n) && q && n >= 1 && n <= q.options.length) {
+        e.preventDefault();
+        choose(q.options[n - 1]);
+      } else if (e.key === 'Enter' && selected) {
+        e.preventDefault();
+        goNext();
+      } else if (e.key === 'ArrowLeft') {
+        goBack();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [phase, breakFor, q, selected, choose, goNext, goBack, continueFromBreak]);
+
+  if (!ready || !profileComplete || phase === 'loading' || !q) return <LoadingScreen />;
+
+  if (phase === 'analysing') return <AnalysingScreen reduceMotion={reduceMotion} />;
+
+  const slide = reduceMotion
+    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
+    : {
+      initial: { opacity: 0, x: direction * 40 },
+      animate: { opacity: 1, x: 0 },
+      exit: { opacity: 0, x: direction * -40 },
+    };
+
+  const maxScore = Math.max(...q.options.map((o) => o.score || 0)) || 1;
+  const showMeter = q.type === 'frequency' || q.type === 'gradient';
+  const isLast = idx === total - 1;
+  const why = q.explanation || {};
 
   return (
-    <div className={styles.questionnairePage}>
-      {/* ── Top Header ── */}
+    <div className={styles.page}>
+      {/* ── Header ── */}
       <header className={styles.header}>
-        <Link href="/" className={styles.brandTitle}>B12 Health Tracker</Link>
-        <button
-          type="button"
-          className={styles.saveExitBtn}
-          onClick={() => router.push(isAuthenticated ? '/dashboard' : '/')}
-        >
-          Save and exit
+        <Link href={isAuthenticated ? '/dashboard' : '/'} className={styles.brand}>
+          <span className={styles.brandMark} aria-hidden="true">B12</span>
+          <span className={styles.brandText}>Health Tracker</span>
+        </Link>
+        <button type="button" className={styles.exitBtn} onClick={saveAndExit}>
+          Save &amp; exit
         </button>
       </header>
 
-      <main className={styles.container}>
-        {/* Progress Tracker */}
-        <div className={styles.progressSection}>
-          <p className={styles.questionCounter}>
-            Question {currentIdx + 1} of {total}
-          </p>
-          <div className={styles.segmentedTrack}>
-            {questions.map((item, idx) => (
-              <span
-                key={item.id || idx}
-                className={`${styles.segmentDash} ${idx <= currentIdx ? styles.dashActive : ''}`}
-              />
-            ))}
-          </div>
+      {/* ── Progress ── */}
+      <div className={styles.progressWrap}>
+        <div className={styles.progressMeta}>
+          <span className={styles.progressCount}>
+            {breakFor ? 'Quick break' : `Question ${idx + 1} of ${total}`}
+          </span>
+          <span className={styles.progressTime}>
+            {progressPct}% · about {minutesLeft} min left
+          </span>
         </div>
+        <div
+          className={styles.progressTrack}
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={progressPct}
+          aria-label="Assessment progress"
+        >
+          <motion.div
+            className={styles.progressFill}
+            initial={false}
+            animate={{ width: `${Math.max(progressPct, 2)}%` }}
+            transition={{ duration: reduceMotion ? 0 : 0.4, ease: 'easeOut' }}
+          />
+        </div>
+        <ol className={styles.sections} aria-label="Sections">
+          {sectionsInSet.map((s) => {
+            const active = s.id === (breakFor || currentSection);
+            return (
+              <li
+                key={s.id}
+                className={`${styles.sectionChip} ${active ? styles.sectionActive : ''} ${s.done ? styles.sectionDone : ''}`}
+                aria-current={active ? 'step' : undefined}
+              >
+                <span aria-hidden="true">{s.done ? '✓' : s.icon}</span>
+                <span className={styles.sectionLabel}>{s.label}</span>
+              </li>
+            );
+          })}
+        </ol>
+      </div>
 
-        {/* 2-Column Grid */}
-        <div className={styles.contentGrid}>
-          {/* Left Column — Question & Answers */}
-          <div className={styles.questionCol}>
-            <div className={styles.categoryBadge}>
-              {q?.category || 'General Health'}
-            </div>
+      {resumed && !breakFor && (
+        <div className={styles.resumeBar}>
+          <span>Welcome back — we saved your answers so you can continue where you left off.</span>
+          <button type="button" onClick={startOver} className={styles.linkBtn}>Start over</button>
+        </div>
+      )}
 
-            <h2 className={styles.questionTitle}>
-              {q?.question}
-            </h2>
+      <main className={styles.main}>
+        <AnimatePresence mode="wait" initial={false}>
+          {breakFor ? (
+            <motion.section
+              key={`break-${breakFor}`}
+              className={styles.factCard}
+              {...slide}
+              transition={{ duration: reduceMotion ? 0.1 : 0.28, ease: 'easeOut' }}
+              aria-live="polite"
+            >
+              <div className={styles.factEmoji} aria-hidden="true">{SECTION_FACTS[breakFor].emoji}</div>
+              <p className={styles.factKicker}>
+                Section complete · {SECTIONS.find((s) => s.id === breakFor)?.label}
+              </p>
+              <h2 className={styles.factTitle}>{SECTION_FACTS[breakFor].title}</h2>
+              <p className={styles.factBody}>{SECTION_FACTS[breakFor].body}</p>
+              <div className={styles.factStat}>
+                <span className={styles.factStatValue}>{SECTION_FACTS[breakFor].stat}</span>
+                <span className={styles.factStatLabel}>{SECTION_FACTS[breakFor].statLabel}</span>
+              </div>
+              <div className={styles.factActions}>
+                <button type="button" className={styles.backBtn} onClick={goBack}>Back</button>
+                <button type="button" className={styles.nextBtn} onClick={continueFromBreak} autoFocus>
+                  Continue
+                </button>
+              </div>
+            </motion.section>
+          ) : (
+            <motion.div
+              key={q.id}
+              className={styles.grid}
+              {...slide}
+              transition={{ duration: reduceMotion ? 0.1 : 0.28, ease: 'easeOut' }}
+            >
+              {/* ── Question card ── */}
+              <section className={styles.questionCard} aria-labelledby="question-title">
+                <span className={styles.categoryBadge}>
+                  <span aria-hidden="true">{q.categoryIcon}</span> {q.category}
+                </span>
+                <h1 id="question-title" className={styles.questionTitle}>{q.question}</h1>
 
-            <div className={styles.optionsList}>
-              {(q?.options || []).map((opt) => {
-                const isSelected = selectedOption?.id === opt.id || answers[q?.id]?.id === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    className={`${styles.optionPill} ${isSelected ? styles.optionSelected : ''}`}
-                    onClick={() => handleSelect(opt)}
-                  >
-                    {opt.label.replace(/^[^\w\s]+\s*/, '')}
+                <div className={styles.options} role="radiogroup" aria-labelledby="question-title">
+                  {q.options.map((opt, i) => {
+                    const isSel = selected?.id === opt.id;
+                    const level = (opt.score || 0) / maxScore;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={isSel}
+                        className={`${styles.option} ${isSel ? styles.optionSelected : ''}`}
+                        onClick={() => choose(opt)}
+                      >
+                        <span className={styles.optionKey} aria-hidden="true">{i + 1}</span>
+                        <span className={styles.optionLabel}>{cleanLabel(opt.label)}</span>
+                        {showMeter && (
+                          <span className={styles.meter} aria-hidden="true">
+                            {[0.25, 0.5, 0.75, 1].map((t) => (
+                              <span key={t} className={`${styles.meterBar} ${level >= t - 0.01 ? styles.meterOn : ''}`} />
+                            ))}
+                          </span>
+                        )}
+                        <span className={styles.radioDot} aria-hidden="true" />
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <AnimatePresence>
+                  {selected && q.insight && (
+                    <motion.div
+                      className={styles.insight}
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                      role="note"
+                    >
+                      <span className={styles.insightIcon} aria-hidden="true">💡</span>
+                      <p><strong>Good to know:</strong> {q.insight}</p>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                <div className={styles.actions}>
+                  <button type="button" className={styles.backBtn} onClick={goBack}>
+                    ← Back
                   </button>
-                );
-              })}
-            </div>
+                  <button
+                    type="button"
+                    className={styles.nextBtn}
+                    onClick={goNext}
+                    disabled={!selected}
+                  >
+                    {isLast ? 'See my results' : 'Continue'}
+                  </button>
+                </div>
+                <p className={styles.kbdHint}>
+                  Tip: press <kbd>1</kbd>–<kbd>{q.options.length}</kbd> to answer and <kbd>Enter</kbd> to continue.
+                </p>
 
-            <div className={styles.actionButtons}>
-              <button
-                type="button"
-                className={styles.backBtn}
-                onClick={handleBack}
+                <button
+                  type="button"
+                  className={styles.whyToggle}
+                  onClick={() => setShowWhyMobile((v) => !v)}
+                  aria-expanded={showWhyMobile}
+                  aria-controls="why-panel"
+                >
+                  {showWhyMobile ? 'Hide' : 'Why are we asking this?'}
+                </button>
+              </section>
+
+              {/* ── Learn panel ── */}
+              <aside
+                id="why-panel"
+                className={`${styles.whyPanel} ${showWhyMobile ? styles.whyPanelOpen : ''}`}
+                aria-label="Why we ask this question"
               >
-                Back
-              </button>
-              <button
-                type="button"
-                className={styles.nextBtn}
-                onClick={handleNext}
-                disabled={submitting}
-              >
-                {submitting ? 'Calculating…' : currentIdx === total - 1 ? 'See Results' : 'Next'}
-              </button>
-            </div>
-          </div>
+                <div className={styles.visualTile}>
+                  <QuestionVisual type={why.visualType} className={styles.visualSvg} />
+                </div>
+                <h2 className={styles.whyHeading}>Why we ask</h2>
+                <div className={styles.whyBlock}>
+                  <h3>In plain words</h3>
+                  <p>{why.simpleText || q.insight}</p>
+                </div>
+                {why.whyItMatters && (
+                  <div className={styles.whyBlock}>
+                    <h3>How it links to B12</h3>
+                    <p>{why.whyItMatters}</p>
+                  </div>
+                )}
+                {why.keySigns?.length > 0 && (
+                  <div className={styles.whyBlock}>
+                    <h3>What it can look like</h3>
+                    <ul className={styles.signs}>
+                      {why.keySigns.map((s) => <li key={s}>{s}</li>)}
+                    </ul>
+                  </div>
+                )}
+                {q.weight >= 4 && (
+                  <p className={styles.weightNote}>
+                    This is a strong risk signal, so it counts more in your score.
+                  </p>
+                )}
+                {currentSection === 'you' && (
+                  <p className={styles.weightNote}>
+                    Asked because of your age or gender — these factors change B12 needs.
+                  </p>
+                )}
+              </aside>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-          {/* Right Column — Educational Card */}
-          <div className={styles.explainerCol}>
-            <div className={styles.explainerCard}>
-              <div className={styles.explainBlock}>
-                <h4 className={styles.explainHeading}>In plain English</h4>
-                <p className={styles.explainText}>{plainEnglish}</p>
-              </div>
-
-              <div className={styles.explainBlock} style={{ marginTop: '24px' }}>
-                <h4 className={styles.explainHeading}>Why it matters</h4>
-                <p className={styles.explainText}>{whyItMatters}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+        <p className={styles.disclaimer}>
+          Educational screening only — not a diagnosis. Your answers stay private.
+        </p>
       </main>
+    </div>
+  );
+}
+
+const ANALYSIS_STEPS = [
+  'Weighing your symptoms',
+  'Checking diet and absorption factors',
+  'Building your personal suggestions',
+];
+
+function AnalysingScreen({ reduceMotion }) {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    if (reduceMotion) return undefined;
+    const t = setInterval(() => setStep((s) => Math.min(s + 1, ANALYSIS_STEPS.length - 1)), 520);
+    return () => clearInterval(t);
+  }, [reduceMotion]);
+
+  return (
+    <div className={styles.analysing} role="status" aria-live="polite">
+      <div className={styles.pulse} aria-hidden="true">
+        <span>B12</span>
+      </div>
+      <h1 className={styles.analysingTitle}>Analysing your answers…</h1>
+      <ul className={styles.analysingSteps}>
+        {ANALYSIS_STEPS.map((label, i) => (
+          <li key={label} className={i <= step ? styles.stepDone : ''}>
+            <span aria-hidden="true">{i < step ? '✓' : i === step ? '•' : '○'}</span> {label}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

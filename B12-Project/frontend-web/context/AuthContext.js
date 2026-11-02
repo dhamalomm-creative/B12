@@ -1,154 +1,131 @@
 'use client';
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { authAPI, usersAPI } from '@/services/api';
+import { authAPI, usersAPI, questionnaireAPI, getToken, setToken, UNAUTHORIZED_EVENT } from '@/services/api';
+import { useApp, resetApp, setRiskResult, setPendingAnswers } from '@/context/AppContext';
+import { normalizeServerResult } from '@/utils/riskCalculator';
 
 const AuthContext = createContext(null);
 
+const buildUserData = (backendUser, profile) => ({
+  id: backendUser?.id || profile?.user_id || null,
+  email: backendUser?.email || '',
+  createdAt: backendUser?.created_at || null,
+  name: profile?.name || '',
+  age: profile?.age ? Number(profile.age) : '',
+  gender: profile?.gender || '',
+  dietType: profile?.diet_type || '',
+});
+
 export function AuthProvider({ children }) {
+  const { state: appState, dispatch } = useApp();
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
+  const [token, setTokenState] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
 
   const isAuthenticated = !!token;
 
-  const buildUserData = (backendUser, profile) => {
-    return {
-      id: backendUser?.id || profile?.user_id,
-      email: backendUser?.email || '',
-      name: profile?.name || '',
-      age: profile?.age ? String(profile.age) : '',
-      gender: profile?.gender || '',
-      dietType: profile?.diet_type || '',
-    };
-  };
+  const clearSession = useCallback(() => {
+    setToken(null);
+    setTokenState(null);
+    setUser(null);
+    dispatch(resetApp());
+  }, [dispatch]);
 
-  // Load JWT & profile on mount
-  useEffect(() => {
-    const savedToken = typeof window !== 'undefined' ? localStorage.getItem('b12_token') : null;
-    if (savedToken) {
-      setToken(savedToken);
-      usersAPI.getProfile()
-        .then(data => {
-          if (data?.user) {
-            setUser(buildUserData(data.user, data.profile));
-          }
-        })
-        .catch(() => {
-          if (typeof window !== 'undefined') {
-            localStorage.removeItem('b12_token');
-            localStorage.removeItem('b12_app_state');
-          }
-          setToken(null);
-          setUser(null);
-        })
-        .finally(() => setIsLoading(false));
-    } else {
-      setIsLoading(false);
-    }
+  const loadProfile = useCallback(async () => {
+    const data = await usersAPI.getProfile();
+    const u = buildUserData(data?.user, data?.profile);
+    setUser(u);
+    return u;
   }, []);
 
+  // Restore session on first load
+  useEffect(() => {
+    const saved = getToken();
+    if (!saved) { setIsLoading(false); return; }
+    setTokenState(saved);
+    loadProfile()
+      .catch((err) => {
+        // Only a rejected token ends the session — a network blip shouldn't sign people out.
+        if (err?.status === 401 || err?.status === 403) clearSession();
+        else setUser((prev) => prev || { id: null, email: '', name: '', age: '', gender: '', dietType: '' });
+      })
+      .finally(() => setIsLoading(false));
+  }, [loadProfile, clearSession]);
+
+  // Any API call that comes back 401 signs the user out
+  useEffect(() => {
+    const onUnauthorized = () => clearSession();
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+  }, [clearSession]);
+
+  // Save a guest's finished assessment to their new/existing account
+  const syncPendingAssessment = useCallback(async () => {
+    const pending = appState.pendingAnswers;
+    if (!pending || !pending.length) return null;
+    try {
+      const data = await questionnaireAPI.submit(pending);
+      const result = normalizeServerResult(data);
+      if (result) dispatch(setRiskResult(result));
+      dispatch(setPendingAnswers(null));
+      return result;
+    } catch {
+      return null; // keep pending answers so we can retry later
+    }
+  }, [appState.pendingAnswers, dispatch]);
+
+  const startSession = useCallback(async (data) => {
+    setToken(data.token);
+    setTokenState(data.token);
+    let u = { id: data.user?.id, email: data.user?.email || '', name: '', age: '', gender: '', dietType: '' };
+    try { u = await loadProfile(); } catch { setUser(u); }
+    return u;
+  }, [loadProfile]);
+
   const register = useCallback(async (email, password, extraData = {}) => {
-    setIsLoading(true);
     setError('');
     try {
       const data = await authAPI.register(email, password, extraData);
-      if (data?.token) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('b12_token', data.token);
-        }
-        setToken(data.token);
-
-        let mergedUser = {
-          id: data.user?.id,
-          email: data.user?.email || email,
-          name: extraData.name || '',
-          age: extraData.age ? String(extraData.age) : '',
-          gender: extraData.gender || '',
-          dietType: extraData.dietType || '',
-        };
-
-        try {
-          const profileData = await usersAPI.getProfile();
-          if (profileData?.user) {
-            mergedUser = buildUserData(profileData.user, profileData.profile);
-          }
-        } catch {}
-
-        setUser(mergedUser);
-        return { success: true, user: mergedUser };
-      }
-      throw new Error(data?.error || 'Registration failed');
+      if (!data?.token) throw new Error('Registration failed. Please try again.');
+      const u = await startSession(data);
+      const synced = await syncPendingAssessment();
+      return { success: true, user: u, syncedAssessment: !!synced };
     } catch (err) {
       const msg = err.message || 'Registration failed';
       setError(msg);
-      return { success: false, error: msg };
-    } finally {
-      setIsLoading(false);
+      return { success: false, error: msg, status: err.status };
     }
-  }, []);
+  }, [startSession, syncPendingAssessment]);
 
   const login = useCallback(async (email, password) => {
-    setIsLoading(true);
     setError('');
     try {
       const data = await authAPI.login(email, password);
-      if (data?.token) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('b12_token', data.token);
-        }
-        setToken(data.token);
-
-        let mergedUser = {
-          id: data.user?.id,
-          email: data.user?.email || email,
-          name: '',
-          age: '',
-          gender: '',
-          dietType: '',
-        };
-
-        try {
-          const profileData = await usersAPI.getProfile();
-          if (profileData?.user) {
-            mergedUser = buildUserData(profileData.user, profileData.profile);
-          }
-        } catch {}
-
-        setUser(mergedUser);
-        return { success: true, user: mergedUser };
-      }
-      throw new Error(data?.error || 'Login failed');
+      if (!data?.token) throw new Error('Login failed. Please try again.');
+      const u = await startSession(data);
+      const synced = await syncPendingAssessment();
+      return { success: true, user: u, syncedAssessment: !!synced };
     } catch (err) {
       const msg = err.message || 'Login failed';
       setError(msg);
-      return { success: false, error: msg };
-    } finally {
-      setIsLoading(false);
+      return { success: false, error: msg, status: err.status };
     }
-  }, []);
+  }, [startSession, syncPendingAssessment]);
 
   const logout = useCallback(async () => {
-    try {
-      await authAPI.logout();
-    } catch {}
-
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('b12_token');
-      localStorage.removeItem('b12_app_state');
-    }
-    setToken(null);
-    setUser(null);
+    await authAPI.logout();
+    clearSession();
     setError('');
-  }, []);
+  }, [clearSession]);
 
-  const updateUser = useCallback((updatedFields) => {
-    setUser(prev => ({
-      ...prev,
-      ...updatedFields,
-    }));
-  }, []);
+  /** Save profile fields to the server, then refresh local user. Throws on failure. */
+  const updateProfile = useCallback(async (fields) => {
+    await usersAPI.updateProfile(fields);
+    return loadProfile();
+  }, [loadProfile]);
 
+  const updateUser = useCallback((fields) => setUser((prev) => ({ ...prev, ...fields })), []);
   const clearError = useCallback(() => setError(''), []);
 
   return (
@@ -161,8 +138,12 @@ export function AuthProvider({ children }) {
       register,
       login,
       logout,
+      clearSession,
+      updateProfile,
+      refreshProfile: loadProfile,
       updateUser,
       clearError,
+      syncPendingAssessment,
     }}>
       {children}
     </AuthContext.Provider>

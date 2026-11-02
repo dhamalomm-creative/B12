@@ -74,8 +74,8 @@
 .ratingRow {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 16px;
-  margin-bottom: 32px;
+  gap: 12px;
+  margin-bottom: 24px;
 }
 
 .ratingButton {
@@ -101,10 +101,9 @@
   border-color: var(--primary, #1E3A2B) !important;
 }
 
-.ratingNumber {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
+.ratingEmoji {
+  font-size: 30px;
+  line-height: 1;
 }
 
 .ratingLabel {
@@ -113,7 +112,6 @@
   color: var(--text-secondary);
 }
 
-.ratingActive .ratingNumber,
 .ratingActive .ratingLabel {
   color: #FFFFFF !important;
 }
@@ -200,8 +198,146 @@
   background-color: rgba(30, 58, 43, 0.05);
 }
 
+/* ── Additions ── */
+.notice {
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: var(--pastel-blue);
+  color: #2C4960;
+  font-size: 14px;
+  margin-bottom: 20px;
+}
+
+.ratingButton:focus-visible,
+.textBtn:focus-visible,
+.reviewAnswer:focus-visible {
+  outline: 3px solid rgba(46, 125, 78, 0.35);
+  outline-offset: 2px;
+}
+
+.ratingButton:active { transform: scale(0.97); }
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.textBtn {
+  background: none;
+  border: none;
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 8px 4px;
+}
+.textBtn:disabled { opacity: 0.35; cursor: default; }
+
+.reviewList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+.reviewList li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border-light);
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+.reviewAnswer {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 6px 12px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.reviewAnswer small { color: var(--primary); margin-left: 6px; font-weight: 700; }
+
+.notesLabel { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: block; }
+.notesLabel span { font-weight: 400; color: var(--text-muted); font-size: 13px; }
+.notes {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 14px;
+  font: inherit;
+  font-size: 14.5px;
+  resize: vertical;
+  background: #FAF8F5;
+  margin-bottom: 18px;
+}
+.notes:focus { outline: none; border-color: var(--primary); background: #fff; }
+
+.error {
+  font-size: 13.5px;
+  color: #8A3B26;
+  background: var(--pastel-peach);
+  padding: 10px 14px;
+  border-radius: 12px;
+  margin-bottom: 14px;
+}
+
+.viewProgressBtn:disabled { opacity: 0.6; cursor: wait; }
+
+.doneIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--pastel-green);
+  color: var(--risk-low);
+  font-size: 30px;
+  font-weight: 800;
+}
+
+.summaryRow {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 92px;
+  padding: 10px;
+  border-radius: 14px;
+  background: var(--bg);
+  font-size: 24px;
+}
+.summaryItem small { font-size: 12px; color: var(--text-secondary); }
+
+.tip {
+  max-width: 520px;
+  font-size: 14.5px;
+  color: var(--text-secondary);
+  background: var(--pastel-yellow);
+  padding: 12px 16px;
+  border-radius: 14px;
+}
+
 @media (max-width: 680px) {
-  .ratingRow {
-    grid-template-columns: repeat(2, 1fr);
-  }
+  .card { padding: 24px 18px; }
+  .questionText { font-size: 21px; margin-bottom: 20px; }
+  .ratingRow { grid-template-columns: repeat(5, 1fr); gap: 6px; }
+  .ratingButton { padding: 14px 4px; }
+  .ratingEmoji { font-size: 24px; }
+  .ratingLabel { font-size: 11px; text-align: center; }
+  .compActions { flex-direction: column; width: 100%; }
+  .compActions button { width: 100%; }
+  .reviewList li { flex-direction: column; align-items: flex-start; }
 }

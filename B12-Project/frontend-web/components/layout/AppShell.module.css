@@ -20,3 +20,7 @@
     padding: 24px 18px 84px;
   }
 }
+
+@media print {
+  .content { margin-left: 0; padding: 0; }
+}

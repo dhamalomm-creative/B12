@@ -6,7 +6,7 @@
  *  [2]  Timing attack prevention: always runs bcrypt even when user not found
  *       → prevents user enumeration via response time differences
  *  [3]  Brute-force check: rejects login if ≥5 failures in last 15 min for that email
- *  [4]  Account lockout: sets is_active=false after consecutive failures
+ *  [4]  Temporary lockout: blocks the email for ACCOUNT_LOCKOUT_MINUTES after repeated failures
  *  [5]  Login attempt logging: every attempt (success/fail) recorded
  *  [6]  JWT jti (unique ID): enables per-token revocation on logout
  *  [7]  JWT algorithm locked to HS256: prevents algorithm confusion attack
@@ -43,11 +43,7 @@ const router = express.Router();
 const DUMMY_HASH = '$2a$12$LQv3c1yqBm9b.XESSzgumHJoZ.GFMB.d4BpJvCHRkOTuXiVtVma';
 
 // ── Helper: Get real client IP ──
-const getClientIp = (req) => {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (forwarded) return forwarded.split(',')[0].trim();
-  return req.ip || req.connection?.remoteAddress || 'unknown';
-};
+const getClientIp = (req) => req.ip || req.socket?.remoteAddress || 'unknown';
 
 // ── Helper: Generate JWT with jti (enables logout revocation) ──
 const generateToken = (user) => {
@@ -106,10 +102,11 @@ const recordAttempt = async (email, ip, success) => {
 router.post('/register', [
   body('email')
     .isEmail().withMessage('A valid email address is required.')
+    .isLength({ max: 254 }).withMessage('Email is too long.')
     .normalizeEmail(),
   // [1] Password policy: min 8 chars + uppercase + number (for medical data)
   body('password')
-    .isLength({ min: 8 }).withMessage('Password must be at least 8 characters.')
+    .isLength({ min: 8, max: 128 }).withMessage('Password must be 8–128 characters.')
     .matches(/[A-Z]/).withMessage('Password must contain at least one uppercase letter.')
     .matches(/[0-9]/).withMessage('Password must contain at least one number.'),
 ], async (req, res, next) => {
@@ -121,6 +118,11 @@ router.post('/register', [
     const { email, password, name, age, gender, dietType } = req.body;
 
     const existing = await User.findOne({ where: { email } });
+    const cleanName = typeof name === 'string' ? name.trim().slice(0, 80) : null;
+    const allowedGenders = ['male', 'female', 'other'];
+    const allowedDiets = ['vegan', 'vegetarian', 'pescatarian', 'omnivore'];
+    const cleanGender = allowedGenders.includes(gender) ? gender : null;
+    const cleanDiet = allowedDiets.includes(dietType) ? dietType : null;
     if (existing) {
       return sendError(res, 'Email already registered. Please log in to your existing account.', 409);
     }
@@ -128,16 +130,17 @@ router.post('/register', [
     const password_hash = await bcrypt.hash(password, 12);
     const user = await User.create({ email, password_hash });
 
-    if (name || age || gender || dietType) {
-      const ageNum = parseInt(age);
+    if (cleanName || age || cleanGender || cleanDiet) {
+      const ageNum = parseInt(age, 10);
+      const validAge = !isNaN(ageNum) && ageNum > 0 && ageNum <= 120;
       await UserProfile.create({
         user_id:            user.id,
-        name:               name || null,
-        age:                (!isNaN(ageNum) && ageNum > 0) ? ageNum : null,
-        age_group:          (!isNaN(ageNum) && ageNum > 0) ? getAgeGroup(ageNum) : null,
-        gender:             gender || null,
-        diet_type:          dietType || null,
-        diet_penalty_score: getDietPenalty(dietType),
+        name:               cleanName || null,
+        age:                validAge ? ageNum : null,
+        age_group:          validAge ? getAgeGroup(ageNum) : null,
+        gender:             cleanGender,
+        diet_type:          cleanDiet,
+        diet_penalty_score: getDietPenalty(cleanDiet),
       });
     }
 
@@ -163,7 +166,8 @@ router.post('/register', [
 // ════════════════════════════════════════════════════
 router.post('/login', [
   body('email').isEmail().normalizeEmail().withMessage('Valid email required.'),
-  body('password').notEmpty().withMessage('Password is required.'),
+  body('password').notEmpty().withMessage('Password is required.')
+    .isLength({ max: 128 }).withMessage('Invalid email or password.'),
 ], async (req, res, next) => {
   try {
     const errors = validationResult(req);
@@ -204,20 +208,16 @@ router.post('/login', [
       // Record the failure
       await recordAttempt(email, ip, false);
 
-      // [4] Check if this failure tips into account lockout
+      // [4] Temporary lockout: once the failure threshold is reached, further attempts
+      // are rejected by the brute-force gate above until the window expires.
+      // We deliberately do NOT set is_active=false here — doing so would let anyone
+      // permanently lock a victim's account just by typing their email 5 times.
       const nowBruteForced = await isEmailBruteForced(email);
-      if (nowBruteForced && user && user.is_active) {
-        // Lock the account
-        await user.update({ is_active: false });
+      if (nowBruteForced && user) {
         await logSecurityEvent(req, EVENTS.ACCOUNT_LOCKED, {
           userId:   user.id,
-          metadata: { email, reason: 'consecutive_failures_lockout' },
+          metadata: { email, reason: 'temporary_lockout_threshold_reached' },
         });
-        return sendError(
-          res,
-          'Account locked after too many failed attempts. Please contact support to unlock.',
-          403,
-        );
       }
 
       // [10] Log the failure

@@ -666,6 +666,157 @@ export const GENDER_QUESTIONS = {
   ],
 };
 
+
+// ─── Extra answer scales ──────────────────────────────────────────────────────
+export const SUPPLEMENT_OPTIONS = [
+  { id: 'yes_regular',    label: 'Yes, most days',          score: 0 },
+  { id: 'yes_occasional', label: 'Sometimes',               score: 1 },
+  { id: 'multivitamin',   label: 'Only a multivitamin',     score: 1 },
+  { id: 'no',             label: 'No',                      score: 3 },
+];
+
+export const MEDICATION_OPTIONS = [
+  { id: 'none',     label: 'Neither',                     score: 0 },
+  { id: 'unsure',   label: 'Not sure',                    score: 1 },
+  { id: 'one',      label: 'Yes, one of them',            score: 3 },
+  { id: 'both',     label: 'Yes, both',                   score: 4 },
+];
+
+export const CONDITION_OPTIONS = [
+  { id: 'no',     label: 'No',                score: 0 },
+  { id: 'unsure', label: 'Not sure',          score: 1 },
+  { id: 'yes',    label: 'Yes',               score: 4 },
+];
+
+export const ALCOHOL_OPTIONS = [
+  { id: 'never',      label: 'Never',               score: 0 },
+  { id: 'occasional', label: 'Occasionally',        score: 1 },
+  { id: 'weekly',     label: 'Most weeks',          score: 2 },
+  { id: 'daily',      label: 'Daily or almost daily', score: 3 },
+];
+
+// ─── Additional clinical-risk questions (asked to everyone) ──────────────────
+// Based on established B12 risk factors (NIH Office of Dietary Supplements):
+// supplement use, absorption disorders / GI surgery, metformin and acid-reducing
+// medicines, alcohol, and classic physical signs (glossitis, anaemia symptoms).
+export const SUPPLEMENT_QUESTION = {
+  id: 'supplement_use',
+  category: 'Diet',
+  categoryIcon: '💊',
+  question: 'Do you take a vitamin B12 supplement (tablet, drops, spray or injection)?',
+  insight: 'A regular B12 supplement is the most reliable way to stay topped up — especially on a plant-based diet or after 50.',
+  explanation: {
+    simpleText: 'Any product that lists vitamin B12 (cyanocobalamin, methylcobalamin) on the label — including B-complex tablets, sublingual drops, sprays or doctor-given injections.',
+    whyItMatters: 'Supplements bypass many of the dietary gaps that cause deficiency. Even people with absorption problems can maintain levels with high-dose or injected B12.',
+    visualType: 'supplement_pill',
+    keySigns: [
+      'Check the label: B12 appears as cyanocobalamin or methylcobalamin',
+      'Most standard multivitamins contain only a small amount of B12',
+    ],
+  },
+  type: 'custom',
+  options: SUPPLEMENT_OPTIONS,
+  weight: 3,
+};
+
+export const CLINICAL_QUESTIONS = [
+  {
+    id: 'tongue_mouth',
+    category: 'Physical',
+    categoryIcon: '👅',
+    question: 'Do you notice a sore, smooth or unusually red tongue, or frequent mouth ulcers?',
+    insight: 'A swollen, smooth, beefy-red tongue (glossitis) is a classic physical sign of low B12.',
+    explanation: {
+      simpleText: 'Your tongue feeling tender, burning, or looking glossy and redder than usual — or mouth ulcers that keep coming back.',
+      whyItMatters: 'The cells lining your mouth and tongue renew very quickly and need B12 to divide properly. When B12 runs low, they are among the first tissues to show it.',
+      visualType: 'tongue',
+      keySigns: [
+        'Tongue looks smooth because the small bumps (papillae) have flattened',
+        'Burning or soreness when eating spicy or acidic food',
+      ],
+    },
+    type: 'gradient',
+    options: GRADIENT_OPTIONS,
+    weight: 2,
+  },
+  {
+    id: 'breathless_pale',
+    category: 'Physical',
+    categoryIcon: '🫁',
+    question: 'Do you get short of breath, a racing heartbeat, or look pale during light activity?',
+    insight: 'These are common signs of anaemia, which long-term B12 deficiency can cause.',
+    explanation: {
+      simpleText: 'Getting out of breath climbing one flight of stairs, feeling your heart pound with little effort, or people telling you that you look pale.',
+      whyItMatters: 'Without enough B12, the body makes fewer, larger and fragile red blood cells (megaloblastic anaemia), so less oxygen reaches your muscles and brain.',
+      visualType: 'blood_flow',
+      keySigns: [
+        'Needing to pause on stairs you used to climb easily',
+        'Pale skin, inner eyelids or nail beds',
+      ],
+    },
+    type: 'gradient',
+    options: GRADIENT_OPTIONS,
+    weight: 2,
+  },
+  {
+    id: 'absorption_conditions',
+    category: 'Medical',
+    categoryIcon: '🩺',
+    question: "Have you been diagnosed with pernicious anaemia, Crohn's disease, coeliac disease, or had stomach / bowel surgery (including weight-loss surgery)?",
+    insight: 'These conditions reduce how much B12 your gut can absorb — even if your diet is rich in it.',
+    explanation: {
+      simpleText: 'Any diagnosis or surgery that affects your stomach or small intestine, such as gastric bypass, sleeve gastrectomy, or removal of part of the bowel.',
+      whyItMatters: 'B12 needs stomach acid, a protein called intrinsic factor and a healthy end of the small intestine (ileum) to be absorbed. These conditions interrupt that chain.',
+      visualType: 'gut_health',
+      keySigns: [
+        'People with these conditions often need B12 injections or high-dose tablets',
+        'Your doctor may recommend yearly B12 blood tests',
+      ],
+    },
+    type: 'custom',
+    options: CONDITION_OPTIONS,
+    weight: 4,
+  },
+  {
+    id: 'medications',
+    category: 'Medical',
+    categoryIcon: '💊',
+    question: 'Do you regularly take metformin (for diabetes) or acid-reducing medicines like omeprazole, pantoprazole or ranitidine?',
+    insight: 'Long-term use of metformin or stomach-acid reducers is a well-known cause of falling B12 levels.',
+    explanation: {
+      simpleText: 'Metformin is a common diabetes tablet. Acid reducers (PPIs and H2 blockers) are taken for acidity, reflux, heartburn or ulcers — often for months or years.',
+      whyItMatters: 'Stomach acid releases B12 from food, and metformin interferes with absorption in the gut. Over 1–2 years, levels can drop quietly.',
+      visualType: 'medication',
+      keySigns: [
+        'Taken daily for more than a few months',
+        'Never stop a prescribed medicine on your own — ask your doctor about B12 monitoring instead',
+      ],
+    },
+    type: 'custom',
+    options: MEDICATION_OPTIONS,
+    weight: 4,
+  },
+  {
+    id: 'alcohol',
+    category: 'Lifestyle',
+    categoryIcon: '🍷',
+    question: 'How often do you drink alcohol?',
+    insight: 'Regular drinking can damage the stomach lining and reduce how well B vitamins are absorbed and stored.',
+    explanation: {
+      simpleText: 'Any alcoholic drink — beer, wine, spirits — counted across a typical week.',
+      whyItMatters: 'Alcohol irritates the stomach lining (reducing intrinsic factor) and affects the liver, which is where most of your B12 reserve is stored.',
+      visualType: 'alcohol',
+      keySigns: [
+        'Several drinks on most days has the biggest effect',
+        'Heavy drinking also tends to reduce how much nutritious food people eat',
+      ],
+    },
+    type: 'custom',
+    options: ALCOHOL_OPTIONS,
+    weight: 2,
+  },
+];
+
 // ─── DAILY CHECK-IN QUESTIONS ─────────────────────────────────────────────────
 export const DAILY_CHECKIN = [
   {
@@ -735,7 +886,7 @@ export const DAILY_CHECKIN = [
 // ─── Helper: get age group ───────────────────────────────────────────────────
 export const getAgeGroup = (age) => {
   const n = parseInt(age);
-  if (n >= 15 && n <= 24) return '15-24';
+  if (n > 0 && n <= 24) return '15-24';
   if (n >= 25 && n <= 40) return '25-40';
   if (n >= 41 && n <= 60) return '41-60';
   if (n > 60)             return '60+';
@@ -751,12 +902,14 @@ export const buildQuestionSet = (age, gender, dietType = 'omnivore') => {
   const dietKey   = (dietType || 'omnivore').toLowerCase();
   const dietFoodQ = DIET_B12_QUESTIONS[dietKey] || DIET_B12_QUESTIONS.omnivore;
 
-  const customizedCommon = COMMON_QUESTIONS.map((q) => {
+  const customizedCommon = [];
+  COMMON_QUESTIONS.forEach((q) => {
     if (q.id === 'b12_food_intake') {
-      return dietFoodQ;
+      customizedCommon.push(dietFoodQ, SUPPLEMENT_QUESTION);
+    } else {
+      customizedCommon.push(q);
     }
-    return q;
   });
 
-  return [...customizedCommon, ...ageQs, ...genderQs];
+  return [...customizedCommon, ...CLINICAL_QUESTIONS, ...ageQs, ...genderQs];
 };
