@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# B12 Health Tracker — Web App
 
-## Getting Started
+Next.js 16 (App Router) + React 19 web app for B12 Health Tracker.
 
-First, run the development server:
+## Quick start
+
+Requires the API running (see [backend/README.md](../backend/README.md)).
+
+```bash
+cp .env.example .env.local
+```
+
+```bash
+npm install
+```
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3001>.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+| Script | Purpose |
+|---|---|
+| `npm run dev` | Dev server on port 3001 |
+| `npm run build` | Production build |
+| `npm start` | Serve the production build |
+| `npm run lint` | ESLint |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment
 
-## Learn More
+| Variable | Example |
+|---|---|
+| `NEXT_PUBLIC_API_URL` | `http://localhost:3000` |
+| `NEXT_PUBLIC_SITE_URL` | `http://localhost:3001` |
+| `NEXT_PUBLIC_CONTACT_EMAIL` | `support@example.com` |
 
-To learn more about Next.js, take a look at the following resources:
+They are inlined at build time — rebuild after changing them. Details: [docs/CONFIGURATION.md](../../docs/CONFIGURATION.md).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Where things are
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Path | Contents |
+|---|---|
+| `app/` | One folder per route |
+| `components/` | Layout (`AppShell`, `TabBar`), `AuthGuard`, UI primitives |
+| `context/` | `AuthContext`, `AppContext`, `ThemeContext` |
+| `data/questions.js` | v2 question bank and `buildQuestionSet()` |
+| `utils/riskCalculator.js` | v2 scoring — must match the server (run `node ../scripts/check-scoring-parity.mjs`) |
+| `services/api.js` | API client |
 
-## Deploy on Vercel
+Pages, user flow, state and storage keys: [docs/FRONTEND.md](../../docs/FRONTEND.md).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+> This project uses Next.js 16, which has breaking changes from earlier versions. See `node_modules/next/dist/docs/` before using an unfamiliar API.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Deploy
+
+Vercel, root directory `B12-Project/frontend-web`. See [docs/DEPLOYMENT.md](../../docs/DEPLOYMENT.md).
