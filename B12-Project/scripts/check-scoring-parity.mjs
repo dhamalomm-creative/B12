@@ -4,7 +4,7 @@
  * Run from B12-Project/:  node scripts/check-scoring-parity.mjs
  */
 import { createRequire } from 'module';
-import { fileURLToPath } from 'url';
+import { fileURLToPath, pathToFileURL } from 'url';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -17,8 +17,9 @@ const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'b12-parity-'));
 fs.copyFileSync(path.join(root, 'frontend-web/data/questions.js'), path.join(tmp, 'questions.mjs'));
 fs.copyFileSync(path.join(root, 'frontend-web/utils/riskCalculator.js'), path.join(tmp, 'risk.mjs'));
-const Q = await import(path.join(tmp, 'questions.mjs'));
-const R = await import(path.join(tmp, 'risk.mjs'));
+// import() needs file:// URLs — a bare "C:\..." path is rejected on Windows.
+const Q = await import(pathToFileURL(path.join(tmp, 'questions.mjs')).href);
+const R = await import(pathToFileURL(path.join(tmp, 'risk.mjs')).href);
 const server = require(path.join(root, 'backend/node-service/src/services/scoringEngineV2.js'));
 
 let failures = 0;
