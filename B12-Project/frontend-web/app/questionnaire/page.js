@@ -2,7 +2,7 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion, AnimatePresence, useReducedMotion } from 'framer-motion';
+import { motion, AnimatePresence, useReducedMotionConfig } from 'framer-motion';
 import { useApp, setRiskResult, setPendingAnswers } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { buildQuestionSet, getAgeGroup } from '@/data/questions';
@@ -11,11 +11,21 @@ import { calculateRisk, toServerAnswers, normalizeServerResult } from '@/utils/r
 import { questionnaireAPI } from '@/services/api';
 import QuestionVisual from '@/components/questionnaire/QuestionVisual';
 import { LoadingScreen, toast } from '@/components/UI';
+import { EASE } from '@/components/motion';
 import styles from './page.module.css';
 
 const PROGRESS_KEY = 'b12_questionnaire_progress';
 const PROGRESS_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const SECONDS_PER_QUESTION = 12;
+
+// Direction-aware slide: `custom` is +1 going forward, -1 going back. Passing it through
+// AnimatePresence means the outgoing card exits the right way, not the way it entered.
+const slideVariants = {
+  enter: (dir) => ({ opacity: 0, x: dir * 40 }),
+  center: { opacity: 1, x: 0 },
+  exit: (dir) => ({ opacity: 0, x: dir * -40 }),
+};
+const fadeVariants = { enter: { opacity: 0 }, center: { opacity: 1 }, exit: { opacity: 0 } };
 
 const cleanLabel = (label) => label.replace(/^[^\p{L}\p{N}]+\s*/u, '');
 
@@ -36,7 +46,7 @@ export default function QuestionnairePage() {
   const { state, dispatch } = useApp();
   const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
   const router = useRouter();
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionConfig();
 
   // Profile used to personalise the question set
   const profile = useMemo(() => {
@@ -71,6 +81,7 @@ export default function QuestionnairePage() {
   const [phase, setPhase] = useState('loading');   // loading | asking | analysing
   const [resumed, setResumed] = useState(false);
   const [showWhyMobile, setShowWhyMobile] = useState(false);
+  const [whyClosing, setWhyClosing] = useState(false);
   const submittingRef = useRef(false);
 
   // Restore saved progress once the question set is known
@@ -172,6 +183,7 @@ export default function QuestionnairePage() {
     setDirection(1);
     setIdx((i) => i + 1);
     setShowWhyMobile(false);
+    setWhyClosing(false);
   }, [q, answers, idx, total, questions, currentSection, seenBreaks, finish]);
 
   const continueFromBreak = useCallback(() => {
@@ -179,6 +191,7 @@ export default function QuestionnairePage() {
     setDirection(1);
     setIdx((i) => Math.min(i + 1, total - 1));
     setShowWhyMobile(false);
+    setWhyClosing(false);
   }, [total]);
 
   const goBack = useCallback(() => {
@@ -187,7 +200,20 @@ export default function QuestionnairePage() {
     setDirection(-1);
     setIdx((i) => i - 1);
     setShowWhyMobile(false);
+    setWhyClosing(false);
   }, [breakFor, idx, router, isAuthenticated]);
+
+  const toggleWhy = () => {
+    if (!showWhyMobile) { setWhyClosing(false); setShowWhyMobile(true); return; }
+    if (reduceMotion) { setShowWhyMobile(false); return; }
+    setWhyClosing(true); // let the 200 ms whyOut fade play, then hide
+  };
+
+  useEffect(() => {
+    if (!whyClosing) return undefined;
+    const t = setTimeout(() => { setWhyClosing(false); setShowWhyMobile(false); }, 200);
+    return () => clearTimeout(t);
+  }, [whyClosing]);
 
   const choose = useCallback((opt) => {
     if (!q) return;
@@ -236,13 +262,13 @@ export default function QuestionnairePage() {
 
   if (phase === 'analysing') return <AnalysingScreen reduceMotion={reduceMotion} />;
 
-  const slide = reduceMotion
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
-    : {
-      initial: { opacity: 0, x: direction * 40 },
-      animate: { opacity: 1, x: 0 },
-      exit: { opacity: 0, x: direction * -40 },
-    };
+  const slide = {
+    custom: direction,
+    variants: reduceMotion ? fadeVariants : slideVariants,
+    initial: 'enter',
+    animate: 'center',
+    exit: 'exit',
+  };
 
   const maxScore = Math.max(...q.options.map((o) => o.score || 0)) || 1;
   const showMeter = q.type === 'frequency' || q.type === 'gradient';
@@ -283,8 +309,9 @@ export default function QuestionnairePage() {
           <motion.div
             className={styles.progressFill}
             initial={false}
-            animate={{ width: `${Math.max(progressPct, 2)}%` }}
-            transition={{ duration: reduceMotion ? 0 : 0.4, ease: 'easeOut' }}
+            // Full-width bar slid in from the left: transform-only and keeps its rounded end
+            animate={{ x: `${Math.max(progressPct, 2) - 100}%` }}
+            transition={{ duration: reduceMotion ? 0 : 0.4, ease: EASE }}
           />
         </div>
         <ol className={styles.sections} aria-label="Sections">
@@ -296,7 +323,16 @@ export default function QuestionnairePage() {
                 className={`${styles.sectionChip} ${active ? styles.sectionActive : ''} ${s.done ? styles.sectionDone : ''}`}
                 aria-current={active ? 'step' : undefined}
               >
-                <span aria-hidden="true">{s.done ? '✓' : s.icon}</span>
+                <motion.span
+                  key={s.done ? 'done' : 'todo'}
+                  aria-hidden="true"
+                  className={styles.sectionIcon}
+                  initial={s.done && !reduceMotion ? { scale: 0.5, opacity: 0 } : false}
+                  animate={{ scale: 1, opacity: 1 }}
+                  transition={{ duration: 0.3, ease: EASE }}
+                >
+                  {s.done ? '✓' : s.icon}
+                </motion.span>
                 <span className={styles.sectionLabel}>{s.label}</span>
               </li>
             );
@@ -312,17 +348,27 @@ export default function QuestionnairePage() {
       )}
 
       <main className={styles.main}>
-        <AnimatePresence mode="wait" initial={false}>
+        <AnimatePresence mode="wait" initial={false} custom={direction}>
           {breakFor ? (
             <motion.section
               key={`break-${breakFor}`}
               className={styles.factCard}
               {...slide}
-              transition={{ duration: reduceMotion ? 0.1 : 0.28, ease: 'easeOut' }}
+              transition={{ duration: reduceMotion ? 0 : 0.28, ease: EASE }}
               aria-live="polite"
             >
-              <div className={styles.factEmoji} aria-hidden="true">{SECTION_FACTS[breakFor].emoji}</div>
+              {/* Understated "section complete" beat: the emoji settles in and a small tick draws */}
+              <motion.div
+                className={styles.factEmoji}
+                aria-hidden="true"
+                initial={reduceMotion ? false : { opacity: 0, scale: 0.85 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.36, delay: 0.12, ease: EASE }}
+              >
+                {SECTION_FACTS[breakFor].emoji}
+              </motion.div>
               <p className={styles.factKicker}>
+                <Tick className={styles.factTick} draw={!reduceMotion} delay={0.3} />
                 Section complete · {SECTIONS.find((s) => s.id === breakFor)?.label}
               </p>
               <h2 className={styles.factTitle}>{SECTION_FACTS[breakFor].title}</h2>
@@ -343,7 +389,7 @@ export default function QuestionnairePage() {
               key={q.id}
               className={styles.grid}
               {...slide}
-              transition={{ duration: reduceMotion ? 0.1 : 0.28, ease: 'easeOut' }}
+              transition={{ duration: reduceMotion ? 0 : 0.28, ease: EASE }}
             >
               {/* ── Question card ── */}
               <section className={styles.questionCard} aria-labelledby="question-title">
@@ -357,13 +403,15 @@ export default function QuestionnairePage() {
                     const isSel = selected?.id === opt.id;
                     const level = (opt.score || 0) / maxScore;
                     return (
-                      <button
+                      <motion.button
                         key={opt.id}
                         type="button"
                         role="radio"
                         aria-checked={isSel}
                         className={`${styles.option} ${isSel ? styles.optionSelected : ''}`}
                         onClick={() => choose(opt)}
+                        whileTap={reduceMotion ? undefined : { scale: 0.985 }}
+                        transition={{ duration: 0.15 }}
                       >
                         <span className={styles.optionKey} aria-hidden="true">{i + 1}</span>
                         <span className={styles.optionLabel}>{cleanLabel(opt.label)}</span>
@@ -374,8 +422,18 @@ export default function QuestionnairePage() {
                             ))}
                           </span>
                         )}
-                        <span className={styles.radioDot} aria-hidden="true" />
-                      </button>
+                        {/* Small pop + tick when chosen; keyed so it replays on each new selection */}
+                        <motion.span
+                          key={isSel ? 'on' : 'off'}
+                          className={styles.radioDot}
+                          aria-hidden="true"
+                          initial={isSel && !reduceMotion ? { scale: 0.7 } : false}
+                          animate={{ scale: 1 }}
+                          transition={{ duration: 0.24, ease: EASE }}
+                        >
+                          {isSel && <Tick className={styles.radioTick} draw={!reduceMotion} delay={0.05} />}
+                        </motion.span>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -384,10 +442,10 @@ export default function QuestionnairePage() {
                   {selected && q.insight && (
                     <motion.div
                       className={styles.insight}
-                      initial={{ opacity: 0, y: 8 }}
+                      initial={reduceMotion ? false : { opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.22 }}
+                      transition={{ duration: reduceMotion ? 0 : 0.22, ease: EASE }}
                       role="note"
                     >
                       <span className={styles.insightIcon} aria-hidden="true">💡</span>
@@ -416,18 +474,18 @@ export default function QuestionnairePage() {
                 <button
                   type="button"
                   className={styles.whyToggle}
-                  onClick={() => setShowWhyMobile((v) => !v)}
-                  aria-expanded={showWhyMobile}
+                  onClick={toggleWhy}
+                  aria-expanded={showWhyMobile && !whyClosing}
                   aria-controls="why-panel"
                 >
-                  {showWhyMobile ? 'Hide' : 'Why are we asking this?'}
+                  {showWhyMobile && !whyClosing ? 'Hide' : 'Why are we asking this?'}
                 </button>
               </section>
 
               {/* ── Learn panel ── */}
               <aside
                 id="why-panel"
-                className={`${styles.whyPanel} ${showWhyMobile ? styles.whyPanelOpen : ''}`}
+                className={`${styles.whyPanel} ${showWhyMobile ? styles.whyPanelOpen : ''} ${whyClosing ? styles.whyPanelClosing : ''}`}
                 aria-label="Why we ask this question"
               >
                 <div className={styles.visualTile}>
@@ -497,11 +555,35 @@ function AnalysingScreen({ reduceMotion }) {
       <h1 className={styles.analysingTitle}>Analysing your answers…</h1>
       <ul className={styles.analysingSteps}>
         {ANALYSIS_STEPS.map((label, i) => (
-          <li key={label} className={i <= step ? styles.stepDone : ''}>
+          <motion.li
+            key={label}
+            className={i <= step ? styles.stepDone : ''}
+            initial={reduceMotion ? false : { opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: i * 0.12, ease: EASE }}
+          >
             <span aria-hidden="true">{i < step ? '✓' : i === step ? '•' : '○'}</span> {label}
-          </li>
+          </motion.li>
         ))}
       </ul>
     </div>
+  );
+}
+
+/** A check mark that draws itself (stroke only) unless motion is reduced. */
+function Tick({ className, draw = true, delay = 0 }) {
+  return (
+    <svg className={className} viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <motion.path
+        d="M3.5 8.5l3 3 6-7"
+        stroke="currentColor"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        initial={draw ? { pathLength: 0 } : false}
+        animate={{ pathLength: 1 }}
+        transition={{ duration: 0.26, delay, ease: EASE }}
+      />
+    </svg>
   );
 }

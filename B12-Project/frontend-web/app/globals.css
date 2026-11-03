@@ -380,13 +380,25 @@ a:hover { opacity: 0.85; }
   position: relative;
   width: 100%;
   height: 8px;
+  margin: 12px 0;
+}
+.risk-gauge-bar {
+  position: absolute;
+  inset: 0;
   border-radius: var(--radius-full);
   background: linear-gradient(90deg, #5AB879 0%, #E8C15A 50%, #E76F51 100%);
-  margin: 12px 0;
+  transform-origin: left center;
+}
+/* Full-width rail moved with translateX(%) so the marker glides on the compositor */
+.risk-gauge-rail {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 }
 .risk-gauge-marker {
   position: absolute;
   top: 50%;
+  left: 0;
   transform: translate(-50%, -50%);
   width: 16px;
   height: 16px;
@@ -394,7 +406,6 @@ a:hover { opacity: 0.85; }
   background: #FFFFFF;
   border: 3.5px solid var(--primary);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
-  transition: left 0.4s ease;
 }
 
 /* ─── Disclaimer Banner ─── */

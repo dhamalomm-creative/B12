@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { motion, useReducedMotionConfig } from 'framer-motion';
 import styles from './Toast.module.css';
 
 let addToastGlobal = null;
@@ -82,13 +83,24 @@ export function ProgressBar({ progress = 0, total = 1, color }) {
   );
 }
 
-export function RiskGauge({ percentage = 0, className = '' }) {
+/**
+ * Horizontal risk scale with a marker at `percentage`.
+ * `animateIn`: 'mount' or 'view' sweeps the scale in and slides the marker to its value
+ * (transform only); omit for a static gauge. Reduced motion always renders it static.
+ */
+export function RiskGauge({ percentage = 0, className = '', animateIn, delay = 0, duration = 0.8 }) {
+  const reduce = useReducedMotionConfig();
   const num = Number(percentage);
   const safePct = isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
   // Clamp between 5% and 95% for the circle marker
   const markerPos = Math.min(95, Math.max(5, safePct));
+  const animated = !!animateIn && !reduce;
+  const trigger = animateIn === 'view'
+    ? { whileInView: 'show', viewport: { once: true, amount: 0.6 } }
+    : { animate: 'show' };
+  const ease = [0.22, 1, 0.36, 1];
   return (
-    <div
+    <motion.div
       className={`risk-gauge-container ${className}`}
       style={{ width: '100%' }}
       role="meter"
@@ -96,11 +108,26 @@ export function RiskGauge({ percentage = 0, className = '' }) {
       aria-valuemax={100}
       aria-valuenow={Math.round(safePct)}
       aria-label="B12 risk score"
+      initial={animated ? 'hidden' : false}
+      {...(animated ? trigger : { animate: 'show' })}
     >
       <div className="risk-gauge-track">
-        <div className="risk-gauge-marker" style={{ left: `${markerPos}%` }} />
+        <motion.div
+          className="risk-gauge-bar"
+          variants={{ hidden: { scaleX: 0 }, show: { scaleX: 1 } }}
+          transition={animated ? { duration: 0.4, delay, ease } : { duration: 0 }}
+        />
+        <motion.div
+          className="risk-gauge-rail"
+          variants={{ hidden: { x: '0%', opacity: 0 }, show: { x: `${markerPos}%`, opacity: 1 } }}
+          transition={animated
+            ? { x: { duration, delay: delay + 0.15, ease }, opacity: { duration: 0.2, delay: delay + 0.15 } }
+            : { duration: 0.4, ease }}
+        >
+          <div className="risk-gauge-marker" />
+        </motion.div>
       </div>
-    </div>
+    </motion.div>
   );
 }
 

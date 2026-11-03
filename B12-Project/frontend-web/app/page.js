@@ -2,14 +2,25 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, useReducedMotionConfig } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { LoadingScreen, RiskGauge } from '@/components/UI';
+import { EASE, Reveal, fadeUp } from '@/components/motion';
 import styles from './page.module.css';
+
+const heroStagger = { hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } } };
+const STEP_CARDS = [
+  { className: 'stepCardGreen', title: 'Answer a few questions', desc: 'About 20 questions picked for your age, gender and diet — each one explains why it matters. No account needed to see your score.' },
+  { className: 'stepCardYellow', title: 'Check in daily', desc: 'Rate energy, mood, sleep and more in 30 seconds. Build a streak and watch your trend.' },
+  { className: 'stepCardBlue', title: 'Eat and act on it', desc: 'Get B12 food ideas that fit your diet and body, and know when to talk to a doctor.' },
+];
 
 export default function RootPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [deleted, setDeleted] = useState(false);
+  const reduce = useReducedMotionConfig();
+  const item = { variants: fadeUp(16), transition: reduce ? { duration: 0 } : { duration: 0.4, ease: EASE } };
 
   useEffect(() => {
     if (typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('deleted')) setDeleted(true);
@@ -51,36 +62,41 @@ export default function RootPage() {
 
       {/* ── Hero Section ── */}
       <section className={styles.heroSection}>
-        <div className={styles.heroLeft}>
-          <div className={styles.kickerBadge}>
+        <motion.div
+          className={styles.heroLeft}
+          variants={heroStagger}
+          initial={reduce ? false : 'hidden'}
+          animate="show"
+        >
+          <motion.div className={styles.kickerBadge} {...item}>
             Free · Private · About 4 minutes
-          </div>
-          <h1 className={styles.heroHeading}>
+          </motion.div>
+          <motion.h1 className={styles.heroHeading} {...item}>
             Tired lately?<br />
             Check your B12<br />
             before it slows<br />
             you down.
-          </h1>
-          <p className={styles.heroSubtext}>
+          </motion.h1>
+          <motion.p className={styles.heroSubtext} {...item}>
             Answer a few questions to see your risk of low vitamin B12, then track how you feel each day and learn which foods help.
-          </p>
-          <div className={styles.ctaRow}>
+          </motion.p>
+          <motion.div className={styles.ctaRow} {...item}>
             <Link href="/onboarding" className={styles.primaryCta}>
               Take the assessment
             </Link>
             <a href="#how-it-works" className={styles.secondaryCta}>
               See how it works
             </a>
-          </div>
-        </div>
+          </motion.div>
+        </motion.div>
 
-        <div className={styles.heroRight}>
+        <Reveal on="mount" delay={reduce ? 0 : 0.25} y={20} className={styles.heroRight}>
           <div className={styles.heroCardContainer}>
             {/* Top Sample Result Card */}
             <div className={styles.sampleResultCard}>
               <p className={styles.sampleCardLabel}>Your B12 risk</p>
               <h3 className={styles.sampleCardValue}>Low</h3>
-              <RiskGauge percentage={20} />
+              <RiskGauge percentage={20} animateIn="view" delay={0.45} />
               <p className={styles.sampleCardFoot}>
                 Sample result. Yours is based on your own answers.
               </p>
@@ -100,52 +116,43 @@ export default function RootPage() {
               </div>
             </div>
           </div>
-        </div>
+        </Reveal>
       </section>
 
       {/* ── 3 Steps Section ── */}
       <section id="how-it-works" className={styles.stepsSection}>
-        <div className={styles.stepCardGreen}>
-          <p className={styles.stepNumber}>Step 1</p>
-          <h3 className={styles.stepTitle}>Answer a few questions</h3>
-          <p className={styles.stepDesc}>
-            About 20 questions picked for your age, gender and diet — each one explains why it matters. No account needed to see your score.
-          </p>
-        </div>
-
-        <div className={styles.stepCardYellow}>
-          <p className={styles.stepNumber}>Step 2</p>
-          <h3 className={styles.stepTitle}>Check in daily</h3>
-          <p className={styles.stepDesc}>
-            Rate energy, mood, sleep and more in 30 seconds. Build a streak and watch your trend.
-          </p>
-        </div>
-
-        <div className={styles.stepCardBlue}>
-          <p className={styles.stepNumber}>Step 3</p>
-          <h3 className={styles.stepTitle}>Eat and act on it</h3>
-          <p className={styles.stepDesc}>
-            Get B12 food ideas that fit your diet and body, and know when to talk to a doctor.
-          </p>
-        </div>
+        {/* Cards rise in order and each step label lights up as it lands: 1 → 2 → 3 */}
+        {STEP_CARDS.map((step, i) => (
+          <Reveal key={step.title} className={styles[step.className]} delay={reduce ? 0 : i * 0.14}>
+            <motion.p
+              className={styles.stepNumber}
+              variants={{ hidden: { opacity: 0.5, scale: 0.92 }, show: { opacity: 1, scale: 1 } }}
+              transition={reduce ? { duration: 0 } : { duration: 0.3, delay: i * 0.14 + 0.12, ease: EASE }}
+            >
+              Step {i + 1}
+            </motion.p>
+            <h3 className={styles.stepTitle}>{step.title}</h3>
+            <p className={styles.stepDesc}>{step.desc}</p>
+          </Reveal>
+        ))}
       </section>
 
       {/* ── Built for People Callout Card ── */}
       <section className={styles.calloutSection}>
-        <div className={styles.calloutCard}>
+        <Reveal className={styles.calloutCard}>
           <h3 className={styles.calloutTitle}>
             Built for people who are more likely to run low on B12.
           </h3>
           <p className={styles.calloutDesc}>
             Vegans and vegetarians, adults over 60, and people taking metformin or acid reducers. This is an educational tool, not a medical diagnosis.
           </p>
-        </div>
+        </Reveal>
       </section>
 
       {/* ── FAQ ── */}
       <section className={styles.faqSection} aria-labelledby="faq-heading">
-        <h2 id="faq-heading" className={styles.faqTitle}>Common questions</h2>
-        <div className={styles.faqList}>
+        <Reveal as="h2" id="faq-heading" className={styles.faqTitle}>Common questions</Reveal>
+        <Reveal className={styles.faqList} delay={reduce ? 0 : 0.08}>
           <details className={styles.faqItem}>
             <summary>Is this a medical test?</summary>
             <p>No. It&apos;s an educational screening based on well-known B12 risk factors and symptoms. It can tell you whether it&apos;s worth asking your doctor for a blood test — only a blood test can confirm a deficiency.</p>
@@ -162,7 +169,7 @@ export default function RootPage() {
             <summary>How often should I retake it?</summary>
             <p>Every 4–8 weeks, or after changing your diet, starting a supplement or new medicine. Daily check-ins in between help you spot patterns.</p>
           </details>
-        </div>
+        </Reveal>
       </section>
 
       {/* ── Footer ── */}

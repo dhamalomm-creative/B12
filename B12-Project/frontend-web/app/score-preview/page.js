@@ -2,10 +2,15 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, useReducedMotionConfig } from 'framer-motion';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { RiskGauge } from '@/components/UI';
+import { CountUp, EASE } from '@/components/motion';
 import styles from './page.module.css';
+
+// Same reveal timeline as the full results page, trimmed to what guests see
+const T = { score: 0.15, count: 0.8, level: 0.75, next: 1.0 };
 
 const DEFAULT_SUGGESTIONS = [
   'Include B12 sources such as eggs, dairy, or fortified foods daily.',
@@ -18,6 +23,7 @@ export default function ScorePreviewPage() {
   const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const { riskResult } = state;
+  const reduce = useReducedMotionConfig();
 
   // Signed-in users get the full report
   useEffect(() => {
@@ -31,6 +37,13 @@ export default function ScorePreviewPage() {
   const level = riskResult?.level
     ? (riskResult.level.toLowerCase() === 'low' ? 'Low risk' : riskResult.level.toLowerCase() === 'medium' ? 'Moderate risk' : 'High risk')
     : 'Not assessed';
+
+  const ease = (delay, duration = 0.34) => (reduce ? { duration: 0 } : { duration, delay, ease: EASE });
+  const enter = (delay, y = 12) => ({
+    initial: reduce ? false : { opacity: 0, y },
+    animate: { opacity: 1, y: 0 },
+    transition: ease(delay),
+  });
 
   const suggestions = riskResult?.suggestions?.length
     ? riskResult.suggestions.slice(0, 3)
@@ -60,34 +73,50 @@ export default function ScorePreviewPage() {
             {/* Left Column */}
             <div className={styles.leftCol}>
               {/* Risk Gauge Card */}
-              <div className={styles.riskCard}>
+              <motion.div className={styles.riskCard} {...enter(0)}>
                 <p className={styles.cardKicker}>Your estimated B12 risk</p>
-                <h2 className={styles.scoreValue}>{percentage}%</h2>
-                <p className={styles.riskLevel}>{level}</p>
-                <RiskGauge percentage={percentage} />
+                <h2 className={styles.scoreValue}>
+                  <CountUp value={percentage} suffix="%" duration={T.count} delay={T.score} srOnlyClassName={styles.srOnly} />
+                </h2>
+                {/* Plain fade for every level — calm and serious, never celebratory */}
+                <motion.p
+                  className={styles.riskLevel}
+                  initial={reduce ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={ease(T.level, 0.4)}
+                >
+                  {level}
+                </motion.p>
+                <RiskGauge percentage={percentage} animateIn="mount" delay={T.score - 0.15} duration={T.count} />
                 <p className={styles.riskDesc}>
                   Based on your responses regarding diet, fatigue, neurological signals, and lifestyle.
                 </p>
-              </div>
+              </motion.div>
 
               {/* Top Suggestions Card */}
-              <div className={styles.suggestionsCard}>
+              <motion.div className={styles.suggestionsCard} {...enter(T.next)}>
                 <h3 className={styles.suggestionsHeading}>Top suggestions</h3>
                 <div className={styles.suggestionsList}>
                   {suggestions.map((item, idx) => (
-                    <div key={idx} className={styles.suggestionRow}>
+                    <motion.div
+                      key={idx}
+                      className={styles.suggestionRow}
+                      initial={reduce ? false : { opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={ease(T.next + 0.1 + idx * 0.07)}
+                    >
                       <span className={styles.suggNumBadge}>{idx + 1}</span>
                       <p className={styles.suggText}>{item}</p>
-                    </div>
+                    </motion.div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             </div>
 
             {/* Right Column */}
             <div className={styles.rightCol}>
               {/* Dark Green CTA Card */}
-              <div className={styles.ctaDarkCard}>
+              <motion.div className={styles.ctaDarkCard} {...enter(T.next + 0.15)}>
                 <h2 className={styles.ctaTitle}>
                   Save your results and<br />
                   keep tracking
@@ -114,7 +143,7 @@ export default function ScorePreviewPage() {
                 <Link href="/auth?mode=login" className={styles.alreadyLink}>
                   I already have an account
                 </Link>
-              </div>
+              </motion.div>
 
               {/* Bottom Disclaimer */}
               <div className={styles.disclaimerBanner}>

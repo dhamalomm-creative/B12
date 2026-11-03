@@ -2,6 +2,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { motion, useReducedMotionConfig } from 'framer-motion';
 import { useApp, setRiskResult } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { questionnaireAPI } from '@/services/api';
@@ -9,7 +10,12 @@ import { GROUP_INFO, normalizeServerResult, THRESHOLD_LOW, THRESHOLD_HIGH } from
 import AppShell from '@/components/layout/AppShell';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { RiskGauge } from '@/components/UI';
+import { CountUp, EASE } from '@/components/motion';
 import styles from './page.module.css';
+
+// Reveal timeline (seconds). The questionnaire's analysing screen leads in; here the score
+// counts up while the gauge sweeps, the risk colour settles, drivers grow, then next steps.
+const T = { score: 0.15, count: 0.8, tone: 0.75, bars: 0.55, barGap: 0.08, next: 1.0 };
 
 const LEVEL_COPY = {
   LOW: {
@@ -44,6 +50,7 @@ export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState([]);
   const [loadError, setLoadError] = useState('');
+  const reduce = useReducedMotionConfig();
 
   const result = state.riskResult;
 
@@ -83,6 +90,15 @@ export default function ResultsPage() {
       .map(([key, v]) => ({ key, pct: Math.max(0, Math.min(100, Math.round(v))), ...GROUP_INFO[key] }))
       .sort((a, b2) => b2.pct - a.pct);
   }, [result]);
+
+  // High risk gets a plainer reveal: no scale "pop" on the badge, just a quiet fade
+  const isHigh = levelKey === 'HIGH';
+  const ease = (delay, duration = 0.34) => (reduce ? { duration: 0 } : { duration, delay, ease: EASE });
+  const enter = (delay, y = 12) => ({
+    initial: reduce ? false : { opacity: 0, y },
+    animate: { opacity: 1, y: 0 },
+    transition: ease(delay),
+  });
 
   const showDoctorAlert = levelKey === 'HIGH' || (result?.breakdown?.neurological ?? 0) >= 50;
   const previous = history.length > 1 ? history[1] : null;
@@ -128,13 +144,26 @@ export default function ResultsPage() {
               <div className={styles.grid}>
                 <div className={styles.leftCol}>
                 {/* ── Score ── */}
-                <section className={`${styles.scoreCard} ${styles[`tone_${copy.tone}`]}`} aria-labelledby="score-heading">
+                <motion.section
+                  className={`${styles.scoreCard} ${styles[`tone_${copy.tone}`]} ${reduce ? '' : styles.toneReveal}`}
+                  aria-labelledby="score-heading"
+                  {...enter(0)}
+                >
                   <p id="score-heading" className={styles.cardKicker}>Overall B12 risk</p>
                   <div className={styles.scoreRow}>
-                    <span className={styles.scoreValue}>{pct}%</span>
-                    <span className={`${styles.levelBadge} ${styles[`badge_${copy.tone}`]}`}>{copy.label}</span>
+                    <span className={styles.scoreValue}>
+                      <CountUp value={pct} suffix="%" duration={T.count} delay={T.score} srOnlyClassName={styles.srOnly} />
+                    </span>
+                    <motion.span
+                      className={`${styles.levelBadge} ${styles[`badge_${copy.tone}`]}`}
+                      initial={reduce ? false : { opacity: 0, scale: isHigh ? 1 : 0.94 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={ease(T.tone)}
+                    >
+                      {copy.label}
+                    </motion.span>
                   </div>
-                  <RiskGauge percentage={pct} />
+                  <RiskGauge percentage={pct} animateIn="mount" delay={T.score - 0.15} duration={T.count} />
                   <div className={styles.scaleLegend} aria-hidden="true">
                     <span>Low &lt;{THRESHOLD_LOW}</span>
                     <span>Moderate {THRESHOLD_LOW}–{THRESHOLD_HIGH - 1}</span>
@@ -150,43 +179,62 @@ export default function ResultsPage() {
                           : `▲ ${delta} points higher than last time (${formatDate(previous.completed_at)}).`}
                     </p>
                   )}
-                </section>
-                <section className={styles.card} aria-labelledby="next-heading">
+                </motion.section>
+                <motion.section className={styles.card} aria-labelledby="next-heading" {...enter(T.next)}>
                   <h2 id="next-heading" className={styles.cardHeading}>Your next steps</h2>
                   <ol className={styles.steps}>
                     {(result.suggestions || []).map((s, i) => (
-                      <li key={s}>
+                      <motion.li
+                        key={s}
+                        initial={reduce ? false : { opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={ease(T.next + 0.1 + i * 0.07)}
+                      >
                         <span className={styles.stepNum}>{i + 1}</span>
                         <span>{s}</span>
-                      </li>
+                      </motion.li>
                     ))}
                   </ol>
-                </section>
+                </motion.section>
                 </div>
 
                 {/* ── Breakdown ── */}
-                <section className={styles.card} aria-labelledby="breakdown-heading">
+                <motion.section className={styles.card} aria-labelledby="breakdown-heading" {...enter(0.1)}>
                   <h2 id="breakdown-heading" className={styles.cardHeading}>What&apos;s driving your score</h2>
                   <p className={styles.cardSub}>Higher bars mean more B12-related signals in that area.</p>
                   <ul className={styles.catList}>
-                    {categories.map((c) => (
+                    {categories.map((c, i) => (
                       <li key={c.key} className={styles.catRow}>
                         <div className={styles.catHeader}>
                           <span className={styles.catName}>{c.label}</span>
                           <span className={styles.catPct}>{c.pct}%</span>
                         </div>
                         <div className={styles.track}>
-                          <div className={`${styles.fill} ${styles[`fill_${barTone(c.pct)}`]}`} style={{ width: `${Math.max(c.pct, 2)}%` }} />
+                          {/* Bars grow in sequence (scaleX, so no layout work), strongest driver first */}
+                          <motion.div
+                            className={`${styles.fill} ${styles[`fill_${barTone(c.pct)}`]}`}
+                            style={{ width: `${Math.max(c.pct, 2)}%`, originX: 0 }}
+                            initial={reduce ? false : { scaleX: 0 }}
+                            animate={{ scaleX: 1 }}
+                            transition={ease(T.bars + i * T.barGap, 0.4)}
+                          />
                         </div>
                         <p className={styles.catDesc}>{c.desc}</p>
                       </li>
                     ))}
                   </ul>
-                </section>
+                </motion.section>
               </div>
 
               {showDoctorAlert && (
-                <section className={styles.doctorAlert} aria-labelledby="doctor-heading">
+                // Serious, not celebratory: a plain fade with no movement
+                <motion.section
+                  className={styles.doctorAlert}
+                  aria-labelledby="doctor-heading"
+                  initial={reduce ? false : { opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={ease(T.next, 0.4)}
+                >
                   <h2 id="doctor-heading">When to see a doctor</h2>
                   <p>
                     Book an appointment and ask for a <strong>vitamin B12 blood test</strong> (your doctor may also check a full
@@ -197,10 +245,10 @@ export default function ResultsPage() {
                     <strong>Get urgent care</strong> if you have new difficulty walking, severe weakness, confusion, chest pain
                     or fainting.
                   </p>
-                </section>
+                </motion.section>
               )}
 
-              <div>
+              <motion.div {...enter(T.next + 0.15)}>
                 <section className={styles.card} aria-labelledby="track-heading">
                   <h2 id="track-heading" className={styles.cardHeading}>Keep tracking</h2>
                   <div className={styles.linkCards}>
@@ -231,7 +279,7 @@ export default function ResultsPage() {
                   </button>
                   <p className={styles.retakeHint}>We suggest retaking every 4–8 weeks, or after changing diet or supplements.</p>
                 </section>
-              </div>
+              </motion.div>
 
               {history.length > 1 && (
                 <section className={styles.card} aria-labelledby="history-heading">
