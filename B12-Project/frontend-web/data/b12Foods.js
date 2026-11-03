@@ -16,6 +16,7 @@ export const DAILY_B12_MCG = 2.4; // adult RDA (NIH ODS); 2.6 in pregnancy, 2.8 
 export const B12_FOODS = [
   {
     name: "Clams",
+    image: "/foods/clams.jpg",
     emoji: "🦪",
     b12mcg: 84.1,
     serving: "3 oz (85 g), cooked",
@@ -27,6 +28,7 @@ export const B12_FOODS = [
   },
   {
     name: "Beef / mutton liver",
+    image: "/foods/beef-liver.jpg",
     emoji: "🍖",
     b12mcg: 70.7,
     serving: "3 oz (85 g), cooked",
@@ -38,6 +40,7 @@ export const B12_FOODS = [
   },
   {
     name: "Mussels",
+    image: "/foods/mussels.jpg",
     emoji: "🐚",
     b12mcg: 20.4,
     serving: "3 oz (85 g), cooked",
@@ -49,6 +52,7 @@ export const B12_FOODS = [
   },
   {
     name: "Chicken liver",
+    image: "/foods/chicken-liver.jpg",
     emoji: "🍗",
     b12mcg: 14.2,
     serving: "3 oz (85 g), cooked",
@@ -60,6 +64,7 @@ export const B12_FOODS = [
   },
   {
     name: "Sardines (canned)",
+    image: "/foods/sardines.jpg",
     emoji: "🐟",
     b12mcg: 8.2,
     serving: "1 small can (92 g)",
@@ -71,6 +76,7 @@ export const B12_FOODS = [
   },
   {
     name: "Rainbow trout",
+    image: "/foods/trout.jpg",
     emoji: "🐟",
     b12mcg: 5.4,
     serving: "3 oz (85 g), cooked",
@@ -82,6 +88,7 @@ export const B12_FOODS = [
   },
   {
     name: "Salmon",
+    image: "/foods/salmon.jpg",
     emoji: "🐠",
     b12mcg: 2.6,
     serving: "3 oz (85 g), cooked",
@@ -93,6 +100,7 @@ export const B12_FOODS = [
   },
   {
     name: "Tuna (canned, light)",
+    image: "/foods/tuna.jpg",
     emoji: "🥫",
     b12mcg: 2.5,
     serving: "3 oz (85 g)",
@@ -104,6 +112,7 @@ export const B12_FOODS = [
   },
   {
     name: "Mutton / lamb",
+    image: "/foods/lamb.jpg",
     emoji: "🍖",
     b12mcg: 2.7,
     serving: "3 oz (85 g), cooked",
@@ -115,6 +124,7 @@ export const B12_FOODS = [
   },
   {
     name: "Lean ground beef",
+    image: "/foods/ground-beef.jpg",
     emoji: "🥩",
     b12mcg: 2.4,
     serving: "3 oz (85 g), cooked",
@@ -126,6 +136,7 @@ export const B12_FOODS = [
   },
   {
     name: "Chicken breast",
+    image: "/foods/chicken-breast.jpg",
     emoji: "🍗",
     b12mcg: 0.3,
     serving: "3 oz (85 g), cooked",
@@ -137,6 +148,7 @@ export const B12_FOODS = [
   },
   {
     name: "Milk",
+    image: "/foods/milk.jpg",
     emoji: "🥛",
     b12mcg: 1.2,
     serving: "1 cup (240 ml)",
@@ -148,6 +160,7 @@ export const B12_FOODS = [
   },
   {
     name: "Curd / yogurt (dahi)",
+    image: "/foods/yogurt.jpg",
     emoji: "🥣",
     b12mcg: 1.0,
     serving: "1 cup (~170 g)",
@@ -159,6 +172,7 @@ export const B12_FOODS = [
   },
   {
     name: "Swiss cheese",
+    image: "/foods/swiss-cheese.jpg",
     emoji: "🧀",
     b12mcg: 0.9,
     serving: "1 oz (28 g)",
@@ -170,6 +184,7 @@ export const B12_FOODS = [
   },
   {
     name: "Paneer",
+    image: "/foods/paneer.jpg",
     emoji: "🧀",
     b12mcg: 0.7,
     serving: "100 g (approx.)",
@@ -181,6 +196,7 @@ export const B12_FOODS = [
   },
   {
     name: "Cottage cheese",
+    image: "/foods/cottage-cheese.jpg",
     emoji: "🥛",
     b12mcg: 0.9,
     serving: "1 cup (~210 g)",
@@ -192,6 +208,7 @@ export const B12_FOODS = [
   },
   {
     name: "Eggs",
+    image: "/foods/eggs.jpg",
     emoji: "🥚",
     b12mcg: 0.5,
     serving: "1 large egg",
@@ -203,6 +220,7 @@ export const B12_FOODS = [
   },
   {
     name: "Nutritional yeast (fortified)",
+    image: "/foods/nutritional-yeast.jpg",
     emoji: "🌿",
     b12mcg: 8.3,
     serving: "¼ cup (~15 g)",
@@ -214,6 +232,7 @@ export const B12_FOODS = [
   },
   {
     name: "Fortified breakfast cereal",
+    image: "/foods/cereal.jpg",
     emoji: "🥣",
     b12mcg: 1.5,
     serving: "1 serving (check label)",
@@ -225,6 +244,7 @@ export const B12_FOODS = [
   },
   {
     name: "Fortified soy milk",
+    image: "/foods/soy-milk.jpg",
     emoji: "🥤",
     b12mcg: 2.7,
     serving: "1 cup (240 ml)",
@@ -236,6 +256,7 @@ export const B12_FOODS = [
   },
   {
     name: "Fortified almond / oat milk",
+    image: "/foods/oat-milk.jpg",
     emoji: "🥤",
     b12mcg: 1.2,
     serving: "1 cup (240 ml)",
@@ -247,6 +268,7 @@ export const B12_FOODS = [
   },
   {
     name: "B12 supplement",
+    image: "/foods/supplement.jpg",
     emoji: "💊",
     b12mcg: 25,
     serving: "1 tablet (dose varies)",
@@ -258,6 +280,7 @@ export const B12_FOODS = [
   },
   {
     name: "Tempeh",
+    image: "/foods/tempeh.jpg",
     emoji: "🌱",
     b12mcg: 0.1,
     serving: "100 g",

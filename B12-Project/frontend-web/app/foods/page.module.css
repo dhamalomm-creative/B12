@@ -68,27 +68,67 @@
 }
 
 .card {
+  --tone: var(--pastel-green);
   border-radius: 20px;
-  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid transparent;
+  background: var(--tone);
+  overflow: hidden;
+}
+.tone_green { --tone: var(--pastel-green); }
+.tone_yellow { --tone: var(--pastel-yellow); }
+.tone_blue { --tone: var(--pastel-blue); }
+.tone_peach { --tone: var(--pastel-peach); }
+
+/* Food photo: fills the top of the card and fades into the card colour,
+   so people who know a food by sight rather than by name can spot it. */
+.photo {
+  position: relative;
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tone);
+}
+.photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, transparent 55%, var(--tone) 100%);
+  pointer-events: none;
+}
+.photoImg {
+  object-fit: cover;
+  transition: transform 400ms ease;
+}
+.card:hover .photoImg { transform: scale(1.04); }
+@media (prefers-reduced-motion: reduce) {
+  .photoImg { transition: none; }
+  .card:hover .photoImg { transform: none; }
+}
+
+.cardBody {
+  padding: 4px 18px 18px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  border: 1px solid transparent;
+  flex: 1;
 }
-.tone_green { background: var(--pastel-green); }
-.tone_yellow { background: var(--pastel-yellow); }
-.tone_blue { background: var(--pastel-blue); }
-.tone_peach { background: var(--pastel-peach); }
 
-.cardTop { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
-.emoji { font-size: 28px; }
+.emoji { font-size: 40px; }
 .typeBadge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 1;
   font-size: 11.5px;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.9);
   color: var(--text-secondary);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
 }
 .foodName { font-size: 17px; font-weight: 700; }
 .serving { font-size: 12.5px; color: var(--text-secondary); }

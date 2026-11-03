@@ -1,6 +1,7 @@
 'use client';
 import { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { B12_FOODS, DAILY_B12_MCG, getBMICategory, BMI_INFO } from '@/data/b12Foods';
@@ -32,6 +33,8 @@ export default function FoodsPage() {
   const [diet, setDiet] = useState('all');
   const [query, setQuery] = useState('');
   const [sort, setSort] = useState('b12');
+  // Foods whose photo failed to load fall back to their emoji.
+  const [brokenImages, setBrokenImages] = useState(() => new Set());
 
   useEffect(() => { if (preferredDiet) setDiet(preferredDiet); }, [preferredDiet]);
 
@@ -113,21 +116,33 @@ export default function FoodsPage() {
             const tone = TYPE_TONE[f.type] || 'green';
             return (
               <li key={f.name} className={`${styles.card} ${styles[`tone_${tone}`]}`}>
-                <div className={styles.cardTop}>
+                <div className={styles.photo}>
                   <span className={styles.emoji} aria-hidden="true">{f.emoji}</span>
+                  {f.image && !brokenImages.has(f.name) && (
+                    <Image
+                      src={f.image}
+                      alt={`Photo of ${f.name}`}
+                      fill
+                      sizes="(max-width: 600px) 100vw, (max-width: 1100px) 50vw, 320px"
+                      className={styles.photoImg}
+                      onError={() => setBrokenImages((s) => new Set(s).add(f.name))}
+                    />
+                  )}
                   <span className={styles.typeBadge}>{f.type}</span>
                 </div>
-                <h2 className={styles.foodName}>{f.name}</h2>
-                <p className={styles.serving}>{f.serving}</p>
-                <div className={styles.amountRow}>
-                  <span className={styles.amount}>{f.b12mcg} mcg</span>
-                  <span className={styles.dv}>{pctDV >= 1000 ? '1000%+' : `${pctDV}%`} of daily need</span>
+                <div className={styles.cardBody}>
+                  <h2 className={styles.foodName}>{f.name}</h2>
+                  <p className={styles.serving}>{f.serving}</p>
+                  <div className={styles.amountRow}>
+                    <span className={styles.amount}>{f.b12mcg} mcg</span>
+                    <span className={styles.dv}>{pctDV >= 1000 ? '1000%+' : `${pctDV}%`} of daily need</span>
+                  </div>
+                  <div className={styles.dvTrack} aria-hidden="true">
+                    <div className={styles.dvFill} style={{ width: `${Math.min(100, pctDV)}%` }} />
+                  </div>
+                  <p className={styles.desc}>{f.desc}</p>
+                  {f.calories > 0 && <p className={styles.kcal}>≈ {f.calories} kcal per serving</p>}
                 </div>
-                <div className={styles.dvTrack} aria-hidden="true">
-                  <div className={styles.dvFill} style={{ width: `${Math.min(100, pctDV)}%` }} />
-                </div>
-                <p className={styles.desc}>{f.desc}</p>
-                {f.calories > 0 && <p className={styles.kcal}>≈ {f.calories} kcal per serving</p>}
               </li>
             );
           })}
@@ -136,6 +151,7 @@ export default function FoodsPage() {
 
       <p className={styles.disclaimer}>
         Values are approximate and vary by brand and preparation. Sources: NIH Office of Dietary Supplements, USDA FoodData Central.
+        Food photos from Unsplash.
         People with absorption problems may not get enough B12 from food alone — ask your doctor.
       </p>
     </div>
