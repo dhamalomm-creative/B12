@@ -220,7 +220,7 @@ export const B12_FOODS = [
   },
   {
     name: "Nutritional yeast (fortified)",
-    image: "/foods/nutritional-yeast.jpg",
+    image: "/foods/nutritional-yeast-flakes.jpg",
     emoji: "🌿",
     b12mcg: 8.3,
     serving: "¼ cup (~15 g)",

@@ -111,8 +111,9 @@ export default function BMIPage() {
             <div className={styles.leftCol}>
               <div className={styles.inputCard}>
                 <div className={styles.fieldGroup}>
-                  <label className={styles.fieldLabel}>Height (cm)</label>
+                  <label htmlFor="bmi-height" className={styles.fieldLabel}>Height (cm)</label>
                   <input
+                    id="bmi-height"
                     type="number"
                     inputMode="decimal"
                     min={50}
@@ -125,8 +126,9 @@ export default function BMIPage() {
                 </div>
 
                 <div className={styles.fieldGroup}>
-                  <label className={styles.fieldLabel}>Weight (kg)</label>
+                  <label htmlFor="bmi-weight" className={styles.fieldLabel}>Weight (kg)</label>
                   <input
+                    id="bmi-weight"
                     type="number"
                     inputMode="decimal"
                     min={10}

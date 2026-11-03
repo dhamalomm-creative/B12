@@ -57,6 +57,7 @@ export default function RootPage() {
         </nav>
       </header>
 
+      <main className={styles.main}>
       {deleted && (
         <div className={styles.deletedBanner} role="status">
           Your account and health data have been permanently deleted.
@@ -99,7 +100,7 @@ export default function RootPage() {
             {/* Top Sample Result Card */}
             <div className={styles.sampleResultCard}>
               <p className={styles.sampleCardLabel}>Your B12 risk</p>
-              <h3 className={styles.sampleCardValue}>Low</h3>
+              <p className={styles.sampleCardValue}>Low</p>
               <RiskGauge percentage={20} animateIn="view" delay={0.45} />
               <p className={styles.sampleCardFoot}>
                 Sample result. Yours is based on your own answers.
@@ -124,7 +125,8 @@ export default function RootPage() {
       </section>
 
       {/* ── 3 Steps Section ── */}
-      <section id="how-it-works" className={styles.stepsSection}>
+      <section id="how-it-works" className={styles.stepsSection} aria-labelledby="how-heading">
+        <h2 id="how-heading" className="visually-hidden">How it works</h2>
         {/* Cards rise in order and each step label lights up as it lands: 1 → 2 → 3 */}
         {STEP_CARDS.map((step, i) => (
           <Reveal key={step.title} className={styles[step.className]} delay={reduce ? 0 : i * 0.14}>
@@ -144,9 +146,9 @@ export default function RootPage() {
       {/* ── Built for People Callout Card ── */}
       <section className={styles.calloutSection}>
         <Reveal className={styles.calloutCard}>
-          <h3 className={styles.calloutTitle}>
+          <h2 className={styles.calloutTitle}>
             Built for people who are more likely to run low on B12.
-          </h3>
+          </h2>
           <p className={styles.calloutDesc}>
             Vegans and vegetarians, adults over 60, and people taking metformin or acid reducers. This is an educational tool, not a medical diagnosis.
           </p>
@@ -175,6 +177,7 @@ export default function RootPage() {
           </details>
         </Reveal>
       </section>
+      </main>
 
       {/* ── Footer ── */}
       <footer className={styles.footer}>

@@ -162,7 +162,7 @@ export default function FoodsPage() {
 
       <p className={styles.disclaimer}>
         Values are approximate and vary by brand and preparation. Sources: NIH Office of Dietary Supplements, USDA FoodData Central.
-        Food photos from Unsplash.
+        Food photos from Unsplash and Wikimedia Commons.
         People with absorption problems may not get enough B12 from food alone — ask your doctor.
       </p>
     </div>

@@ -179,8 +179,8 @@ export default function ProgressPage() {
                               </linearGradient>
                             </defs>
                             <CartesianGrid stroke="#F0EAE0" vertical={false} />
-                            <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#85948A' }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={18} />
-                            <YAxis domain={[0, 4]} ticks={[0, 2, 4]} tick={{ fontSize: 11, fill: '#85948A' }} tickLine={false} axisLine={false} />
+                            <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#616C65' }} tickLine={false} axisLine={false} interval="preserveStartEnd" minTickGap={18} />
+                            <YAxis domain={[0, 4]} ticks={[0, 2, 4]} tick={{ fontSize: 11, fill: '#616C65' }} tickLine={false} axisLine={false} />
                             <Tooltip
                               contentStyle={{ background: '#fff', border: '1px solid #E8E2D5', borderRadius: 10, fontSize: 12 }}
                               formatter={(v) => [`${v} / 4`, m.label]}
@@ -212,8 +212,8 @@ export default function ProgressPage() {
                     <ResponsiveContainer width="100%" height={150}>
                       <AreaChart data={assessmentData} margin={{ top: 8, right: 6, left: -20, bottom: 0 }}>
                         <CartesianGrid stroke="#F0EAE0" vertical={false} />
-                        <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#85948A' }} tickLine={false} axisLine={false} />
-                        <YAxis domain={[0, 100]} ticks={[0, 35, 65, 100]} tick={{ fontSize: 11, fill: '#85948A' }} tickLine={false} axisLine={false} />
+                        <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#616C65' }} tickLine={false} axisLine={false} />
+                        <YAxis domain={[0, 100]} ticks={[0, 35, 65, 100]} tick={{ fontSize: 11, fill: '#616C65' }} tickLine={false} axisLine={false} />
                         <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E8E2D5', borderRadius: 10, fontSize: 12 }} formatter={(v) => [`${v}%`, 'Risk']} />
                         <Area type="monotone" dataKey="score" stroke="#1E3A2B" strokeWidth={2.2} fill="#E5EFE7" dot={{ r: 3, fill: '#1E3A2B' }} />
                       </AreaChart>

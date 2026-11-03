@@ -14,9 +14,11 @@
 }
 
 .brand {
+  display: block;
   margin-bottom: 32px;
   padding: 0 6px;
-  cursor: pointer;
+  text-decoration: none;
+  border-radius: 8px;
 }
 
 .brandName {

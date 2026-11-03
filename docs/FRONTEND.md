@@ -14,16 +14,15 @@ frontend-web/
 │   ├── error.js · not-found.js · robots.js · sitemap.js
 │   └── <route>/page.js
 ├── components/
-│   ├── Providers.js        Theme → App → Auth → Toast providers
+│   ├── Providers.js        MotionConfig → App → Auth → Toast providers
 │   ├── auth/AuthGuard.js   Redirects signed-out users to /auth?mode=login
 │   ├── layout/             AppShell (signed-in layout), TabBar (navigation)
 │   ├── questionnaire/      QuestionVisual (illustrations)
 │   ├── QuestionExplainer.js "Why we ask" panel
-│   └── UI/                 Skeleton, EmptyState, ErrorState, ThemeToggle, Toast, RiskGauge, …
+│   └── UI/                 Skeleton, EmptyState, ErrorState, Toast, RiskGauge, …
 ├── context/
 │   ├── AuthContext.js      Token, login/register/logout, syncs pending guest answers
-│   ├── AppContext.js       Guest flow + cached server data (useReducer)
-│   └── ThemeContext.js     Light / dark theme
+│   └── AppContext.js       Guest flow + cached server data (useReducer)
 ├── data/
 │   ├── questions.js        v2 question bank, buildQuestionSet(), daily check-in questions
 │   ├── questionnaireSections.js · questionnaireInterstitials.js
@@ -75,7 +74,6 @@ A guest's answers are stored as `pendingAnswers`. After register or login, `Auth
 |---|---|
 | `AuthContext` | `isAuthenticated`, `isLoading`, current user, auth actions |
 | `AppContext` | `user` (guest profile), `guestName`, `onboardingDone`, `riskResult`, `pendingAnswers`, `bmiData`, and cached server data (`serverStreak`, `serverInsights`, `serverCheckinHistory`) |
-| `ThemeContext` | Current theme |
 
 State is loaded from `localStorage` after mount (not during render) to avoid hydration mismatches.
 
@@ -86,7 +84,6 @@ State is loaded from `localStorage` after mount (not during render) to avoid hyd
 | `b12_token` | JWT |
 | `b12_app_state` | Persisted subset of `AppContext`: `user`, `guestName`, `onboardingDone`, `riskResult`, `pendingAnswers`, `bmiData` |
 | `b12_questionnaire_progress` | In-progress questionnaire, for resume |
-| `b12_theme` | Theme preference |
 
 ## API client
 
@@ -102,9 +99,13 @@ To add an endpoint, add a method to the matching `*API` object and document it i
 
 ## Styling
 
-- CSS Modules per page/component, global tokens in `app/globals.css` (CSS custom properties, light and dark).
+- CSS Modules per page/component, global tokens in `app/globals.css` (CSS custom properties).
+- **Light theme only, by design.** `color-scheme: light` (plus `viewport.colorScheme`) stops browsers auto-darkening the page. A dark mode would mean replacing ~270 hard-coded colours across the pages with tokens first.
+- **Contrast:** body text must reach 4.5:1 on every background. `--text-muted` (`#616C65`) is the lightest text colour that passes on the cream page and all pastel cards — don't use anything lighter for text.
+- Use `className="visually-hidden"` for text that only screen readers should see (e.g. a section heading).
+- Each page needs exactly one `<main>` landmark (`AppShell` provides it for signed-in pages).
 - Inter is self-hosted via `@fontsource-variable/inter`.
-- Respect `prefers-reduced-motion` for any new animation (Framer Motion is used for transitions).
+- Respect `prefers-reduced-motion` for any new animation (Framer Motion is used for transitions). Shared pieces: `components/motion.js`, `AmbientBackground`, `CursorGlow`.
 
 ## Security headers
 

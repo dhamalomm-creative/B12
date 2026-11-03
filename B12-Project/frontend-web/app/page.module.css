@@ -65,6 +65,14 @@
   background-color: var(--primary-container, #162E22);
 }
 
+/* Landmark wrapper for everything between header and footer; mirrors the page's column layout. */
+.main {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  flex: 1;
+}
+
 /* ── Hero Section ── */
 .heroSection {
   position: relative;
@@ -195,6 +203,7 @@
 
 .sampleCardValue {
   font-size: 32px;
+  line-height: 1.2;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 8px;

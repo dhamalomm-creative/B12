@@ -1,5 +1,10 @@
 /* ─── "B12 Health Tracker" Organic Minimalist Design Tokens ─── */
 :root {
+  /* Light-only by design (high-clarity medical look). Declaring it stops browsers
+     such as Chrome on Android from auto-darkening the page and keeps form controls
+     and scrollbars light even when the device is in dark mode. */
+  color-scheme: light;
+
   --font-headline: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-body:     'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font:          'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -56,7 +61,7 @@
   /* ── Text ── */
   --text-primary:         #16241C;   /* Deep charcoal forest green */
   --text-secondary:       #55685E;   /* Calm clinical slate-green */
-  --text-muted:           #85948A;   /* Muted caption / metadata */
+  --text-muted:           #616C65;   /* Muted caption / metadata — 4.5:1 on all page and card backgrounds */
 
   /* ── Borders ── */
   --border:               #E8E2D5;
@@ -460,6 +465,19 @@ a:hover { opacity: 0.85; }
   font-weight: 600;
 }
 .skip-link:focus { left: 8px; }
+
+/* Readable by screen readers, invisible on screen (e.g. headings that give a section structure). */
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 :focus-visible {
   outline: 3px solid rgba(46, 125, 78, 0.35);

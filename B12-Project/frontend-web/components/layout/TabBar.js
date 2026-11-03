@@ -1,4 +1,5 @@
 'use client';
+import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
@@ -67,13 +68,6 @@ export default function TabBar() {
   const { isAuthenticated, logout } = useAuth();
   const { dispatch } = useApp();
 
-  const handleBrandClick = () => {
-    if (isAuthenticated) {
-      router.push('/dashboard');
-    } else {
-      router.push('/');
-    }
-  };
 
   const handleSignOut = async () => {
     await logout();
@@ -86,9 +80,9 @@ export default function TabBar() {
       {/* ── Desktop Sidebar ── */}
       <aside className={styles.sidebar}>
         {/* Brand */}
-        <div className={styles.brand} onClick={handleBrandClick}>
+        <Link href={isAuthenticated ? '/dashboard' : '/'} className={styles.brand}>
           <span className={styles.brandName}>B12 Health Tracker</span>
-        </div>
+        </Link>
 
         {/* Nav Items */}
         <nav className={styles.nav}>

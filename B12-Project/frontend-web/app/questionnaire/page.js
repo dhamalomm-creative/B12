@@ -289,6 +289,7 @@ export default function QuestionnairePage() {
       </header>
 
       {/* ── Progress ── */}
+      <section aria-label="Your progress">
       <div className={styles.progressWrap}>
         <div className={styles.progressMeta}>
           <span className={styles.progressCount}>
@@ -346,6 +347,7 @@ export default function QuestionnairePage() {
           <button type="button" onClick={startOver} className={styles.linkBtn}>Start over</button>
         </div>
       )}
+      </section>
 
       <main className={styles.main}>
         <AnimatePresence mode="wait" initial={false} custom={direction}>

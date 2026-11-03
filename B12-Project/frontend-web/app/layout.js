@@ -23,7 +23,8 @@ export const metadata = {
     url: SITE_URL,
   },
   twitter: {
-    card: 'summary',
+    // Large preview card; the image itself comes from app/opengraph-image.js
+    card: 'summary_large_image',
     title: 'B12 Health Tracker',
     description: 'A free, 4-minute B12 risk assessment with daily symptom tracking and food guidance.',
   },
@@ -34,6 +35,7 @@ export const viewport = {
   width: 'device-width',
   initialScale: 1,
   themeColor: '#1E3A2B',
+  colorScheme: 'light',
 };
 
 export default function RootLayout({ children }) {

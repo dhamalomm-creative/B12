@@ -124,7 +124,7 @@ function AuthForm() {
   return (
     <div className={styles.splitPage}>
       {/* ── Left Half (Dark Green) ── */}
-      <div className={styles.leftHalf}>
+      <aside aria-label="About B12 Health Tracker" className={styles.leftHalf}>
         <AmbientBackground tone="dark" />
         <div className={styles.leftHeader}>
           <Link href="/" className={styles.leftBrand}>B12 Health Tracker</Link>
@@ -150,10 +150,10 @@ function AuthForm() {
             </li>
           </ul>
         </div>
-      </div>
+      </aside>
 
       {/* ── Right Half (Warm Cream) ── */}
-      <div className={styles.rightHalf}>
+      <main className={styles.rightHalf}>
         {/* Top Right Toggle */}
         <div className={styles.topToggleWrap}>
           <div className={styles.togglePillContainer}>
@@ -277,7 +277,7 @@ function AuthForm() {
             </button>
           </form>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
