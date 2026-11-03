@@ -95,6 +95,53 @@ describe('questionnaire', () => {
   });
 });
 
+describe('blood test result', () => {
+  let assessmentId = '';
+  beforeAll(async () => {
+    const latest = await request(app).get('/api/questionnaire/latest').set(auth());
+    assessmentId = latest.body.assessment.id;
+  });
+
+  it('converts pg/mL to pmol/L and labels it', async () => {
+    const res = await request(app).put(`/api/questionnaire/${assessmentId}/lab`).set(auth())
+      .send({ value: 180, unit: 'pg/mL' });
+    expect(res.status).toBe(200);
+    expect(res.body.lab.value_pmol_l).toBeCloseTo(132.84, 1);
+    expect(res.body.lab.status).toBe('deficient');
+  });
+
+  it('accepts pmol/L and classifies borderline / normal', async () => {
+    const borderline = await request(app).put(`/api/questionnaire/${assessmentId}/lab`).set(auth())
+      .send({ value: 180, unit: 'pmol/L' });
+    expect(borderline.body.lab.status).toBe('borderline');
+    const normal = await request(app).put(`/api/questionnaire/${assessmentId}/lab`).set(auth())
+      .send({ value: 400, unit: 'pmol/L' });
+    expect(normal.body.lab.status).toBe('normal');
+    const latest = await request(app).get('/api/questionnaire/latest').set(auth());
+    expect(Number(latest.body.assessment.lab_b12_value_pmol)).toBe(400);
+    expect(latest.body.assessment.ml_label).toBe('normal');
+  });
+
+  it('rejects implausible values and unknown units', async () => {
+    const tiny = await request(app).put(`/api/questionnaire/${assessmentId}/lab`).set(auth()).send({ value: 5, unit: 'pmol/L' });
+    expect(tiny.status).toBe(400);
+    const unit = await request(app).put(`/api/questionnaire/${assessmentId}/lab`).set(auth()).send({ value: 300, unit: 'ng/L' });
+    expect(unit.status).toBe(400);
+  });
+
+  it("returns 404 for someone else's or a made-up assessment", async () => {
+    const res = await request(app).put('/api/questionnaire/00000000-0000-4000-8000-000000000000/lab').set(auth())
+      .send({ value: 300, unit: 'pg/mL' });
+    expect(res.status).toBe(404);
+  });
+
+  it('removes the result', async () => {
+    const res = await request(app).delete(`/api/questionnaire/${assessmentId}/lab`).set(auth());
+    expect(res.status).toBe(200);
+    expect(res.body.lab).toBeNull();
+  });
+});
+
 describe('daily check-in', () => {
   it('allows one check-in per day, then only edits', async () => {
     const body = { energyScore: 3, fatigueScore: 1, moodScore: 3, sleepScore: 2, focusScore: 3 };

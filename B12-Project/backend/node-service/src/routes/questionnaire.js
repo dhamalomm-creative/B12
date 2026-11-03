@@ -9,6 +9,7 @@ const UserHealthState = require('../models/UserHealthState');
 const scoringProxy = require('../services/scoringProxy');
 const scoringV2 = require('../services/scoringEngineV2');
 const { sendSuccess, sendError } = require('../utils/response');
+const labB12 = require('../utils/labB12');
 const { Op } = require('sequelize');
 const { sequelize } = require('../config/db');
 
@@ -222,7 +223,7 @@ router.get('/history', async (req, res, next) => {
     const assessments = await Assessment.findAll({
       where: { user_id: req.user.id },
       order: [['completed_at', 'DESC']],
-      attributes: ['id', 'risk_level', 'risk_percentage', 'normalized_score', 'category_breakdown', 'questions_shown', 'scoring_version', 'completed_at'],
+      attributes: ['id', 'risk_level', 'risk_percentage', 'normalized_score', 'category_breakdown', 'questions_shown', 'scoring_version', 'completed_at', 'lab_b12_value_pmol', 'ml_label'],
       limit: Math.min(parseInt(req.query.limit, 10) || 20, 100),
     });
     return sendSuccess(res, { assessments });
@@ -255,6 +256,63 @@ router.get('/:id', async (req, res, next) => {
     if (!assessment) return sendError(res, 'Assessment not found', 404);
     const answers = await AssessmentAnswer.findAll({ where: { assessment_id: assessment.id } });
     return sendSuccess(res, { assessment, answers });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── Blood test result attached to an assessment ──
+// Stored in pmol/L; the interpretation goes into ml_label so real lab outcomes can
+// later be used to validate / train the risk score.
+const findOwnAssessment = (req) => (
+  /^[0-9a-f-]{36}$/i.test(req.params.id)
+    ? Assessment.findOne({ where: { id: req.params.id, user_id: req.user.id } })
+    : null
+);
+
+const labPayload = (assessment) => {
+  const pmol = assessment.lab_b12_value_pmol === null ? null : Number(assessment.lab_b12_value_pmol);
+  return {
+    assessment_id: assessment.id,
+    lab: pmol === null ? null : {
+      value_pmol_l: pmol,
+      value_pg_ml: Math.round(pmol / labB12.PG_ML_TO_PMOL_L),
+      status: assessment.ml_label,
+    },
+  };
+};
+
+// ── PUT /api/questionnaire/:id/lab ──
+router.put('/:id/lab', [
+  body('value').isFloat({ gt: 0, max: 100000 }).withMessage('Enter your B12 result as a number.').toFloat(),
+  body('unit').isIn(labB12.UNITS).withMessage('Unit must be pg/mL or pmol/L.'),
+], async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) return sendError(res, errors.array()[0].msg);
+
+    const assessment = await findOwnAssessment(req);
+    if (!assessment) return sendError(res, 'Assessment not found', 404);
+
+    const pmol = Math.round(labB12.toPmol(req.body.value, req.body.unit) * 100) / 100;
+    if (pmol < labB12.MIN_PMOL || pmol > labB12.MAX_PMOL) {
+      return sendError(res, 'That value looks unusual for a B12 test. Check the number and the unit on your report.');
+    }
+
+    await assessment.update({ lab_b12_value_pmol: pmol, ml_label: labB12.classify(pmol) });
+    return sendSuccess(res, labPayload(assessment));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ── DELETE /api/questionnaire/:id/lab ──
+router.delete('/:id/lab', async (req, res, next) => {
+  try {
+    const assessment = await findOwnAssessment(req);
+    if (!assessment) return sendError(res, 'Assessment not found', 404);
+    await assessment.update({ lab_b12_value_pmol: null, ml_label: null });
+    return sendSuccess(res, labPayload(assessment));
   } catch (err) {
     next(err);
   }

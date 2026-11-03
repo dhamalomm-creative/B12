@@ -1,0 +1,59 @@
+.card { display: flex; flex-direction: column; gap: 8px; }
+
+.resultRow { display: flex; align-items: baseline; flex-wrap: wrap; gap: 10px; margin-top: 4px; }
+.value { font-size: 30px; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.value small { font-size: 15px; font-weight: 600; color: var(--text-secondary); }
+.alt { font-size: 13.5px; color: var(--text-muted); }
+
+.message { font-size: 14.5px; line-height: 1.55; color: var(--text-primary); }
+.compare { font-size: 14px; line-height: 1.5; color: var(--text-secondary); font-weight: 600; }
+.note { font-size: 12.5px; line-height: 1.5; color: var(--text-muted); }
+
+.form { display: flex; flex-direction: column; gap: 10px; }
+.label { font-size: 13.5px; font-weight: 600; color: var(--text-primary); }
+.inputRow { display: flex; gap: 10px; flex-wrap: wrap; }
+.input {
+  flex: 1 1 140px;
+  min-width: 0;
+  padding: 11px 14px;
+  font-size: 16px; /* 16px stops iOS zooming into the field */
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  color: var(--text-primary);
+}
+.input:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.units { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-full); padding: 3px; margin: 0; background: #fff; }
+.unit {
+  position: relative;
+  padding: 8px 14px;
+  border-radius: var(--radius-full);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.unit input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.unitActive { background: var(--primary); color: #fff; }
+.unit:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.error { font-size: 13.5px; color: #8A3B26; }
+
+.actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.linkBtn {
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+.linkBtn:disabled { opacity: 0.5; cursor: default; }
+
+@media print {
+  .actions { display: none; }
+}

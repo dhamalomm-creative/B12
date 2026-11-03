@@ -32,6 +32,12 @@ For an existing database, run only the new migrations instead of the full setup 
 
 ## 2. API
 
+### Shared rate limiting (Redis) — recommended
+
+Create a small Redis database — e.g. [Upstash](https://upstash.com) → **Create database** (pick the region closest to your API), or **Railway → New → Database → Redis** — and copy its `rediss://…` connection URL. Add it to the API's variables as `REDIS_URL`.
+
+Without it, every server instance counts rate limits on its own; on Vercel that lets an attacker spread login attempts across many instances. If Redis is ever unreachable the API keeps working (limits fail open, and the per-email login lockout is in Postgres).
+
 ### Option A — Railway
 
 `railway.json` builds the `Dockerfile` and health-checks `/health`.
@@ -48,6 +54,7 @@ For an existing database, run only the new migrations instead of the full setup 
    JWT_EXPIRES_IN=7d
    ALLOWED_ORIGINS=https://<your-web-domain>
    ALLOW_VERCEL_PREVIEWS=false
+   REDIS_URL=rediss://default:<password>@<host>:6379
    ```
 
    Railway sets `PORT` itself.

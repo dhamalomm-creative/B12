@@ -25,6 +25,7 @@ services:
       MAX_LOGIN_ATTEMPTS: ${MAX_LOGIN_ATTEMPTS:-5}
       ACCOUNT_LOCKOUT_MINUTES: ${ACCOUNT_LOCKOUT_MINUTES:-15}
       LOG_LEVEL:          ${LOG_LEVEL:-info}
+      REDIS_URL:          ${REDIS_URL:-}
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3000/health || exit 1"]
       interval: 15s

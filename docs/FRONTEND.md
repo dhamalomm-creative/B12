@@ -46,7 +46,8 @@ frontend-web/
 | `/dashboard` | Signed in | Risk summary, 7-day check-in strip, streak, insights |
 | `/checkin` | Signed in | Daily 5-question check-in with review step and notes |
 | `/progress` | Signed in | 7 / 14 / 30-day charts, pattern alerts, assessment history |
-| `/results` | Signed in | Full report: drivers, next steps, when to see a doctor, history, print |
+| `/results` | Signed in | Full report: drivers, next steps, when to see a doctor, **add / edit a blood test result** (`app/results/LabResultCard.js`), history |
+| `/report` | Signed in | One-page A4 **doctor report**: patient details, score + drivers, blood test, relevant history, answers that raised the score, 14-day check-in chart. "Save as PDF / Print" uses the browser's print-to-PDF (crisp vector text, no PDF library). |
 | `/bmi` | Signed in | BMI calculator and history |
 | `/profile` | Signed in | Edit profile, change password, log out, delete account |
 

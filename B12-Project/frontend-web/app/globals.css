@@ -494,3 +494,10 @@ button, input, select, textarea { font-family: inherit; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ── Print (doctor report and results) ── */
+@media print {
+  @page { size: A4; margin: 12mm; }
+  body { background: #fff !important; }
+  .skip-link { display: none !important; }
+}

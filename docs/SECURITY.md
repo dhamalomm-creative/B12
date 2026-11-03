@@ -21,6 +21,7 @@ B12 Health Tracker stores health data, so the API, web app and database each hav
 | Login lockout | `MAX_LOGIN_ATTEMPTS` (5) failures for an email within `ACCOUNT_LOCKOUT_MINUTES` (15) → `429` until the window passes. It is **temporary** — accounts are never disabled by failed logins, so nobody can lock out another user permanently. |
 | Auth rate limit | 5 failed requests per IP + email per 15 min on login and register |
 | Progressive slow-down | +500 ms per failed request after the 3rd, up to 10 s |
+| Shared counters | With `REDIS_URL` set, all limiters count in Redis (`middleware/redisStore.js`), so the limits hold across every API instance. Emails are SHA-256 hashed in keys. If Redis is down, limiters **fail open** (requests allowed, warning logged) — the login lockout above lives in Postgres and keeps working. |
 | Timing-safe login | bcrypt runs against a dummy hash when the email is unknown |
 | Generic errors | `Invalid email or password.` never says which part was wrong |
 | Attempt log | Every attempt is written to `login_attempts` |
@@ -82,7 +83,7 @@ Every resource query is scoped to `req.user.id`. There are no admin endpoints. `
 | Item | Notes |
 |---|---|
 | JWT in `localStorage` | Readable by any script on the page if XSS ever got through. Mitigated by CSP and sanitisation. An httpOnly cookie would be stronger but would change the Android contract. |
-| In-memory rate limits | Counters are per instance and reset on restart. Use a shared store (e.g. Redis) when running several instances. |
+| Rate limits without Redis | If `REDIS_URL` is not set, rate-limit counters are per instance and reset on restart — fine for one server, weak on Vercel. Set `REDIS_URL` in production. |
 | Password change keeps old sessions | Existing tokens stay valid until they expire or the user logs out. |
 | No email verification or password reset | Not implemented yet. |
 
@@ -91,6 +92,7 @@ Every resource query is scoped to `req.user.id`. There are no admin endpoints. `
 - [ ] Unique random `JWT_SECRET` per environment, stored only in the host's secret settings.
 - [ ] `NODE_ENV=production` and an exact `ALLOWED_ORIGINS`.
 - [ ] `ALLOW_VERCEL_PREVIEWS=false` in production.
+- [ ] `REDIS_URL` set so rate limits are shared across instances.
 - [ ] Migration 007 applied and `pg_cron` cleanup scheduled.
 - [ ] Database password and connection string not shared outside the host.
 - [ ] No credentials in git history or in git remote URLs.

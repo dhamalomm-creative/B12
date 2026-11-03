@@ -9,10 +9,29 @@
  * Key-generator for auth: IP + email combo
  *   → Prevents distributed attacks where one attacker rotates IPs
  *   → One email can't be hammered from 1000 IPs
+ *
+ * Counters are shared across all server instances when REDIS_URL is set (see
+ * config/redis.js); otherwise each instance keeps its own in memory. If Redis is
+ * unavailable, requests are let through (passOnStoreError) — logins stay protected
+ * by the per-email lockout in routes/auth.js, which is stored in Postgres.
  */
 
+const crypto = require('crypto');
 const rateLimit = require('express-rate-limit');
 const slowDown = require('express-slow-down');
+const { getRedisClient } = require('../config/redis');
+const RedisStore = require('./redisStore');
+
+const redis = getRedisClient();
+// Each limiter needs its own store instance and key prefix.
+const sharedStore = (prefix) => (redis ? { store: new RedisStore(redis, prefix), passOnStoreError: true } : {});
+
+// Emails are hashed so raw addresses never end up as Redis keys.
+const emailKey = (req) => crypto
+  .createHash('sha256')
+  .update((req.body?.email || '').toLowerCase().substring(0, 254))
+  .digest('hex')
+  .slice(0, 32);
 
 // ── [1] Auth rate limiter: strict on failures ──
 // Defends against: brute-force login, credential stuffing, account enumeration
@@ -30,10 +49,10 @@ const authLimiter = rateLimit({
   },
   keyGenerator: (req) => {
     // Combine IP + email for key — prevents single-IP bypass AND email-targeted attacks
-    const email = (req.body?.email || '').toLowerCase().substring(0, 100);
     const ip = req.ip || 'unknown';
-    return `auth_${ip}_${email}`;
+    return `auth_${ip}_${emailKey(req)}`;
   },
+  ...sharedStore('rl:auth:'),
 });
 
 // ── [2] General API rate limiter: moderate ──
@@ -49,6 +68,7 @@ const apiLimiter = rateLimit({
     error: 'Too many requests. Please try again later.',
     code: 'RATE_LIMIT_API',
   },
+  ...sharedStore('rl:api:'),
 });
 
 // ── [3] Progressive slow-down for auth endpoints ──
@@ -63,10 +83,10 @@ const authSlowDown = slowDown({
   skipSuccessfulRequests: true, // Don't slow down people who simply log in a few times a day
   validate: false,
   keyGenerator: (req) => {
-    const email = (req.body?.email || '').toLowerCase().substring(0, 100);
     const ip = req.ip || 'unknown';
-    return `slowdown_${ip}_${email}`;
+    return `slowdown_${ip}_${emailKey(req)}`;
   },
+  ...sharedStore('rl:slow:'),
 });
 
 module.exports = { authLimiter, apiLimiter, authSlowDown };

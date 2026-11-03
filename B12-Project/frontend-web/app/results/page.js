@@ -11,6 +11,7 @@ import AppShell from '@/components/layout/AppShell';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { RiskGauge } from '@/components/UI';
 import { CountUp, EASE } from '@/components/motion';
+import LabResultCard from './LabResultCard';
 import styles from './page.module.css';
 
 // Reveal timeline (seconds). The questionnaire's analysing screen leads in; here the score
@@ -117,9 +118,9 @@ export default function ResultsPage() {
               )}
             </div>
             {result && (
-              <button type="button" className={styles.printBtn} onClick={() => window.print()}>
-                Print / save for your doctor
-              </button>
+              <Link href="/report" className={styles.printBtn}>
+                Doctor report (PDF)
+              </Link>
             )}
           </header>
 
@@ -246,6 +247,18 @@ export default function ResultsPage() {
                     or fainting.
                   </p>
                 </motion.section>
+              )}
+
+              {result.assessmentId && (
+                <motion.div {...enter(T.next + 0.1)}>
+                  <LabResultCard
+                    assessmentId={result.assessmentId}
+                    riskLevel={levelKey}
+                    labPmol={result.labPmol}
+                    labStatus={result.labStatus}
+                    onChange={(lab) => dispatch(setRiskResult({ ...result, ...lab }))}
+                  />
+                </motion.div>
               )}
 
               <motion.div {...enter(T.next + 0.15)}>

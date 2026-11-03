@@ -75,7 +75,7 @@ Errors use one shape:
 | `401` | Missing, invalid, expired or revoked token; wrong login credentials |
 | `403` | Account deactivated; CORS origin not allowed (`Origin not permitted.`) |
 | `404` | Resource or route not found (`Route not found.`) |
-| `409` | Email already registered |
+| `409` | Email already registered; already checked in today (`code: "ALREADY_CHECKED_IN"`) |
 | `415` | Request body is not `application/json` |
 | `429` | Rate limit or login lockout hit. Includes `code` (see below). |
 | `500` | Unexpected server error |
@@ -96,6 +96,8 @@ Unexpected errors include a `correlationId` (e.g. `"A3F8C9B1"`) that matches the
 | Login lockout | `/api/auth/login` | `MAX_LOGIN_ATTEMPTS` failures for an email within `ACCOUNT_LOCKOUT_MINUTES` | email | `429` |
 
 Successful requests do not count toward the auth limiter. Responses include the standard `RateLimit-*` headers.
+
+When `REDIS_URL` is set, the three limiters share their counters across every API instance; otherwise each instance counts on its own. The login lockout is stored in Postgres and is always shared. See [SECURITY.md](SECURITY.md#brute-force-and-enumeration).
 
 ---
 
@@ -487,11 +489,14 @@ The most recent assessment (full row), or `null`.
     {
       "id": "5a1e…", "risk_level": "medium", "risk_percentage": "48.00", "normalized_score": "48.00",
       "category_breakdown": { "…": 0 }, "questions_shown": 22, "scoring_version": "2.0",
-      "completed_at": "2026-11-03T10:20:00.000Z"
+      "completed_at": "2026-11-03T10:20:00.000Z",
+      "lab_b12_value_pmol": "132.84", "ml_label": "deficient"
     }
   ]
 }
 ```
+
+`lab_b12_value_pmol` / `ml_label` are `null` unless a blood test was added.
 
 Newest first.
 
@@ -518,6 +523,43 @@ One assessment with its individual answers. `:id` must be a UUID that belongs to
 
 **Errors:** `404` `Assessment not found` (also returned for another user's assessment, so IDs cannot be probed).
 
+### `PUT /api/questionnaire/:id/lab`
+
+Attach the user's **serum vitamin B12 blood test** to one of their assessments (replaces any earlier value). The value is stored in pmol/L in `lab_b12_value_pmol`, and its interpretation in `ml_label` — real-world outcomes that can later be used to validate or train the risk score.
+
+| Field | Type | Rules |
+|---|---|---|
+| `value` | number | > 0, as printed on the lab report |
+| `unit` | string | `pg/mL` (common in India/US) or `pmol/L`. 1 pg/mL = 0.738 pmol/L. |
+
+The converted value must be 20–5000 pmol/L (≈ 27–6,800 pg/mL); anything outside is rejected as a likely typo.
+
+| `status` (`ml_label`) | pmol/L | pg/mL |
+|---|---|---|
+| `deficient` | < 148 | < 200 |
+| `borderline` | 148–221 | 200–300 |
+| `normal` | > 221 | > 300 |
+
+```json
+{ "value": 180, "unit": "pg/mL" }
+```
+
+**200 OK**
+
+```json
+{
+  "success": true,
+  "assessment_id": "5a1e…",
+  "lab": { "value_pmol_l": 132.84, "value_pg_ml": 180, "status": "deficient" }
+}
+```
+
+**Errors:** `400` `Enter your B12 result as a number.` / `Unit must be pg/mL or pmol/L.` / `That value looks unusual for a B12 test…` · `404` `Assessment not found` (also for another user's assessment)
+
+### `DELETE /api/questionnaire/:id/lab`
+
+Remove the blood test from an assessment. **200 OK** — same shape with `"lab": null`.
+
 ---
 
 ## Check-in
@@ -526,7 +568,7 @@ All `/api/checkin/*` endpoints **require auth**.
 
 ### `POST /api/checkin/daily`
 
-Log today's symptoms. One check-in per user per day — sending again on the same day **updates** it without changing the streak.
+Log today's symptoms. **One check-in per user per day**: a second `POST` on the same day is rejected with `409` (use [`PUT /api/checkin/daily`](#put-apicheckindaily) to edit).
 
 | Field | Type | Scale |
 |---|---|---|
@@ -543,7 +585,7 @@ Log today's symptoms. One check-in per user per day — sending again on the sam
 { "energyScore": 2, "fatigueScore": 3, "moodScore": 2, "sleepScore": 1, "focusScore": 2, "localDate": "2026-11-03" }
 ```
 
-**201 Created** (first check-in today) or **200 OK** (updated):
+**201 Created**
 
 ```json
 {
@@ -559,7 +601,29 @@ Log today's symptoms. One check-in per user per day — sending again on the sam
 }
 ```
 
-Streak rules: a check-in the day after the last one extends the streak; a gap resets it to 1; a repeat on the same day changes nothing.
+Streak rules: a check-in the day after the last one extends the streak; a gap resets it to 1.
+
+**409 Conflict** — already checked in today. The existing entry is returned so the client can offer to edit it:
+
+```json
+{
+  "success": false,
+  "code": "ALREADY_CHECKED_IN",
+  "error": "You've already checked in today. You can edit today's check-in instead.",
+  "checkin": { "checkin_date": "2026-11-03", "energy_score": 2, "…": "…" },
+  "checkinDate": "2026-11-03"
+}
+```
+
+Two simultaneous submissions (double tap, two tabs) are safe: the database lets only one through and the other gets the same `409`.
+
+### `PUT /api/checkin/daily`
+
+Edit **today's** check-in. Same body as `POST`. Only today's entry can be changed; the streak and totals are not touched.
+
+**200 OK** — `{ success, checkin, streak, isNew: false, checkinDate }`
+
+**Errors:** `404` `You haven't checked in today yet.`
 
 ### `GET /api/checkin/history`
 
@@ -661,7 +725,10 @@ Returns check-ins from the last `days` days (plus one extra day of slack for tim
 | GET | `/api/questionnaire/latest` | ✓ |
 | GET | `/api/questionnaire/history` | ✓ |
 | GET | `/api/questionnaire/:id` | ✓ |
+| PUT | `/api/questionnaire/:id/lab` | ✓ |
+| DELETE | `/api/questionnaire/:id/lab` | ✓ |
 | POST | `/api/checkin/daily` | ✓ |
+| PUT | `/api/checkin/daily` | ✓ |
 | GET | `/api/checkin/history` | ✓ |
 | GET | `/api/insights` | ✓ |
 | POST | `/api/notifications/token` | ✓ |

@@ -178,6 +178,9 @@ export const normalizeServerResult = (data) => {
     completedAt: data.completed_at || data.completedAt || new Date().toISOString(),
     assessmentId: data.assessment_id || data.id || null,
     scoringVersion: data.scoring_version || SCORING_VERSION,
+    // Blood test result, if the user added one (stored in pmol/L)
+    labPmol: data.lab_b12_value_pmol != null ? Number(data.lab_b12_value_pmol) : null,
+    labStatus: data.ml_label || null,
     synced: true,
   };
 };

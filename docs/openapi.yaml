@@ -398,10 +398,81 @@ paths:
         '401': { $ref: '#/components/responses/Unauthorized' }
         '404': { $ref: '#/components/responses/NotFound' }
 
+  /api/questionnaire/{id}/lab:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: string, format: uuid }
+    put:
+      tags: [Questionnaire]
+      summary: Attach a serum B12 blood test result to an assessment
+      description: |
+        Stored in pmol/L (1 pg/mL = 0.738 pmol/L) and labelled deficient (<148 pmol/L),
+        borderline (148–221) or normal (>221). Converted value must be 20–5000 pmol/L.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value, unit]
+              properties:
+                value: { type: number, exclusiveMinimum: true, minimum: 0, example: 180 }
+                unit: { type: string, enum: ['pg/mL', 'pmol/L'] }
+      responses:
+        '200':
+          description: Saved
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LabResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [Questionnaire]
+      summary: Remove the blood test result from an assessment
+      responses:
+        '200':
+          description: Removed (lab is null)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LabResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
   /api/checkin/daily:
     post:
       tags: [Check-in]
-      summary: Create or update today's check-in
+      summary: Create today's check-in (once per day)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CheckinRequest' }
+      responses:
+        '201':
+          description: Today's check-in created
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CheckinResponse' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409':
+          description: Already checked in today (code ALREADY_CHECKED_IN); body includes the existing checkin
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Error'
+                  - type: object
+                    properties:
+                      code: { type: string, enum: [ALREADY_CHECKED_IN] }
+                      checkin: { $ref: '#/components/schemas/Checkin' }
+                      checkinDate: { type: string, format: date }
+    put:
+      tags: [Check-in]
+      summary: Edit today's check-in (streak and totals unchanged)
       requestBody:
         required: true
         content:
@@ -413,13 +484,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CheckinResponse' }
-        '201':
-          description: Today's check-in created
-          content:
-            application/json:
-              schema: { $ref: '#/components/schemas/CheckinResponse' }
         '400': { $ref: '#/components/responses/BadRequest' }
         '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
 
   /api/checkin/history:
     get:
@@ -696,6 +763,21 @@ components:
         gender: { type: string, nullable: true }
         diet_type: { type: string, nullable: true }
         completed_at: { type: string, format: date-time }
+        lab_b12_value_pmol: { type: string, nullable: true, description: Serum B12 the user entered, in pmol/L }
+        ml_label: { type: string, nullable: true, enum: [deficient, borderline, normal, null] }
+
+    LabResponse:
+      type: object
+      properties:
+        success: { type: boolean }
+        assessment_id: { type: string, format: uuid }
+        lab:
+          nullable: true
+          type: object
+          properties:
+            value_pmol_l: { type: number }
+            value_pg_ml: { type: integer }
+            status: { type: string, enum: [deficient, borderline, normal] }
 
     AssessmentAnswer:
       type: object

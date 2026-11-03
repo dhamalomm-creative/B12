@@ -7,7 +7,8 @@ Location: `B12-Project/backend/node-service/tests/` · Runner: Jest + Supertest.
 | File | Covers |
 |---|---|
 | `auth.test.js` | Register, duplicate email (409), weak password, login, wrong password (401), `/health` |
-| `api.e2e.test.js` | Register with profile; passwords with HTML characters; XSS sanitising of names; invalid enums; body-less POST; v2 and v1 questionnaire submission, unknown and duplicate answers; latest + history; check-in create/update without double counting; score range validation; check-in history + streak; password policy on change; temporary (not permanent) lockout; account deletion |
+| `api.e2e.test.js` | Register with profile; passwords with HTML characters; XSS sanitising of names; invalid enums; body-less POST; v2 and v1 questionnaire submission, unknown and duplicate answers; latest + history; blood test result (unit conversion, labels, validation, ownership, removal); check-in once per day + edit; score range validation; check-in history + streak; password policy on change; temporary (not permanent) lockout; account deletion |
+| `redisStore.test.js` | Redis-backed rate limiting with a fake Redis client: limits shared across two app instances, window expiry, `RateLimit-*` headers, fails open (no hang) when Redis is down or errors, waits briefly for a reconnecting client. **No database needed:** `npx jest tests/redisStore.test.js` |
 
 The tests run against a **real PostgreSQL database** — they create users with unique `@b12.test` emails. Use a dedicated test database, never production.
 

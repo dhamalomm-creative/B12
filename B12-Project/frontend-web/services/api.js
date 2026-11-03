@@ -110,6 +110,10 @@ export const questionnaireAPI = {
   submit: (answers) => request('/api/questionnaire/submit', { method: 'POST', body: { answers } }),
   getLatest: () => request('/api/questionnaire/latest'),
   getHistory: (limit = 20) => request(`/api/questionnaire/history?limit=${limit}`),
+  getById: (id) => request(`/api/questionnaire/${encodeURIComponent(id)}`),
+  // Blood test result: { value: number, unit: 'pg/mL' | 'pmol/L' }
+  saveLab: (id, lab) => request(`/api/questionnaire/${encodeURIComponent(id)}/lab`, { method: 'PUT', body: lab }),
+  deleteLab: (id) => request(`/api/questionnaire/${encodeURIComponent(id)}/lab`, { method: 'DELETE' }),
 };
 
 // Backwards-compatible alias

@@ -98,7 +98,7 @@ One row per completed questionnaire.
 |---|---|
 | Profile snapshot | `age_at_assessment`, `age_group`, `gender`, `diet_type`, `diet_penalty_score`, `has_*`, `takes_*` |
 | Result | `raw_score`, `max_possible_score`, `normalized_score` (0–100), `risk_percentage` (same), `risk_level` (`low`/`medium`/`high`), `category_breakdown` JSONB, `suggestions` JSONB |
-| ML labels (filled later) | `ml_label` (`deficient`/`borderline`/`normal`), `doctor_confirmed`, `lab_b12_value_pmol` |
+| Blood test / ML labels | `lab_b12_value_pmol` (serum B12 the user entered, always pmol/L) and `ml_label` (`deficient` < 148 · `borderline` 148–221 · `normal` > 221 pmol/L), set by `PUT /api/questionnaire/:id/lab`; `doctor_confirmed` is reserved |
 | Metadata | `questions_shown`, `scoring_version` (`1.0` or `2.0`), `completed_at` |
 
 ### `assessment_answers`

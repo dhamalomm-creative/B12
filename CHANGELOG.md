@@ -5,6 +5,9 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ## [Unreleased]
 
 ### Added
+- **Blood test results:** users can add their serum B12 result (pg/mL or pmol/L) to an assessment on the results page and see how it compares with the questionnaire. New `PUT/DELETE /api/questionnaire/:id/lab`; stored in the existing `lab_b12_value_pmol` / `ml_label` columns (no migration).
+- **Doctor report:** `/report` — a one-page A4 summary (score, drivers, blood test, history, key answers, 14-day check-in chart) saved via the browser's "Save as PDF".
+- **Shared rate limiting:** set `REDIS_URL` to keep rate-limit counters in Redis across all API instances (fails open if Redis is down). Rate-limit keys now hash the email.
 - Full project documentation in `docs/`: setup, configuration, architecture, API reference, OpenAPI spec, database, scoring, frontend, security, deployment, testing and troubleshooting.
 - `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md` and `LICENSE`.
 - Migration `007_launch_hardening.sql`: Row Level Security on every table, privileges revoked from Supabase `anon`/`authenticated`, duplicate indexes removed, nightly `cleanup_security_tables()` via `pg_cron`.

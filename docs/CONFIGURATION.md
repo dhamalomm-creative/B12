@@ -56,6 +56,7 @@ Changing `JWT_SECRET`, `JWT_ISSUER` or `JWT_AUDIENCE` signs every user out.
 | `ALLOW_VERCEL_PREVIEWS` | `true` in dev, `false` in production | Also allow any `*.vercel.app` origin. Keep it off in production — anyone can deploy to `vercel.app`. |
 | `RATE_LIMIT_WINDOW_MS` | `900000` (15 min) | General API limiter window |
 | `RATE_LIMIT_MAX` | `300` | Requests per IP per window. The Docker Compose files default this to `100`. |
+| `REDIS_URL` | — | **Recommended in production.** e.g. `rediss://default:<password>@<host>:6379` (Upstash, Railway or Redis Cloud). Shares rate-limit counters across every API instance — important on Vercel, where each function instance would otherwise count separately. Unset = in-memory counters per instance. If Redis is unreachable, requests are allowed and a warning is logged. |
 
 Outside production, `localhost` and `127.0.0.1` origins are always allowed. If `ALLOWED_ORIGINS` is empty or `*`, every origin is allowed (development only).
 
