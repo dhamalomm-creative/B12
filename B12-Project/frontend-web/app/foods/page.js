@@ -20,6 +20,17 @@ const TYPE_TONE = {
   Seafood: 'blue', Meat: 'peach', Dairy: 'yellow', Eggs: 'yellow', Fortified: 'green', Supplement: 'green', Plant: 'green',
 };
 
+// Moves the card's hover spotlight (see .card::before) to the pointer, via CSS
+// variables so React doesn't re-render on every mouse move.
+const trackSpotlight = (e) => {
+  if (e.pointerType !== 'mouse') return;
+  const card = e.target.closest('li');
+  if (!card) return;
+  const r = card.getBoundingClientRect();
+  card.style.setProperty('--mx', `${e.clientX - r.left}px`);
+  card.style.setProperty('--my', `${e.clientY - r.top}px`);
+};
+
 const SORTS = [
   { id: 'b12', label: 'Most B12' },
   { id: 'cal', label: 'Fewest calories' },
@@ -110,7 +121,7 @@ export default function FoodsPage() {
       {foods.length === 0 ? (
         <p className={styles.empty}>No foods match “{query}”.</p>
       ) : (
-        <ul className={styles.grid}>
+        <ul className={styles.grid} onPointerMove={trackSpotlight}>
           {foods.map((f) => {
             const pctDV = Math.round((f.b12mcg / DAILY_B12_MCG) * 100);
             const tone = TYPE_TONE[f.type] || 'green';

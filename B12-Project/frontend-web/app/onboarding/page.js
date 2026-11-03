@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useApp, setUser, setGuestName, completeOnboarding } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from '@/components/UI';
+import AmbientBackground from '@/components/AmbientBackground';
 import styles from './page.module.css';
 
 const AGE_RANGES = [
@@ -95,6 +96,7 @@ function OnboardingForm() {
 
   return (
     <div className={styles.onboardingPage}>
+      <AmbientBackground fixed />
       <header className={styles.topHeader}>
         <Link href={isAuthenticated ? '/dashboard' : '/'} className={styles.brandTitle}>B12 Health Tracker</Link>
       </header>

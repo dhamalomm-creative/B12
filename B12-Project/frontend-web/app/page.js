@@ -6,6 +6,8 @@ import { motion, useReducedMotionConfig } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
 import { LoadingScreen, RiskGauge } from '@/components/UI';
 import { EASE, Reveal, fadeUp } from '@/components/motion';
+import AmbientBackground from '@/components/AmbientBackground';
+import CursorGlow from '@/components/CursorGlow';
 import styles from './page.module.css';
 
 const heroStagger = { hidden: {}, show: { transition: { staggerChildren: 0.08, delayChildren: 0.05 } } };
@@ -38,15 +40,16 @@ export default function RootPage() {
 
   return (
     <div className={styles.landingPage}>
+      <AmbientBackground fixed />
       {/* ── Top Navigation ── */}
       <header className={styles.header}>
         <div className={styles.brand}>
           <Link href="/" className={styles.brandLink}>B12 Health Tracker</Link>
         </div>
         <nav className={styles.navLinks}>
-          <a href="#how-it-works" className={styles.navLink}>How it works</a>
+          <a href="#how-it-works" className={`${styles.navLink} ${styles.navLinkWide}`}>How it works</a>
           <Link href="/foods" className={styles.navLink}>Foods</Link>
-          <Link href="/privacy" className={styles.navLink}>Privacy</Link>
+          <Link href="/privacy" className={`${styles.navLink} ${styles.navLinkWide}`}>Privacy</Link>
           <Link href="/auth" className={styles.navLink}>Log in</Link>
           <Link href="/auth?mode=register" className={styles.startBtn}>
             Start free
@@ -62,6 +65,7 @@ export default function RootPage() {
 
       {/* ── Hero Section ── */}
       <section className={styles.heroSection}>
+        <CursorGlow />
         <motion.div
           className={styles.heroLeft}
           variants={heroStagger}

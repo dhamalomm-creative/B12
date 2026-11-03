@@ -4,6 +4,10 @@
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
+  /* Stacking context for AmbientBackground; clip stops the cursor glow adding a horizontal scrollbar. */
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
 }
 
 /* ── Header ── */
@@ -63,6 +67,8 @@
 
 /* ── Hero Section ── */
 .heroSection {
+  position: relative;
+  isolation: isolate;
   max-width: 1200px;
   margin: 40px auto 72px;
   padding: 0 48px;
@@ -377,6 +383,16 @@
     padding-left: 24px;
     padding-right: 24px;
   }
+}
+
+/* Phones: keep the header on one line so "Start free" stays on screen.
+   "How it works" is further down this page and Privacy is in the footer. */
+@media (max-width: 600px) {
+  .header { padding: 16px 16px; gap: 12px; }
+  .brandLink { font-size: 16px; white-space: nowrap; }
+  .navLinks { gap: 14px; }
+  .navLinkWide { display: none; }
+  .startBtn { padding: 9px 16px; white-space: nowrap; }
 }
 
 /* ── Additions ── */

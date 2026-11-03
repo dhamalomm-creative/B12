@@ -69,6 +69,7 @@
 
 .card {
   --tone: var(--pastel-green);
+  position: relative;
   border-radius: 20px;
   display: flex;
   flex-direction: column;
@@ -106,6 +107,31 @@
 @media (prefers-reduced-motion: reduce) {
   .photoImg { transition: none; }
   .card:hover .photoImg { transform: none; }
+}
+
+/* Soft light that follows the mouse across a card (position set in page.js).
+   Mouse devices only, and off when reduced motion is requested. */
+@media (hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference) {
+  .card {
+    transition: box-shadow 250ms ease;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(
+      280px circle at var(--mx, 50%) var(--my, 50%),
+      rgba(255, 255, 255, 0.32),
+      transparent 65%
+    );
+    opacity: 0;
+    transition: opacity 250ms ease;
+  }
+  .card:hover::before { opacity: 1; }
+  .card:hover { box-shadow: 0 8px 24px rgba(30, 58, 43, 0.1); }
 }
 
 .cardBody {

@@ -1,0 +1,36 @@
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.fixed { position: fixed; }
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  will-change: transform;
+  animation: drift 28s ease-in-out infinite alternate;
+}
+
+/* Light pages: the app's own pastel tokens, kept faint so text contrast is unchanged. */
+.light .a { width: 46vmax; height: 46vmax; top: -14vmax; left: -10vmax; background: var(--pastel-green, #E5EFE7); opacity: 0.85; }
+.light .b { width: 38vmax; height: 38vmax; top: 18vh; right: -14vmax; background: var(--pastel-peach, #FCECE3); opacity: 0.8; animation-duration: 34s; animation-delay: -9s; }
+.light .c { width: 34vmax; height: 34vmax; bottom: -16vmax; left: 22vw; background: var(--pastel-blue, #E1EDF7); opacity: 0.75; animation-duration: 24s; animation-delay: -15s; }
+
+/* Dark brand panel: lighter greens at low opacity, a soft glow rather than colour. */
+.dark .a { width: 34vmax; height: 34vmax; top: -12vmax; left: -12vmax; background: #3F7A5E; opacity: 0.35; }
+.dark .b { width: 28vmax; height: 28vmax; bottom: -10vmax; right: -10vmax; background: #6FA585; opacity: 0.22; animation-duration: 34s; animation-delay: -9s; }
+.dark .c { width: 22vmax; height: 22vmax; top: 40%; left: 30%; background: #2A5C45; opacity: 0.4; animation-duration: 24s; animation-delay: -15s; }
+
+@keyframes drift {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(6vmax, 4vmax, 0) scale(1.08); }
+  100% { transform: translate3d(-4vmax, 7vmax, 0) scale(0.95); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .blob { animation: none; }
+}

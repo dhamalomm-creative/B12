@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
+import AmbientBackground from '@/components/AmbientBackground';
 import styles from './page.module.css';
 
 function AuthForm() {
@@ -124,6 +125,7 @@ function AuthForm() {
     <div className={styles.splitPage}>
       {/* ── Left Half (Dark Green) ── */}
       <div className={styles.leftHalf}>
+        <AmbientBackground tone="dark" />
         <div className={styles.leftHeader}>
           <Link href="/" className={styles.leftBrand}>B12 Health Tracker</Link>
         </div>

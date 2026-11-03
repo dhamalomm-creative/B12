@@ -12,6 +12,9 @@
   padding: 48px 64px;
   display: flex;
   flex-direction: column;
+  position: relative;
+  isolation: isolate; /* keeps AmbientBackground behind the content */
+  overflow: hidden;
 }
 
 .leftHeader {

@@ -4,6 +4,8 @@
   color: var(--text-primary);
   display: flex;
   flex-direction: column;
+  position: relative;
+  isolation: isolate; /* keeps AmbientBackground behind the content */
 }
 
 .topHeader {
