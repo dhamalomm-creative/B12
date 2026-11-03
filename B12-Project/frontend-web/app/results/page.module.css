@@ -128,7 +128,7 @@
 .catHeader { display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; margin-bottom: 6px; }
 .catPct { font-variant-numeric: tabular-nums; color: var(--text-secondary); }
 .track { height: 8px; border-radius: var(--radius-full); background: var(--bg-mid); overflow: hidden; }
-.fill { height: 100%; border-radius: var(--radius-full); transition: width 0.6s ease; }
+.fill { height: 100%; border-radius: var(--radius-full); }
 .fill_low { background: #5AB879; }
 .fill_medium { background: #E8C15A; }
 .fill_high { background: #E76F51; }
@@ -243,3 +243,22 @@
 .leftCol { display: flex; flex-direction: column; gap: 20px; }
 .linkCards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 @media (max-width: 900px) { .linkCards { grid-template-columns: 1fr; } }
+
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Risk colour stripe fades in once the score has counted up */
+@media (prefers-reduced-motion: no-preference) {
+  .toneReveal::before { animation: toneIn 0.4s ease-out 0.75s both; }
+}
+
+@keyframes toneIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

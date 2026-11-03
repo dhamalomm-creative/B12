@@ -1,5 +1,7 @@
 'use client';
 import { useState } from 'react';
+import { AnimatePresence, motion, useReducedMotionConfig } from 'framer-motion';
+import { EASE } from '@/components/motion';
 import styles from './QuestionExplainer.module.css';
 
 // SVG Diagram Component for various medical & biological concepts
@@ -415,6 +417,7 @@ function QuestionVisualDiagram({ type }) {
 
 export default function QuestionExplainer({ explanation, category }) {
   const [isExpanded, setIsExpanded] = useState(true);
+  const reduce = useReducedMotionConfig();
 
   if (!explanation) return null;
 
@@ -441,8 +444,15 @@ export default function QuestionExplainer({ explanation, category }) {
         </div>
       </button>
 
+      <AnimatePresence initial={false}>
       {isExpanded && (
-        <div className={styles.contentWrapper}>
+        <motion.div
+          className={styles.contentWrapper}
+          initial={reduce ? false : { opacity: 0, y: -6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={reduce ? { opacity: 0, transition: { duration: 0 } } : { opacity: 0, y: -6 }}
+          transition={{ duration: 0.26, ease: EASE }}
+        >
           <div className={styles.visualContainer}>
             <div className={styles.visualSvgWrap}>
               <QuestionVisualDiagram type={visualType} />
@@ -477,8 +487,9 @@ export default function QuestionExplainer({ explanation, category }) {
               </ul>
             )}
           </div>
-        </div>
+        </motion.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -81,7 +81,9 @@
 }
 
 .progressFill {
+  width: 100%;
   height: 100%;
+  transform: translateX(-98%);
   border-radius: var(--radius-full);
   background: linear-gradient(90deg, #2E7D4E, var(--primary));
 }
@@ -287,9 +289,26 @@
   transition: all 0.15s ease;
 }
 
+.radioDot {
+  display: inline-grid;
+  place-items: center;
+  color: #fff;
+}
+
 .optionSelected .radioDot {
   border-color: var(--primary);
-  background: radial-gradient(circle, var(--primary) 0 45%, #fff 50%);
+  background: var(--primary);
+}
+
+.radioTick { width: 14px; height: 14px; }
+
+.sectionIcon { display: inline-block; }
+
+.factTick {
+  width: 13px;
+  height: 13px;
+  margin-right: 6px;
+  vertical-align: -2px;
 }
 
 .insight {
@@ -535,6 +554,8 @@
 }
 
 .pulse {
+  position: relative;
+  isolation: isolate;
   width: 96px;
   height: 96px;
   border-radius: 50%;
@@ -544,12 +565,26 @@
   color: #fff;
   font-weight: 800;
   font-size: 20px;
-  animation: pulse 1.4s ease-in-out infinite;
+}
+
+/* Soft ring that breathes outward — scale/opacity only so it stays smooth on low-end phones */
+.pulse::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: rgba(30, 58, 43, 0.3);
+  z-index: -1;
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pulse::before { animation: pulse 1.4s ease-out infinite; }
 }
 
 @keyframes pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(30, 58, 43, 0.35); }
-  50% { box-shadow: 0 0 0 22px rgba(30, 58, 43, 0); }
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.45); }
 }
 
 .analysingTitle { font-size: 24px; }
@@ -566,15 +601,31 @@
 
 .stepDone { color: var(--text-primary); font-weight: 600; }
 
-@media (prefers-reduced-motion: reduce) {
-  .pulse { animation: none; }
-}
 
 /* ── Responsive ── */
 @media (max-width: 900px) {
   .grid { grid-template-columns: 1fr; }
   .whyPanel { position: static; display: none; }
   .whyPanelOpen { display: block; }
+}
+
+/* "Why we ask" (mobile): fade/slide open and closed (closing is timed to whyOut in page.js) */
+@media (max-width: 900px) and (prefers-reduced-motion: no-preference) {
+  .whyPanelOpen { animation: whyIn 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+  .whyPanelClosing { animation: whyOut 0.2s ease-in forwards; }
+}
+
+@keyframes whyIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes whyOut {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateY(-6px); }
+}
+
+@media (max-width: 900px) {
   .whyToggle {
     display: block;
     margin: 16px auto 0;
