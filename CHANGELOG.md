@@ -22,7 +22,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Plainer wording for the diet, period and pregnancy questions.
 
 ### Fixed
-- **Diet questions now match the diet chosen.** The vegetarian path no longer mentions eggs anywhere (question, "Good to know", "Why we ask", suggestion, onboarding hint, picture). Removed plant-based text from the non-vegetarian path, and fish, eggs and dairy pictures or text from the vegan path. The doctor report now shows the food question as the user's own diet saw it.
+- **Diet questions now match the diet chosen.** The vegetarian path no longer mentions eggs anywhere (question, "Good to know", "Why we ask", suggestion, onboarding hint, picture). Removed plant-based text from the non-vegetarian path, and fish, eggs and dairy pictures or text from the vegan path. The doctor report now shows the food question as the user's own diet saw it. The Vegetarian filter on the Foods page no longer lists eggs (they stay under All foods).
 - Double-clicking Continue in the questionnaire could skip the next question while the card animated out.
 - `scripts/check-scoring-parity.mjs` crashing on Windows (`ERR_UNSUPPORTED_ESM_URL_SCHEME`) — dynamic imports now use `file://` URLs.
 

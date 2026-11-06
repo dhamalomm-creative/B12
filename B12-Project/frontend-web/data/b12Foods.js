@@ -213,7 +213,7 @@ export const B12_FOODS = [
     b12mcg: 0.5,
     serving: "1 large egg",
     type: 'Eggs',
-    dietTags: ['vegetarian', 'pescatarian', 'omnivore'],
+    dietTags: ['pescatarian', 'omnivore'],
     calorieTier: 'moderate',
     calories: 78,
     desc: "Most of the B12 is in the yolk — eat the whole egg.",
