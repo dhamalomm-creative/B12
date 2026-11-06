@@ -1,7 +1,10 @@
 // Self-hosted Inter (no request to Google — better privacy and works offline/behind firewalls)
 import '@fontsource-variable/inter';
+// Devanagari text for Hindi and Marathi; only downloaded when that text is on screen
+import '@fontsource-variable/noto-sans-devanagari';
 import './globals.css';
 import Providers from '@/components/Providers';
+import SkipLink from '@/components/SkipLink';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3001';
 
@@ -42,8 +45,8 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" data-scroll-behavior="smooth">
       <body>
-        <a href="#main-content" className="skip-link">Skip to content</a>
         <Providers>
+          <SkipLink />
           <div id="main-content">{children}</div>
         </Providers>
       </body>

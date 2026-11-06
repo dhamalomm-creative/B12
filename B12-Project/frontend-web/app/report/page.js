@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
+import { useI18n } from '@/i18n/LanguageProvider';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { useAuth } from '@/context/AuthContext';
 import { usersAPI, questionnaireAPI, checkinAPI } from '@/services/api';
@@ -108,6 +109,7 @@ function TrendChart({ days }) {
 }
 
 export default function ReportPage() {
+  const { t } = useI18n();
   const { isAuthenticated } = useAuth();
   const [data, setData] = useState(null);
   const [error, setError] = useState('');
@@ -164,14 +166,15 @@ export default function ReportPage() {
     <AuthGuard>
       <div className={styles.screen}>
         <div className={styles.toolbar}>
-          <Link href="/results" className={styles.back}>← Back to results</Link>
+          <Link href="/results" className={styles.back}>← {t('Back to results')}</Link>
           {a && (
             <button type="button" className={styles.printBtn} onClick={() => window.print()}>
-              Save as PDF / Print
+              {t('Save as PDF / Print')}
             </button>
           )}
         </div>
-        {a && <p className={styles.tip}>Tip: in the print window choose “Save as PDF” as the printer to get a file you can email or keep on your phone.</p>}
+        {a && <p className={styles.tip}>{t('Tip: in the print window choose “Save as PDF” as the printer to get a file you can email or keep on your phone.')}</p>}
+        {a && <p className={styles.tip}>{t('This report stays in English so any doctor can read it.')}</p>}
 
         <main className={styles.sheet}>
           {error && <p role="alert" className={styles.error}>{error}</p>}

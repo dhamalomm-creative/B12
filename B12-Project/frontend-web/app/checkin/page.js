@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useApp, setStreak } from '@/context/AppContext';
+import { useI18n } from '@/i18n/LanguageProvider';
 import { checkinAPI } from '@/services/api';
 import { localISODate } from '@/utils/riskCalculator';
 import AppShell from '@/components/layout/AppShell';
@@ -97,6 +98,7 @@ const answersFromRow = (row) => ({
 });
 
 export default function CheckInPage() {
+  const { t } = useI18n();
   const { dispatch } = useApp();
   const router = useRouter();
 
@@ -208,7 +210,7 @@ export default function CheckInPage() {
       <AuthGuard>
         <AppShell>
           <div className={styles.checkinPage} aria-busy="true">
-            <p className={styles.subtitle}>Loading today&apos;s check-in…</p>
+            <p className={styles.subtitle}>{t("Loading today's check-in…")}</p>
           </div>
         </AppShell>
       </AuthGuard>
@@ -223,11 +225,11 @@ export default function CheckInPage() {
           <div className={styles.checkinPage}>
             <div className={styles.completionCard}>
               <div className={styles.doneIcon} aria-hidden="true">✓</div>
-              <h1 className={styles.compTitle}>{headline}</h1>
-              <p className={styles.lockedNote}>Your next check-in opens tomorrow.</p>
+              <h1 className={styles.compTitle}>{t(headline)}</h1>
+              <p className={styles.lockedNote}>{t('Your next check-in opens tomorrow.')}</p>
               <div className={styles.streakPill}>
                 <span aria-hidden="true">🔥</span>
-                <span>{current}-day streak</span>
+                <span>{t('{n}-day streak', { n: current })}</span>
               </div>
               <div className={styles.summaryRow}>
                 {CHECKIN_QUESTIONS.map((cq) => {
@@ -235,22 +237,22 @@ export default function CheckInPage() {
                   return (
                     <div key={cq.id} className={styles.summaryItem}>
                       <span aria-hidden="true">{opt?.emoji}</span>
-                      <small>{cq.icon} {opt?.label}</small>
+                      <small>{cq.icon} {t(opt?.label)}</small>
                     </div>
                   );
                 })}
               </div>
               {notes && <p className={styles.savedNotes}>📝 {notes}</p>}
-              <p className={styles.tip}>{tipFor(answers)}</p>
+              <p className={styles.tip}>{t(tipFor(answers))}</p>
               <div className={styles.compActions}>
                 <button type="button" className={styles.backDashBtn} onClick={startEdit}>
-                  ✏️ Edit today&apos;s check-in
+                  ✏️ {t("Edit today's check-in")}
                 </button>
                 <button type="button" className={styles.viewProgressBtn} onClick={() => router.push('/progress')}>
-                  View my trends
+                  {t('View my trends')}
                 </button>
                 <button type="button" className={styles.backDashBtn} onClick={() => router.push('/dashboard')}>
-                  Back to dashboard
+                  {t('Back to dashboard')}
                 </button>
               </div>
             </div>
@@ -267,17 +269,17 @@ export default function CheckInPage() {
       <AppShell>
         <div className={styles.checkinPage}>
           <header className={styles.header}>
-            <h1 className={styles.title}>{mode === 'edit' ? "Edit today's check-in" : 'Daily check-in'}</h1>
+            <h1 className={styles.title}>{t(mode === 'edit' ? "Edit today's check-in" : 'Daily check-in')}</h1>
             <p className={styles.subtitle}>
-              {mode === 'edit'
+              {t(mode === 'edit'
                 ? 'Change any answer, then save. Your streak stays the same.'
-                : 'Five taps, about 30 seconds. Answer for how you feel today.'}
+                : 'Five taps, about 30 seconds. Answer for how you feel today.')}
             </p>
           </header>
 
           <div className={styles.progressWrap}>
             <p className={styles.counterText}>
-              {isReview ? 'Review' : `Question ${idx + 1} of ${total}`}
+              {isReview ? t('Review') : t('Question {current} of {total}', { current: idx + 1, total })}
             </p>
             <div className={styles.segmentedTrack}>
               {CHECKIN_QUESTIONS.map((item, i) => (
@@ -292,9 +294,9 @@ export default function CheckInPage() {
           {!isReview ? (
             <div className={styles.card}>
               <h2 className={styles.questionText}>
-                <span aria-hidden="true">{q.icon}</span> {q.title}
+                <span aria-hidden="true">{q.icon}</span> {t(q.title)}
               </h2>
-              <div className={styles.ratingRow} role="radiogroup" aria-label={q.title}>
+              <div className={styles.ratingRow} role="radiogroup" aria-label={t(q.title)}>
                 {q.options.map((opt) => {
                   const isSel = answers[q.id] === opt.value;
                   return (
@@ -307,36 +309,36 @@ export default function CheckInPage() {
                       onClick={() => select(opt)}
                     >
                       <span className={styles.ratingEmoji} aria-hidden="true">{opt.emoji}</span>
-                      <span className={styles.ratingLabel}>{opt.label}</span>
+                      <span className={styles.ratingLabel}>{t(opt.label)}</span>
                     </button>
                   );
                 })}
               </div>
               <div className={styles.cardFooter}>
                 <button type="button" className={styles.textBtn} onClick={back} disabled={idx === 0}>
-                  ← Back
+                  ← {t('Back')}
                 </button>
-                <span className={styles.nextHint}>Tap an answer to continue</span>
+                <span className={styles.nextHint}>{t('Tap an answer to continue')}</span>
               </div>
             </div>
           ) : (
             <div className={styles.card}>
-              <h2 className={styles.questionText}>{mode === 'edit' ? 'Tap an answer to change it' : 'Anything else today?'}</h2>
+              <h2 className={styles.questionText}>{t(mode === 'edit' ? 'Tap an answer to change it' : 'Anything else today?')}</h2>
               <ul className={styles.reviewList}>
                 {CHECKIN_QUESTIONS.map((cq, i) => {
                   const opt = cq.options.find((o) => o.value === answers[cq.id]);
                   return (
                     <li key={cq.id}>
-                      <span>{cq.icon} {cq.title}</span>
+                      <span>{cq.icon} {t(cq.title)}</span>
                       <button type="button" className={styles.reviewAnswer} onClick={() => { setPhase('asking'); setIdx(i); }}>
-                        {opt?.emoji} {opt?.label} <small>Edit</small>
+                        {opt?.emoji} {t(opt?.label)} <small>{t('Edit')}</small>
                       </button>
                     </li>
                   );
                 })}
               </ul>
               <label htmlFor="notes" className={styles.notesLabel}>
-                Notes <span>(optional — e.g. headache, skipped meals, started a supplement)</span>
+                {t('Notes')} <span>{t('(optional — e.g. headache, skipped meals, started a supplement)')}</span>
               </label>
               <textarea
                 id="notes"
@@ -345,15 +347,15 @@ export default function CheckInPage() {
                 maxLength={500}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="How was your day?"
+                placeholder={t('How was your day?')}
               />
-              {error && <p className={styles.error} role="alert">{error}</p>}
+              {error && <p className={styles.error} role="alert">{t(error)}</p>}
               <div className={styles.cardFooter}>
                 {mode === 'edit'
-                  ? <button type="button" className={styles.textBtn} onClick={cancelEdit} disabled={phase === 'saving'}>Cancel</button>
-                  : <button type="button" className={styles.textBtn} onClick={back}>← Back</button>}
+                  ? <button type="button" className={styles.textBtn} onClick={cancelEdit} disabled={phase === 'saving'}>{t('Cancel')}</button>
+                  : <button type="button" className={styles.textBtn} onClick={back}>← {t('Back')}</button>}
                 <button type="button" className={styles.viewProgressBtn} onClick={save} disabled={phase === 'saving'}>
-                  {phase === 'saving' ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Save check-in'}
+                  {t(phase === 'saving' ? 'Saving…' : mode === 'edit' ? 'Save changes' : 'Save check-in')}
                 </button>
               </div>
             </div>

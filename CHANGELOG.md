@@ -5,6 +5,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 ## [Unreleased]
 
 ### Added
+- **Hindi and Marathi:** the web app can be switched between English, हिन्दी and मराठी from the language picker (landing header, sidebar, phone header, Profile, sign-in, onboarding and questionnaire). The choice is saved on the device. Translations live in `frontend-web/i18n/translations` and are keyed by the English text, so answer ids and scoring are unaffected. `npm run i18n:check` confirms every string has both translations and matching placeholders. Privacy Policy, Terms, the doctor report and page metadata stay in English.
+- **Landing page:** a tabbed product preview built from the app's own components and marked as sample data, a B12 facts strip sourced from the NIH Office of Dietary Supplements, and trust points (sources, delete your data anytime, never sold, no account needed for a score).
 - **Blood test results:** users can add their serum B12 result (pg/mL or pmol/L) to an assessment on the results page and see how it compares with the questionnaire. New `PUT/DELETE /api/questionnaire/:id/lab`; stored in the existing `lab_b12_value_pmol` / `ml_label` columns (no migration).
 - **Doctor report:** `/report` — a one-page A4 summary (score, drivers, blood test, history, key answers, 14-day check-in chart) saved via the browser's "Save as PDF".
 - **Shared rate limiting:** set `REDIS_URL` to keep rate-limit counters in Redis across all API instances (fails open if Redis is down). Rate-limit keys now hash the email.
@@ -14,6 +16,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - Migration `007_launch_hardening.sql`: Row Level Security on every table, privileges revoked from Supabase `anon`/`authenticated`, duplicate indexes removed, nightly `cleanup_security_tables()` via `pg_cron`.
 
 ### Changed
+- Landing page now says adults over 50 in both places (the callout said 60).
 - Auth middleware checks the token blacklist and the user in parallel.
 - Registration creates the user, streak and profile in one transaction.
 - `*.vercel.app` origins are no longer allowed by default in production (`ALLOW_VERCEL_PREVIEWS`).

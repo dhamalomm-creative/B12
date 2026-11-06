@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, useReducedMotionConfig } from 'framer-motion';
 import { useApp, setRiskResult } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/i18n/LanguageProvider';
 import { questionnaireAPI } from '@/services/api';
 import { GROUP_INFO, normalizeServerResult, THRESHOLD_LOW, THRESHOLD_HIGH } from '@/utils/riskCalculator';
 import AppShell from '@/components/layout/AppShell';
@@ -36,15 +37,11 @@ const LEVEL_COPY = {
   },
 };
 
-const formatDate = (d) => {
-  try {
-    return new Date(d).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
-  } catch { return ''; }
-};
-
 const barTone = (pct) => (pct >= THRESHOLD_HIGH ? 'high' : pct >= THRESHOLD_LOW ? 'medium' : 'low');
 
 export default function ResultsPage() {
+  const { t, rich, formatDate: formatLocalDate } = useI18n();
+  const formatDate = (d) => formatLocalDate(d, { day: 'numeric', month: 'short', year: 'numeric' });
   const { state, dispatch } = useApp();
   const { isAuthenticated, syncPendingAssessment } = useAuth();
   const router = useRouter();
@@ -111,31 +108,31 @@ export default function ResultsPage() {
         <div className={styles.page}>
           <header className={styles.header}>
             <div>
-              <p className={styles.kicker}>B12 risk report</p>
-              <h1 className={styles.title}>Your assessment results</h1>
+              <p className={styles.kicker}>{t('B12 risk report')}</p>
+              <h1 className={styles.title}>{t('Your assessment results')}</h1>
               {result?.completedAt && (
-                <p className={styles.subtitle}>Completed {formatDate(result.completedAt)}</p>
+                <p className={styles.subtitle}>{t('Completed {date}', { date: formatDate(result.completedAt) })}</p>
               )}
             </div>
             {result && (
               <Link href="/report" className={styles.printBtn}>
-                Doctor report (PDF)
+                {t('Doctor report (PDF)')}
               </Link>
             )}
           </header>
 
           {loadError && !result && (
-            <div className={styles.errorBanner} role="alert">{loadError}</div>
+            <div className={styles.errorBanner} role="alert">{t(loadError)}</div>
           )}
 
           {!result && loading && <div className={styles.skeleton} aria-busy="true" />}
 
           {!result && !loading && (
             <div className={styles.emptyCard}>
-              <h2>No assessment yet</h2>
-              <p>Answer about 20 quick questions to estimate your vitamin B12 deficiency risk.</p>
+              <h2>{t('No assessment yet')}</h2>
+              <p>{t('Answer about 20 quick questions to estimate your vitamin B12 deficiency risk.')}</p>
               <button type="button" className={styles.primaryBtn} onClick={() => router.push('/questionnaire')}>
-                Take the assessment
+                {t('Take the assessment')}
               </button>
             </div>
           )}
@@ -150,7 +147,7 @@ export default function ResultsPage() {
                   aria-labelledby="score-heading"
                   {...enter(0)}
                 >
-                  <p id="score-heading" className={styles.cardKicker}>Overall B12 risk</p>
+                  <p id="score-heading" className={styles.cardKicker}>{t('Overall B12 risk')}</p>
                   <div className={styles.scoreRow}>
                     <span className={styles.scoreValue}>
                       <CountUp value={pct} suffix="%" duration={T.count} delay={T.score} srOnlyClassName={styles.srOnly} />
@@ -161,28 +158,28 @@ export default function ResultsPage() {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={ease(T.tone)}
                     >
-                      {copy.label}
+                      {t(copy.label)}
                     </motion.span>
                   </div>
                   <RiskGauge percentage={pct} animateIn="mount" delay={T.score - 0.15} duration={T.count} />
                   <div className={styles.scaleLegend} aria-hidden="true">
-                    <span>Low &lt;{THRESHOLD_LOW}</span>
-                    <span>Moderate {THRESHOLD_LOW}–{THRESHOLD_HIGH - 1}</span>
-                    <span>High {THRESHOLD_HIGH}+</span>
+                    <span>{t('Low')} &lt;{THRESHOLD_LOW}</span>
+                    <span>{t('Moderate')} {THRESHOLD_LOW}–{THRESHOLD_HIGH - 1}</span>
+                    <span>{t('High')} {THRESHOLD_HIGH}+</span>
                   </div>
-                  <p className={styles.scoreMessage}>{copy.message}</p>
+                  <p className={styles.scoreMessage}>{t(copy.message)}</p>
                   {delta !== null && (
                     <p className={styles.delta}>
                       {delta === 0
-                        ? 'Same as your previous assessment.'
+                        ? t('Same as your previous assessment.')
                         : delta < 0
-                          ? `▼ ${Math.abs(delta)} points lower than last time (${formatDate(previous.completed_at)}).`
-                          : `▲ ${delta} points higher than last time (${formatDate(previous.completed_at)}).`}
+                          ? `▼ ${t('{n} points lower than last time ({date}).', { n: Math.abs(delta), date: formatDate(previous.completed_at) })}`
+                          : `▲ ${t('{n} points higher than last time ({date}).', { n: delta, date: formatDate(previous.completed_at) })}`}
                     </p>
                   )}
                 </motion.section>
                 <motion.section className={styles.card} aria-labelledby="next-heading" {...enter(T.next)}>
-                  <h2 id="next-heading" className={styles.cardHeading}>Your next steps</h2>
+                  <h2 id="next-heading" className={styles.cardHeading}>{t('Your next steps')}</h2>
                   <ol className={styles.steps}>
                     {(result.suggestions || []).map((s, i) => (
                       <motion.li
@@ -192,7 +189,7 @@ export default function ResultsPage() {
                         transition={ease(T.next + 0.1 + i * 0.07)}
                       >
                         <span className={styles.stepNum}>{i + 1}</span>
-                        <span>{s}</span>
+                        <span>{t(s)}</span>
                       </motion.li>
                     ))}
                   </ol>
@@ -201,13 +198,13 @@ export default function ResultsPage() {
 
                 {/* ── Breakdown ── */}
                 <motion.section className={styles.card} aria-labelledby="breakdown-heading" {...enter(0.1)}>
-                  <h2 id="breakdown-heading" className={styles.cardHeading}>What&apos;s driving your score</h2>
-                  <p className={styles.cardSub}>Higher bars mean more B12-related signals in that area.</p>
+                  <h2 id="breakdown-heading" className={styles.cardHeading}>{t("What's driving your score")}</h2>
+                  <p className={styles.cardSub}>{t('Higher bars mean more B12-related signals in that area.')}</p>
                   <ul className={styles.catList}>
                     {categories.map((c, i) => (
                       <li key={c.key} className={styles.catRow}>
                         <div className={styles.catHeader}>
-                          <span className={styles.catName}>{c.label}</span>
+                          <span className={styles.catName}>{t(c.label)}</span>
                           <span className={styles.catPct}>{c.pct}%</span>
                         </div>
                         <div className={styles.track}>
@@ -220,7 +217,7 @@ export default function ResultsPage() {
                             transition={ease(T.bars + i * T.barGap, 0.4)}
                           />
                         </div>
-                        <p className={styles.catDesc}>{c.desc}</p>
+                        <p className={styles.catDesc}>{t(c.desc)}</p>
                       </li>
                     ))}
                   </ul>
@@ -236,15 +233,16 @@ export default function ResultsPage() {
                   animate={{ opacity: 1 }}
                   transition={ease(T.next, 0.4)}
                 >
-                  <h2 id="doctor-heading">When to see a doctor</h2>
+                  <h2 id="doctor-heading">{t('When to see a doctor')}</h2>
                   <p>
-                    Book an appointment and ask for a <strong>vitamin B12 blood test</strong> (your doctor may also check a full
-                    blood count, MMA or homocysteine). B12 deficiency is very treatable — and nerve symptoms respond best when
-                    treated early.
+                    {rich('Book an appointment and ask for a {test} (your doctor may also check a full blood count, MMA or homocysteine). B12 deficiency is very treatable — and nerve symptoms respond best when treated early.', {
+                      test: <strong>{t('vitamin B12 blood test')}</strong>,
+                    })}
                   </p>
                   <p>
-                    <strong>Get urgent care</strong> if you have new difficulty walking, severe weakness, confusion, chest pain
-                    or fainting.
+                    {rich('{urgent} if you have new difficulty walking, severe weakness, confusion, chest pain or fainting.', {
+                      urgent: <strong>{t('Get urgent care')}</strong>,
+                    })}
                   </p>
                 </motion.section>
               )}
@@ -263,40 +261,40 @@ export default function ResultsPage() {
 
               <motion.div {...enter(T.next + 0.15)}>
                 <section className={styles.card} aria-labelledby="track-heading">
-                  <h2 id="track-heading" className={styles.cardHeading}>Keep tracking</h2>
+                  <h2 id="track-heading" className={styles.cardHeading}>{t('Keep tracking')}</h2>
                   <div className={styles.linkCards}>
                     <Link href="/checkin" className={styles.linkCard}>
                       <span className={styles.linkIcon} aria-hidden="true">✅</span>
                       <span>
-                        <strong>Daily check-in</strong>
-                        <small>30 seconds to log energy, mood, sleep and focus.</small>
+                        <strong>{t('Daily check-in')}</strong>
+                        <small>{t('30 seconds to log energy, mood, sleep and focus.')}</small>
                       </span>
                     </Link>
                     <Link href="/foods" className={styles.linkCard}>
                       <span className={styles.linkIcon} aria-hidden="true">🥚</span>
                       <span>
-                        <strong>B12 foods for your diet</strong>
-                        <small>See what to add to your plate.</small>
+                        <strong>{t('B12 foods for your diet')}</strong>
+                        <small>{t('See what to add to your plate.')}</small>
                       </span>
                     </Link>
                     <Link href="/progress" className={styles.linkCard}>
                       <span className={styles.linkIcon} aria-hidden="true">📈</span>
                       <span>
-                        <strong>Progress & history</strong>
-                        <small>Trends from your check-ins and past assessments.</small>
+                        <strong>{t('Progress & history')}</strong>
+                        <small>{t('Trends from your check-ins and past assessments.')}</small>
                       </span>
                     </Link>
                   </div>
                   <button type="button" className={styles.secondaryBtn} onClick={() => router.push('/questionnaire')}>
-                    Retake assessment
+                    {t('Retake assessment')}
                   </button>
-                  <p className={styles.retakeHint}>We suggest retaking every 4–8 weeks, or after changing diet or supplements.</p>
+                  <p className={styles.retakeHint}>{t('We suggest retaking every 4–8 weeks, or after changing diet or supplements.')}</p>
                 </section>
               </motion.div>
 
               {history.length > 1 && (
                 <section className={styles.card} aria-labelledby="history-heading">
-                  <h2 id="history-heading" className={styles.cardHeading}>Assessment history</h2>
+                  <h2 id="history-heading" className={styles.cardHeading}>{t('Assessment history')}</h2>
                   <ul className={styles.historyList}>
                     {history.slice(0, 6).map((h) => {
                       const tone = String(h.risk_level || '').toLowerCase();
@@ -304,7 +302,7 @@ export default function ResultsPage() {
                         <li key={h.id} className={styles.historyRow}>
                           <span>{formatDate(h.completed_at)}</span>
                           <span className={`${styles.levelBadge} ${styles[`badge_${tone === 'medium' ? 'medium' : tone === 'high' ? 'high' : 'low'}`]}`}>
-                            {Math.round(Number(h.risk_percentage || 0))}% · {tone === 'medium' ? 'Moderate' : tone === 'high' ? 'High' : 'Low'}
+                            {Math.round(Number(h.risk_percentage || 0))}% · {t(tone === 'medium' ? 'Moderate' : tone === 'high' ? 'High' : 'Low')}
                           </span>
                         </li>
                       );
@@ -316,8 +314,7 @@ export default function ResultsPage() {
           )}
 
           <p className={styles.disclaimer}>
-            This report is for education and awareness. It is not a diagnosis and does not replace advice from a qualified
-            healthcare professional. Only a blood test can confirm B12 deficiency.
+            {t('This report is for education and awareness. It is not a diagnosis and does not replace advice from a qualified healthcare professional. Only a blood test can confirm B12 deficiency.')}
           </p>
         </div>
       </AppShell>

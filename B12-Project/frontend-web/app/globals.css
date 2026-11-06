@@ -5,9 +5,9 @@
      and scrollbars light even when the device is in dark mode. */
   color-scheme: light;
 
-  --font-headline: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-body:     'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font:          'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-headline: 'Inter Variable', 'Inter', 'Noto Sans Devanagari Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-body:     'Inter Variable', 'Inter', 'Noto Sans Devanagari Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font:          'Inter Variable', 'Inter', 'Noto Sans Devanagari Variable', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 
   /* ── Canvas & Surfaces — Warm Cream, Crisp White & Earthy Pastels ── */
   --bg:                   #FAF6F0;   /* Warm soft ivory / cream canvas */
@@ -500,4 +500,21 @@ button, input, select, textarea { font-family: inherit; }
   @page { size: A4; margin: 12mm; }
   body { background: #fff !important; }
   .skip-link { display: none !important; }
+}
+
+/* Hindi and Marathi: tight tracking breaks the headline bar that joins Devanagari letters,
+   and the marks above and below letters need more line height than Latin text. */
+html:lang(hi) *,
+html:lang(mr) * {
+  letter-spacing: normal !important;
+}
+
+html:lang(hi) :is(h1, h2, h3, p, li, label, summary, button, small),
+html:lang(mr) :is(h1, h2, h3, p, li, label, summary, button, small) {
+  line-height: 1.5;
+}
+
+html:lang(hi) :is(h1, h2, h3),
+html:lang(mr) :is(h1, h2, h3) {
+  line-height: 1.35;
 }

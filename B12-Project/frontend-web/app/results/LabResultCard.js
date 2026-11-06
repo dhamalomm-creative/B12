@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useI18n } from '@/i18n/LanguageProvider';
 import { questionnaireAPI } from '@/services/api';
 import { LAB_STATUS, UNITS, toPgMl, compareWithRisk } from '@/utils/labResult';
 import page from './page.module.css';
@@ -11,6 +12,7 @@ import styles from './LabResultCard.module.css';
  * interpretation, which becomes real-world data for improving the score later.
  */
 export default function LabResultCard({ assessmentId, riskLevel, labPmol, labStatus, onChange }) {
+  const { t } = useI18n();
   const hasLab = labPmol != null && LAB_STATUS[labStatus];
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState('');
@@ -62,7 +64,7 @@ export default function LabResultCard({ assessmentId, riskLevel, labPmol, labSta
 
   return (
     <section className={`${page.card} ${styles.card}`} aria-labelledby="lab-heading">
-      <h2 id="lab-heading" className={page.cardHeading}>Your blood test</h2>
+      <h2 id="lab-heading" className={page.cardHeading}>{t('Your blood test')}</h2>
 
       {!editing && hasLab && (
         <>
@@ -71,17 +73,19 @@ export default function LabResultCard({ assessmentId, riskLevel, labPmol, labSta
               {toPgMl(labPmol)} <small>pg/mL</small>
             </span>
             <span className={styles.alt}>= {Math.round(labPmol)} pmol/L</span>
-            <span className={`${page.levelBadge} ${page[`badge_${info.tone}`]}`}>{info.label}</span>
+            <span className={`${page.levelBadge} ${page[`badge_${info.tone}`]}`}>{t(info.label)}</span>
           </div>
-          <p className={styles.message}>{info.message}</p>
-          <p className={styles.compare}>{compareWithRisk(labStatus, riskLevel)}</p>
+          <p className={styles.message}>{t(info.message)}</p>
+          <p className={styles.compare}>{t(compareWithRisk(labStatus, riskLevel))}</p>
           <p className={styles.note}>
-            Ranges used: low {LAB_STATUS.deficient.range}, borderline {LAB_STATUS.borderline.range}. Labs differ —
-            the range printed on your report and your doctor’s advice come first.
+            {t('Ranges used: low {low}, borderline {borderline}. Labs differ — the range printed on your report and your doctor’s advice come first.', {
+              low: t(LAB_STATUS.deficient.range),
+              borderline: t(LAB_STATUS.borderline.range),
+            })}
           </p>
           <div className={styles.actions}>
-            <button type="button" className={styles.linkBtn} onClick={startEdit} disabled={saving}>Edit</button>
-            <button type="button" className={styles.linkBtn} onClick={remove} disabled={saving}>Remove</button>
+            <button type="button" className={styles.linkBtn} onClick={startEdit} disabled={saving}>{t('Edit')}</button>
+            <button type="button" className={styles.linkBtn} onClick={remove} disabled={saving}>{t('Remove')}</button>
           </div>
         </>
       )}
@@ -89,16 +93,15 @@ export default function LabResultCard({ assessmentId, riskLevel, labPmol, labSta
       {!editing && !hasLab && (
         <>
           <p className={page.cardSub}>
-            Had a vitamin B12 blood test? Add the result to see how it compares with your questionnaire — and keep it with
-            your report for your doctor.
+            {t('Had a vitamin B12 blood test? Add the result to see how it compares with your questionnaire — and keep it with your report for your doctor.')}
           </p>
-          <button type="button" className={page.secondaryBtn} onClick={startEdit}>Add my blood test result</button>
+          <button type="button" className={page.secondaryBtn} onClick={startEdit}>{t('Add my blood test result')}</button>
         </>
       )}
 
       {editing && (
         <form className={styles.form} onSubmit={save} noValidate>
-          <label htmlFor="lab-value" className={styles.label}>Serum vitamin B12 (look for “B12” or “Cobalamin” on your report)</label>
+          <label htmlFor="lab-value" className={styles.label}>{t('Serum vitamin B12 (look for “B12” or “Cobalamin” on your report)')}</label>
           <div className={styles.inputRow}>
             <input
               id="lab-value"
@@ -107,7 +110,7 @@ export default function LabResultCard({ assessmentId, riskLevel, labPmol, labSta
               inputMode="decimal"
               min="1"
               step="any"
-              placeholder={unit === 'pg/mL' ? 'e.g. 350' : 'e.g. 260'}
+              placeholder={t('e.g. {n}', { n: unit === 'pg/mL' ? 350 : 260 })}
               value={value}
               onChange={(e) => setValue(e.target.value)}
               aria-describedby={error ? 'lab-error' : undefined}
@@ -115,7 +118,7 @@ export default function LabResultCard({ assessmentId, riskLevel, labPmol, labSta
               autoFocus
             />
             <fieldset className={styles.units}>
-              <legend className="visually-hidden">Unit</legend>
+              <legend className="visually-hidden">{t('Unit')}</legend>
               {UNITS.map((u) => (
                 <label key={u} className={`${styles.unit} ${unit === u ? styles.unitActive : ''}`}>
                   <input type="radio" name="lab-unit" value={u} checked={unit === u} onChange={() => setUnit(u)} />
@@ -124,12 +127,12 @@ export default function LabResultCard({ assessmentId, riskLevel, labPmol, labSta
               ))}
             </fieldset>
           </div>
-          {error && <p id="lab-error" className={styles.error} role="alert">{error}</p>}
+          {error && <p id="lab-error" className={styles.error} role="alert">{t(error)}</p>}
           <div className={styles.actions}>
-            <button type="submit" className={page.primaryBtn} disabled={saving}>{saving ? 'Saving…' : 'Save result'}</button>
-            <button type="button" className={styles.linkBtn} onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
+            <button type="submit" className={page.primaryBtn} disabled={saving}>{t(saving ? 'Saving…' : 'Save result')}</button>
+            <button type="button" className={styles.linkBtn} onClick={() => setEditing(false)} disabled={saving}>{t('Cancel')}</button>
           </div>
-          <p className={styles.note}>Your result is private and stored with this assessment. You can remove it any time.</p>
+          <p className={styles.note}>{t('Your result is private and stored with this assessment. You can remove it any time.')}</p>
         </form>
       )}
     </section>

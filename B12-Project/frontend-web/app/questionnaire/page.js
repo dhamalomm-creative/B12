@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotionConfig } from 'framer-motion';
 import { useApp, setRiskResult, setPendingAnswers } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/i18n/LanguageProvider';
 import { buildQuestionSet, dropHiddenAnswers, getAgeGroup, getVisibleQuestions } from '@/data/questions';
 import { SECTIONS, SECTION_FACTS, getSectionId } from '@/data/questionnaireSections';
 import { calculateRisk, toServerAnswers, normalizeServerResult } from '@/utils/riskCalculator';
@@ -12,6 +13,7 @@ import { questionnaireAPI } from '@/services/api';
 import QuestionVisual from '@/components/questionnaire/QuestionVisual';
 import { LoadingScreen, toast } from '@/components/UI';
 import { EASE } from '@/components/motion';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import styles from './page.module.css';
 
 const PROGRESS_KEY = 'b12_questionnaire_progress';
@@ -43,6 +45,7 @@ const clearProgress = () => {
 };
 
 export default function QuestionnairePage() {
+  const { t, rich } = useI18n();
   const { state, dispatch } = useApp();
   const { isAuthenticated, isLoading: authLoading, user: authUser } = useAuth();
   const router = useRouter();
@@ -158,7 +161,7 @@ export default function QuestionnairePage() {
         dispatch(setPendingAnswers(null));
       } catch (err) {
         dispatch(setPendingAnswers(serverAnswers));
-        toast("We couldn't save to your account just now — your result is kept on this device and will sync automatically.", 'info');
+        toast(t("We couldn't save to your account just now — your result is kept on this device and will sync automatically."), 'info');
       }
     } else {
       dispatch(setPendingAnswers(serverAnswers));
@@ -168,7 +171,7 @@ export default function QuestionnairePage() {
     dispatch(setRiskResult(result));
     clearProgress();
     router.replace(isAuthenticated ? '/results?new=1' : '/score-preview');
-  }, [questions, profile.dietType, isAuthenticated, dispatch, router, reduceMotion]);
+  }, [questions, profile.dietType, isAuthenticated, dispatch, router, reduceMotion, t]);
 
   // ── Navigation ────────────────────────────────────────────────────────────
   const goNext = useCallback(() => {
@@ -236,7 +239,7 @@ export default function QuestionnairePage() {
   };
 
   const saveAndExit = () => {
-    if (answeredCount > 0) toast('Progress saved — pick up where you left off any time.', 'success');
+    if (answeredCount > 0) toast(t('Progress saved — pick up where you left off any time.'), 'success');
     router.push(isAuthenticated ? '/dashboard' : '/');
   };
 
@@ -290,20 +293,23 @@ export default function QuestionnairePage() {
           <span className={styles.brandMark} aria-hidden="true">B12</span>
           <span className={styles.brandText}>Health Tracker</span>
         </Link>
-        <button type="button" className={styles.exitBtn} onClick={saveAndExit}>
-          Save &amp; exit
-        </button>
+        <div className={styles.headerActions}>
+          <LanguageSwitcher />
+          <button type="button" className={styles.exitBtn} onClick={saveAndExit}>
+            {t('Save & exit')}
+          </button>
+        </div>
       </header>
 
       {/* ── Progress ── */}
-      <section aria-label="Your progress">
+      <section aria-label={t('Your progress')}>
       <div className={styles.progressWrap}>
         <div className={styles.progressMeta}>
           <span className={styles.progressCount}>
-            {breakFor ? 'Quick break' : `Question ${idx + 1} of ${total}`}
+            {breakFor ? t('Quick break') : t('Question {current} of {total}', { current: idx + 1, total })}
           </span>
           <span className={styles.progressTime}>
-            {progressPct}% · about {minutesLeft} min left
+            {progressPct}% · {t('about {n} min left', { n: minutesLeft })}
           </span>
         </div>
         <div
@@ -312,7 +318,7 @@ export default function QuestionnairePage() {
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={progressPct}
-          aria-label="Assessment progress"
+          aria-label={t('Assessment progress')}
         >
           <motion.div
             className={styles.progressFill}
@@ -322,7 +328,7 @@ export default function QuestionnairePage() {
             transition={{ duration: reduceMotion ? 0 : 0.4, ease: EASE }}
           />
         </div>
-        <ol className={styles.sections} aria-label="Sections">
+        <ol className={styles.sections} aria-label={t('Sections')}>
           {sectionsInSet.map((s) => {
             const active = s.id === (breakFor || currentSection);
             return (
@@ -341,7 +347,7 @@ export default function QuestionnairePage() {
                 >
                   {s.done ? '✓' : s.icon}
                 </motion.span>
-                <span className={styles.sectionLabel}>{s.label}</span>
+                <span className={styles.sectionLabel}>{t(s.label)}</span>
               </li>
             );
           })}
@@ -350,8 +356,8 @@ export default function QuestionnairePage() {
 
       {resumed && !breakFor && (
         <div className={styles.resumeBar}>
-          <span>Welcome back — we saved your answers so you can continue where you left off.</span>
-          <button type="button" onClick={startOver} className={styles.linkBtn}>Start over</button>
+          <span>{t('Welcome back — we saved your answers so you can continue where you left off.')}</span>
+          <button type="button" onClick={startOver} className={styles.linkBtn}>{t('Start over')}</button>
         </div>
       )}
       </section>
@@ -378,18 +384,18 @@ export default function QuestionnairePage() {
               </motion.div>
               <p className={styles.factKicker}>
                 <Tick className={styles.factTick} draw={!reduceMotion} delay={0.3} />
-                Section complete · {SECTIONS.find((s) => s.id === breakFor)?.label}
+                {t('Section complete')} · {t(SECTIONS.find((s) => s.id === breakFor)?.label)}
               </p>
-              <h2 className={styles.factTitle}>{SECTION_FACTS[breakFor].title}</h2>
-              <p className={styles.factBody}>{SECTION_FACTS[breakFor].body}</p>
+              <h2 className={styles.factTitle}>{t(SECTION_FACTS[breakFor].title)}</h2>
+              <p className={styles.factBody}>{t(SECTION_FACTS[breakFor].body)}</p>
               <div className={styles.factStat}>
-                <span className={styles.factStatValue}>{SECTION_FACTS[breakFor].stat}</span>
-                <span className={styles.factStatLabel}>{SECTION_FACTS[breakFor].statLabel}</span>
+                <span className={styles.factStatValue}>{t(SECTION_FACTS[breakFor].stat)}</span>
+                <span className={styles.factStatLabel}>{t(SECTION_FACTS[breakFor].statLabel)}</span>
               </div>
               <div className={styles.factActions}>
-                <button type="button" className={styles.backBtn} onClick={goBack}>Back</button>
+                <button type="button" className={styles.backBtn} onClick={goBack}>{t('Back')}</button>
                 <button type="button" className={styles.nextBtn} onClick={continueFromBreak} autoFocus>
-                  Continue
+                  {t('Continue')}
                 </button>
               </div>
             </motion.section>
@@ -403,9 +409,9 @@ export default function QuestionnairePage() {
               {/* ── Question card ── */}
               <section className={styles.questionCard} aria-labelledby="question-title">
                 <span className={styles.categoryBadge}>
-                  <span aria-hidden="true">{q.categoryIcon}</span> {q.category}
+                  <span aria-hidden="true">{q.categoryIcon}</span> {t(q.category)}
                 </span>
-                <h1 id="question-title" className={styles.questionTitle}>{q.question}</h1>
+                <h1 id="question-title" className={styles.questionTitle}>{t(q.question)}</h1>
 
                 <div className={styles.options} role="radiogroup" aria-labelledby="question-title">
                   {q.options.map((opt, i) => {
@@ -423,7 +429,7 @@ export default function QuestionnairePage() {
                         transition={{ duration: 0.15 }}
                       >
                         <span className={styles.optionKey} aria-hidden="true">{i + 1}</span>
-                        <span className={styles.optionLabel}>{cleanLabel(opt.label)}</span>
+                        <span className={styles.optionLabel}>{t(cleanLabel(opt.label))}</span>
                         {showMeter && (
                           <span className={styles.meter} aria-hidden="true">
                             {[0.25, 0.5, 0.75, 1].map((t) => (
@@ -458,14 +464,14 @@ export default function QuestionnairePage() {
                       role="note"
                     >
                       <span className={styles.insightIcon} aria-hidden="true">💡</span>
-                      <p><strong>Good to know:</strong> {q.insight}</p>
+                      <p><strong>{t('Good to know:')}</strong> {t(q.insight)}</p>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
                 <div className={styles.actions}>
                   <button type="button" className={styles.backBtn} onClick={goBack}>
-                    ← Back
+                    ← {t('Back')}
                   </button>
                   <button
                     type="button"
@@ -473,11 +479,14 @@ export default function QuestionnairePage() {
                     onClick={goNext}
                     disabled={!selected}
                   >
-                    {isLast ? 'See my results' : 'Continue'}
+                    {t(isLast ? 'See my results' : 'Continue')}
                   </button>
                 </div>
                 <p className={styles.kbdHint}>
-                  Tip: press <kbd>1</kbd>–<kbd>{q.options.length}</kbd> to answer and <kbd>Enter</kbd> to continue.
+                  {rich('Tip: press {keys} to answer and {enter} to continue.', {
+                    keys: <><kbd>1</kbd>–<kbd>{q.options.length}</kbd></>,
+                    enter: <kbd>Enter</kbd>,
+                  })}
                 </p>
 
                 <button
@@ -487,7 +496,7 @@ export default function QuestionnairePage() {
                   aria-expanded={showWhyMobile && !whyClosing}
                   aria-controls="why-panel"
                 >
-                  {showWhyMobile && !whyClosing ? 'Hide' : 'Why are we asking this?'}
+                  {t(showWhyMobile && !whyClosing ? 'Hide' : 'Why are we asking this?')}
                 </button>
               </section>
 
@@ -495,38 +504,38 @@ export default function QuestionnairePage() {
               <aside
                 id="why-panel"
                 className={`${styles.whyPanel} ${showWhyMobile ? styles.whyPanelOpen : ''} ${whyClosing ? styles.whyPanelClosing : ''}`}
-                aria-label="Why we ask this question"
+                aria-label={t('Why we ask this question')}
               >
                 <div className={styles.visualTile}>
                   <QuestionVisual type={why.visualType} className={styles.visualSvg} />
                 </div>
-                <h2 className={styles.whyHeading}>Why we ask</h2>
+                <h2 className={styles.whyHeading}>{t('Why we ask')}</h2>
                 <div className={styles.whyBlock}>
-                  <h3>In plain words</h3>
-                  <p>{why.simpleText || q.insight}</p>
+                  <h3>{t('In plain words')}</h3>
+                  <p>{t(why.simpleText || q.insight)}</p>
                 </div>
                 {why.whyItMatters && (
                   <div className={styles.whyBlock}>
-                    <h3>How it links to B12</h3>
-                    <p>{why.whyItMatters}</p>
+                    <h3>{t('How it links to B12')}</h3>
+                    <p>{t(why.whyItMatters)}</p>
                   </div>
                 )}
                 {why.keySigns?.length > 0 && (
                   <div className={styles.whyBlock}>
-                    <h3>What it can look like</h3>
+                    <h3>{t('What it can look like')}</h3>
                     <ul className={styles.signs}>
-                      {why.keySigns.map((s) => <li key={s}>{s}</li>)}
+                      {why.keySigns.map((s) => <li key={s}>{t(s)}</li>)}
                     </ul>
                   </div>
                 )}
                 {q.weight >= 4 && (
                   <p className={styles.weightNote}>
-                    This is a strong risk signal, so it counts more in your score.
+                    {t('This is a strong risk signal, so it counts more in your score.')}
                   </p>
                 )}
                 {currentSection === 'you' && (
                   <p className={styles.weightNote}>
-                    Asked because of your age or gender — these factors change B12 needs.
+                    {t('Asked because of your age or gender — these factors change B12 needs.')}
                   </p>
                 )}
               </aside>
@@ -535,7 +544,7 @@ export default function QuestionnairePage() {
         </AnimatePresence>
 
         <p className={styles.disclaimer}>
-          Educational screening only — not a diagnosis. Your answers stay private.
+          {t('Educational screening only — not a diagnosis. Your answers stay private.')}
         </p>
       </main>
     </div>
@@ -549,6 +558,7 @@ const ANALYSIS_STEPS = [
 ];
 
 function AnalysingScreen({ reduceMotion }) {
+  const { t } = useI18n();
   const [step, setStep] = useState(0);
   useEffect(() => {
     if (reduceMotion) return undefined;
@@ -561,7 +571,7 @@ function AnalysingScreen({ reduceMotion }) {
       <div className={styles.pulse} aria-hidden="true">
         <span>B12</span>
       </div>
-      <h1 className={styles.analysingTitle}>Analysing your answers…</h1>
+      <h1 className={styles.analysingTitle}>{t('Analysing your answers…')}</h1>
       <ul className={styles.analysingSteps}>
         {ANALYSIS_STEPS.map((label, i) => (
           <motion.li
@@ -571,7 +581,7 @@ function AnalysingScreen({ reduceMotion }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: i * 0.12, ease: EASE }}
           >
-            <span aria-hidden="true">{i < step ? '✓' : i === step ? '•' : '○'}</span> {label}
+            <span aria-hidden="true">{i < step ? '✓' : i === step ? '•' : '○'}</span> {t(label)}
           </motion.li>
         ))}
       </ul>

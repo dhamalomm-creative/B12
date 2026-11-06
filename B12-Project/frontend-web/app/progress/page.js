@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { useApp, setStreak } from '@/context/AppContext';
+import { useI18n } from '@/i18n/LanguageProvider';
 import { checkinAPI, questionnaireAPI } from '@/services/api';
 import AppShell from '@/components/layout/AppShell';
 import AuthGuard from '@/components/auth/AuthGuard';
@@ -31,6 +32,7 @@ const trendOf = (values, better) => {
 };
 
 export default function ProgressPage() {
+  const { t, formatDate } = useI18n();
   const { state, dispatch } = useApp();
   const router = useRouter();
   const [range, setRange] = useState(14);
@@ -62,14 +64,14 @@ export default function ProgressPage() {
   }, []);
 
   const data = useMemo(() => logs.map((h) => ({
-    day: new Date(`${h.checkin_date}T00:00:00`).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+    day: formatDate(`${h.checkin_date}T00:00:00`, { day: 'numeric', month: 'short' }),
     energy: h.energy_score ?? null,
     fatigue: h.fatigue_score ?? null,
     mood: h.mood_score ?? null,
     sleep: h.sleep_score ?? null,
     focus: h.focus_score ?? null,
     notes: h.notes,
-  })), [logs]);
+  })), [logs, formatDate]);
 
   const alerts = useMemo(() => {
     if (logs.length < 3) return [];
@@ -87,9 +89,9 @@ export default function ProgressPage() {
 
   const streak = state.serverStreak?.current_streak ?? 0;
   const assessmentData = useMemo(() => [...assessments].reverse().map((a) => ({
-    day: new Date(a.completed_at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' }),
+    day: formatDate(a.completed_at, { day: 'numeric', month: 'short' }),
     score: Math.round(Number(a.risk_percentage || 0)),
-  })), [assessments]);
+  })), [assessments, formatDate]);
 
   return (
     <AuthGuard>
@@ -97,10 +99,10 @@ export default function ProgressPage() {
         <div className={styles.page}>
           <header className={styles.header}>
             <div>
-              <h1 className={styles.title}>Your progress</h1>
-              <p className={styles.subtitle}>Daily check-ins on a 0–4 scale. Patterns over 2+ weeks are the most useful.</p>
+              <h1 className={styles.title}>{t('Your progress')}</h1>
+              <p className={styles.subtitle}>{t('Daily check-ins on a 0–4 scale. Patterns over 2+ weeks are the most useful.')}</p>
             </div>
-            <div className={styles.rangeToggle} role="tablist" aria-label="Date range">
+            <div className={styles.rangeToggle} role="tablist" aria-label={t('Date range')}>
               {RANGES.map((r) => (
                 <button
                   key={r}
@@ -110,7 +112,7 @@ export default function ProgressPage() {
                   className={`${styles.rangeBtn} ${range === r ? styles.rangeActive : ''}`}
                   onClick={() => setRange(r)}
                 >
-                  {r} days
+                  {t('{n} days', { n: r })}
                 </button>
               ))}
             </div>
@@ -118,55 +120,55 @@ export default function ProgressPage() {
 
           <div className={styles.stats}>
             <div className={`${styles.stat} ${styles.statGreen}`}>
-              <p className={styles.statLabel}>Streak</p>
-              <p className={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</p>
+              <p className={styles.statLabel}>{t('Streak')}</p>
+              <p className={styles.statValue}>{t(streak === 1 ? '{n} day' : '{n} days', { n: streak })}</p>
             </div>
             <div className={`${styles.stat} ${styles.statYellow}`}>
-              <p className={styles.statLabel}>Days logged</p>
+              <p className={styles.statLabel}>{t('Days logged')}</p>
               <p className={styles.statValue}>{Math.min(logs.length, range)} / {range}</p>
             </div>
             <div className={`${styles.stat} ${styles.statBlue}`}>
-              <p className={styles.statLabel}>Avg. energy</p>
+              <p className={styles.statLabel}>{t('Avg. energy')}</p>
               <p className={styles.statValue}>
                 {logs.length ? `${avg(logs.map((l) => l.energy_score)).toFixed(1)} / 4` : '—'}
               </p>
             </div>
           </div>
 
-          {error && <div className={styles.error} role="alert">{error}</div>}
+          {error && <div className={styles.error} role="alert">{t(error)}</div>}
 
           {alerts.length > 0 && (
             <section className={styles.alert} aria-labelledby="alert-h">
-              <h2 id="alert-h">Patterns worth noticing</h2>
-              <ul>{alerts.map((a) => <li key={a}>{a}</li>)}</ul>
-              <p>These are common B12-related symptoms. If they continue, consider discussing a B12 blood test with your doctor.</p>
+              <h2 id="alert-h">{t('Patterns worth noticing')}</h2>
+              <ul>{alerts.map((a) => <li key={a}>{t(a)}</li>)}</ul>
+              <p>{t('These are common B12-related symptoms. If they continue, consider discussing a B12 blood test with your doctor.')}</p>
             </section>
           )}
 
           {!loading && logs.length === 0 ? (
             <div className={styles.empty}>
-              <h2>No check-ins in the last {range} days</h2>
-              <p>Log a 30-second daily check-in to start seeing your energy, mood and sleep trends here.</p>
+              <h2>{t('No check-ins in the last {n} days', { n: range })}</h2>
+              <p>{t('Log a 30-second daily check-in to start seeing your energy, mood and sleep trends here.')}</p>
               <button type="button" className={styles.primaryBtn} onClick={() => router.push('/checkin')}>
-                Start daily check-in
+                {t('Start daily check-in')}
               </button>
             </div>
           ) : (
             <div className={styles.chartsGrid}>
               {METRICS.map((m) => {
                 const values = logs.map((l) => l[`${m.key}_score`]).filter((v) => v !== null && v !== undefined);
-                const t = trendOf(values, m.better);
+                const trend = trendOf(values, m.better);
                 const a = avg(values);
                 return (
-                  <section key={m.key} className={styles.chartCard} aria-label={`${m.label} trend`}>
+                  <section key={m.key} className={styles.chartCard} aria-label={t('{metric} trend', { metric: t(m.label) })}>
                     <div className={styles.chartHead}>
                       <div>
-                        <h2 className={styles.chartTitle}>{m.label}</h2>
+                        <h2 className={styles.chartTitle}>{t(m.label)}</h2>
                         <p className={styles.chartSub}>
-                          {a === null ? 'No data' : `Avg ${a.toFixed(1)} / 4`} · {m.better} is better
+                          {a === null ? t('No data') : t('Avg {n} / 4', { n: a.toFixed(1) })} · {t(m.better === 'higher' ? 'higher is better' : 'lower is better')}
                         </p>
                       </div>
-                      {t && <span className={`${styles.trend} ${styles[`trend_${t.tone}`]}`}>{t.label}</span>}
+                      {trend && <span className={`${styles.trend} ${styles[`trend_${trend.tone}`]}`}>{t(trend.label)}</span>}
                     </div>
                     <div className={styles.chartWrap}>
                       {mounted && !loading && (
@@ -183,7 +185,7 @@ export default function ProgressPage() {
                             <YAxis domain={[0, 4]} ticks={[0, 2, 4]} tick={{ fontSize: 11, fill: '#616C65' }} tickLine={false} axisLine={false} />
                             <Tooltip
                               contentStyle={{ background: '#fff', border: '1px solid #E8E2D5', borderRadius: 10, fontSize: 12 }}
-                              formatter={(v) => [`${v} / 4`, m.label]}
+                              formatter={(v) => [`${v} / 4`, t(m.label)]}
                             />
                             <Area type="monotone" dataKey={m.key} stroke={m.color} strokeWidth={2.2} fill={`url(#g-${m.key})`} connectNulls dot={{ r: 2.5, fill: m.color }} />
                           </AreaChart>
@@ -194,19 +196,19 @@ export default function ProgressPage() {
                 );
               })}
 
-              <section className={styles.chartCard} aria-label="Assessment score history">
+              <section className={styles.chartCard} aria-label={t('Assessment score history')}>
                 <div className={styles.chartHead}>
                   <div>
-                    <h2 className={styles.chartTitle}>B12 risk score</h2>
-                    <p className={styles.chartSub}>Your assessments over time · lower is better</p>
+                    <h2 className={styles.chartTitle}>{t('B12 risk score')}</h2>
+                    <p className={styles.chartSub}>{t('Your assessments over time · lower is better')}</p>
                   </div>
                 </div>
                 <div className={styles.chartWrap}>
                   {assessmentData.length < 2 ? (
                     <p className={styles.chartEmpty}>
                       {assessmentData.length === 1
-                        ? `Latest score: ${assessmentData[0].score}%. Retake in a few weeks to see a trend.`
-                        : 'Take the assessment to start tracking your score.'}
+                        ? t('Latest score: {n}%. Retake in a few weeks to see a trend.', { n: assessmentData[0].score })
+                        : t('Take the assessment to start tracking your score.')}
                     </p>
                   ) : mounted && (
                     <ResponsiveContainer width="100%" height={150}>
@@ -214,7 +216,7 @@ export default function ProgressPage() {
                         <CartesianGrid stroke="#F0EAE0" vertical={false} />
                         <XAxis dataKey="day" tick={{ fontSize: 11, fill: '#616C65' }} tickLine={false} axisLine={false} />
                         <YAxis domain={[0, 100]} ticks={[0, 35, 65, 100]} tick={{ fontSize: 11, fill: '#616C65' }} tickLine={false} axisLine={false} />
-                        <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E8E2D5', borderRadius: 10, fontSize: 12 }} formatter={(v) => [`${v}%`, 'Risk']} />
+                        <Tooltip contentStyle={{ background: '#fff', border: '1px solid #E8E2D5', borderRadius: 10, fontSize: 12 }} formatter={(v) => [`${v}%`, t('Risk')]} />
                         <Area type="monotone" dataKey="score" stroke="#1E3A2B" strokeWidth={2.2} fill="#E5EFE7" dot={{ r: 3, fill: '#1E3A2B' }} />
                       </AreaChart>
                     </ResponsiveContainer>
@@ -225,7 +227,7 @@ export default function ProgressPage() {
           )}
 
           <p className={styles.disclaimer}>
-            Symptom tracking can help you spot patterns, but it can&apos;t diagnose B12 deficiency. Only a blood test can.
+            {t("Symptom tracking can help you spot patterns, but it can't diagnose B12 deficiency. Only a blood test can.")}
           </p>
         </div>
       </AppShell>

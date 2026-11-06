@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import LegalLanguageNotice from '@/components/LegalLanguageNotice';
 import styles from './page.module.css';
 
 const SECTIONS = [
@@ -70,6 +71,7 @@ export default function TermsPage() {
       {/* ── Main Content ── */}
       <main className={styles.container}>
         <h1 className={styles.title}>Terms of Service</h1>
+        <LegalLanguageNotice />
         <p className={styles.subtitle}>
           Last updated: November 2026. Please read before using B12 Health Tracker.
         </p>

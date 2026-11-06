@@ -276,3 +276,7 @@ legend.groupLabel { margin-bottom: 12px; padding: 0; }
   .dietGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .mainTitle { font-size: 26px; }
 }
+
+.topHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.brandTitle { white-space: nowrap; }

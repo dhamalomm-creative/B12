@@ -4,10 +4,13 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
+import { useI18n } from '@/i18n/LanguageProvider';
 import AmbientBackground from '@/components/AmbientBackground';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import styles from './page.module.css';
 
 function AuthForm() {
+  const { t, rich } = useI18n();
   const { register, login, isLoading, isAuthenticated, error, clearError } = useAuth();
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -124,7 +127,7 @@ function AuthForm() {
   return (
     <div className={styles.splitPage}>
       {/* ── Left Half (Dark Green) ── */}
-      <aside aria-label="About B12 Health Tracker" className={styles.leftHalf}>
+      <aside aria-label={t('About B12 Health Tracker')} className={styles.leftHalf}>
         <AmbientBackground tone="dark" />
         <div className={styles.leftHeader}>
           <Link href="/" className={styles.leftBrand}>B12 Health Tracker</Link>
@@ -132,21 +135,21 @@ function AuthForm() {
 
         <div className={styles.leftContent}>
           <h1 className={styles.leftHeading}>
-            Know your B12, before it slows you down.
+            {t('Know your B12, before it slows you down.')}
           </h1>
 
           <ul className={styles.checkList}>
             <li className={styles.checkItem}>
               <span className={styles.checkIcon}>✓</span>
-              <span>Free and private</span>
+              <span>{t('Free and private')}</span>
             </li>
             <li className={styles.checkItem}>
               <span className={styles.checkIcon}>✓</span>
-              <span>Takes about 5 minutes</span>
+              <span>{t('Takes about 5 minutes')}</span>
             </li>
             <li className={styles.checkItem}>
               <span className={styles.checkIcon}>✓</span>
-              <span>For education, not diagnosis</span>
+              <span>{t('For education, not diagnosis')}</span>
             </li>
           </ul>
         </div>
@@ -156,20 +159,21 @@ function AuthForm() {
       <main className={styles.rightHalf}>
         {/* Top Right Toggle */}
         <div className={styles.topToggleWrap}>
+          <LanguageSwitcher />
           <div className={styles.togglePillContainer}>
             <button
               type="button"
               className={`${styles.togglePill} ${mode === 'login' ? styles.togglePillActive : ''}`}
               onClick={() => switchMode('login')}
             >
-              Log in
+              {t('Log in')}
             </button>
             <button
               type="button"
               className={`${styles.togglePill} ${mode === 'register' ? styles.togglePillActive : ''}`}
               onClick={() => switchMode('register')}
             >
-              Create account
+              {t('Create account')}
             </button>
           </div>
         </div>
@@ -177,25 +181,25 @@ function AuthForm() {
         {/* Auth Form Container */}
         <div className={styles.formContainer}>
           <h2 className={styles.formTitle}>
-            {mode === 'register' ? 'Create your account' : 'Log in to your account'}
+            {t(mode === 'register' ? 'Create your account' : 'Log in to your account')}
           </h2>
 
           {hasPendingResult && mode === 'register' && (
             <div className={styles.infoBox}>
-              Your {state.riskResult.percentage}% risk score will be saved to your new account.
+              {t('Your {pct}% risk score will be saved to your new account.', { pct: state.riskResult.percentage })}
             </div>
           )}
 
           {displayError && (
             <div className={styles.errorBox} role="alert">
-              <p>{displayError}</p>
+              <p>{t(displayError)}</p>
               {dupEmail && (
                 <button
                   type="button"
                   className={styles.errorSwitchBtn}
                   onClick={() => switchMode('login')}
                 >
-                  Log in to existing account →
+                  {t('Log in to existing account →')}
                 </button>
               )}
             </div>
@@ -203,7 +207,7 @@ function AuthForm() {
 
           <form onSubmit={handleSubmit} className={styles.authForm}>
             <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel} htmlFor="email">Email</label>
+              <label className={styles.fieldLabel} htmlFor="email">{t('Email')}</label>
               <input
                 id="email"
                 type="email"
@@ -217,13 +221,13 @@ function AuthForm() {
             </div>
 
             <div className={styles.fieldGroup}>
-              <label className={styles.fieldLabel} htmlFor="password">Password</label>
+              <label className={styles.fieldLabel} htmlFor="password">{t('Password')}</label>
               <div className={styles.passwordWrap}>
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   className={styles.inputField}
-                  placeholder={mode === 'register' ? 'Create a password' : 'Your password'}
+                  placeholder={t(mode === 'register' ? 'Create a password' : 'Your password')}
                   value={password}
                   maxLength={128}
                   onChange={(e) => setPassword(e.target.value)}
@@ -234,16 +238,16 @@ function AuthForm() {
                   type="button"
                   className={styles.showPwBtn}
                   onClick={() => setShowPassword((v) => !v)}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  aria-label={t(showPassword ? 'Hide password' : 'Show password')}
                 >
-                  {showPassword ? 'Hide' : 'Show'}
+                  {t(showPassword ? 'Hide' : 'Show')}
                 </button>
               </div>
               {mode === 'register' && (
-                <ul className={styles.pwChecks} aria-label="Password requirements">
+                <ul className={styles.pwChecks} aria-label={t('Password requirements')}>
                   {pwChecks.map((c) => (
                     <li key={c.label} className={c.ok ? styles.pwOk : ''}>
-                      <span aria-hidden="true">{c.ok ? '✓' : '○'}</span> {c.label}
+                      <span aria-hidden="true">{c.ok ? '✓' : '○'}</span> {t(c.label)}
                     </li>
                   ))}
                 </ul>
@@ -259,7 +263,10 @@ function AuthForm() {
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
                 />
                 <span className={styles.checkboxText}>
-                  I agree to the <Link href="/terms" className={styles.legalLink}>Terms</Link> and <Link href="/privacy" className={styles.legalLink}>Privacy Policy</Link>
+                  {rich('I agree to the {terms} and {privacy}', {
+                    terms: <Link href="/terms" className={styles.legalLink}>{t('Terms')}</Link>,
+                    privacy: <Link href="/privacy" className={styles.legalLink}>{t('Privacy Policy')}</Link>,
+                  })}
                 </span>
               </label>
             )}
@@ -269,11 +276,11 @@ function AuthForm() {
               className={styles.submitBtn}
               disabled={submitting}
             >
-              {submitting
+              {t(submitting
                 ? (mode === 'register' ? 'Creating account…' : 'Logging in…')
                 : mode === 'register'
                 ? 'Create account'
-                : 'Log in'}
+                : 'Log in')}
             </button>
           </form>
         </div>
@@ -284,7 +291,7 @@ function AuthForm() {
 
 export default function AuthPage() {
   return (
-    <Suspense fallback={<div className={styles.loadingWrap}>Loading…</div>}>
+    <Suspense fallback={<div className={styles.loadingWrap} />}>
       <AuthForm />
     </Suspense>
   );

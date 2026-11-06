@@ -1,7 +1,9 @@
 'use client';
 // Illustrations shown alongside each questionnaire question (light theme).
+import { useI18n } from '@/i18n/LanguageProvider';
 
 export default function QuestionVisual({ type, className = '' }) {
+  const { t } = useI18n();
   switch (type) {
     case 'energy_drain':
       return (
@@ -15,7 +17,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <line x1="53" y1="26" x2="53" y2="54" stroke="#B4BDB6" strokeWidth="1.5" strokeDasharray="3 3" />
           {/* Energy spark warning */}
           <path d="M47 8L39 19H49L43 30" stroke="#D99B26" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="46" y="74" textAnchor="middle" fill="#E76F51" fontSize="9" fontWeight="bold" fontFamily="sans-serif">LOW CHARGE</text>
+          <text x="46" y="74" textAnchor="middle" fill="#E76F51" fontSize="9" fontWeight="bold" fontFamily="sans-serif">{t('LOW CHARGE')}</text>
         </svg>
       );
 
@@ -49,7 +51,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Sun icon for morning, slump arrow */}
           <circle cx="28" cy="18" r="4" fill="#D99B26" />
           <path d="M68 46L68 56M68 56L63 51M68 56L73 51" stroke="#E76F51" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="60" y="73" fill="#55685E" fontSize="8" fontFamily="sans-serif">Midday</text>
+          <text x="60" y="73" fill="#55685E" fontSize="8" fontFamily="sans-serif">{t('Midday')}</text>
         </svg>
       );
 
@@ -97,7 +99,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <path d="M42 38L58 36" stroke="#2E7D4E" strokeWidth="1.5" strokeDasharray="3 3" />
           {/* Cloud / Fog overlay */}
           <path d="M20 54C20 49 25 46 29 47C31 42 37 40 42 42C44 38 52 38 56 41C61 39 68 41 70 46C76 47 79 52 77 56C78 61 74 65 68 65H27C22 65 20 60 20 54Z" fill="#F4EFE6" stroke="#D99B26" strokeWidth="1.5" opacity="0.9" />
-          <text x="49" y="57" textAnchor="middle" fill="#16241C" fontSize="9" fontWeight="bold">FOG</text>
+          <text x="49" y="57" textAnchor="middle" fill="#16241C" fontSize="9" fontWeight="bold">{t('FOG')}</text>
         </svg>
       );
 
@@ -179,7 +181,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <path d="M15 48H32L36 32L40 56L44 38L48 50H60L64 28L68 54L72 44H85" stroke="#E76F51" strokeWidth="2" strokeLinejoin="round" />
           {/* Moon */}
           <path d="M32 18C32 24 37 29 43 29C40 31 36 32 32 31C27 29 24 24 25 19C26 16 28 14 31 13C31.5 14.5 32 16 32 18Z" fill="#D99B26" />
-          <text x="65" y="22" fill="#4A8FA3" fontSize="8" fontFamily="sans-serif">Broken sleep</text>
+          <text x="65" y="22" fill="#4A8FA3" fontSize="8" fontFamily="sans-serif">{t('Broken sleep')}</text>
         </svg>
       );
 
@@ -208,7 +210,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Plate crossed out on right */}
           <circle cx="76" cy="40" r="14" stroke="#B4BDB6" strokeWidth="1.5" />
           <line x1="68" y1="32" x2="84" y2="48" stroke="#E76F51" strokeWidth="2.5" strokeLinecap="round" />
-          <text x="42" y="73" textAnchor="middle" fill="#55685E" fontSize="8">Missed meals</text>
+          <text x="42" y="73" textAnchor="middle" fill="#55685E" fontSize="8">{t('Missed meals')}</text>
         </svg>
       );
 
@@ -222,7 +224,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Nutrients low meter */}
           <rect x="76" y="24" width="8" height="34" rx="3" stroke="#B4BDB6" strokeWidth="1" />
           <rect x="78" y="46" width="4" height="10" rx="1" fill="#E76F51" />
-          <text x="50" y="68" textAnchor="middle" fill="#E76F51" fontSize="9" fontWeight="bold">Low Micronutrients</text>
+          <text x="50" y="68" textAnchor="middle" fill="#E76F51" fontSize="9" fontWeight="bold">{t('Low Micronutrients')}</text>
         </svg>
       );
 
@@ -237,7 +239,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Circular shift arrows */}
           <path d="M26 32Q34 16 50 16" stroke="#E76F51" strokeWidth="1.5" strokeLinecap="round" />
           <circle cx="50" cy="40" r="3" fill="#16241C" />
-          <text x="50" y="74" textAnchor="middle" fill="#55685E" fontSize="8">Shifting Bedtimes</text>
+          <text x="50" y="74" textAnchor="middle" fill="#55685E" fontSize="8">{t('Shifting Bedtimes')}</text>
         </svg>
       );
 
@@ -253,7 +255,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Overtime clock */}
           <circle cx="76" cy="22" r="10" stroke="#E76F51" strokeWidth="1.5" fill="#F4EFE6" />
           <polyline points="76,16 76,22 80,22" stroke="#E76F51" strokeWidth="1.5" />
-          <text x="50" y="72" textAnchor="middle" fill="#55685E" fontSize="8">Busy schedule</text>
+          <text x="50" y="72" textAnchor="middle" fill="#55685E" fontSize="8">{t('Busy schedule')}</text>
         </svg>
       );
 
@@ -269,7 +271,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Spike & Crash chart next to it */}
           <path d="M66 64V24" stroke="#B4BDB6" strokeWidth="1" />
           <path d="M66 52Q72 20 78 30T90 60" stroke="#E76F51" strokeWidth="2" />
-          <text x="80" y="70" textAnchor="middle" fill="#E76F51" fontSize="7">Energy Crash</text>
+          <text x="80" y="70" textAnchor="middle" fill="#E76F51" fontSize="7">{t('Energy Crash')}</text>
         </svg>
       );
 
@@ -280,8 +282,8 @@ export default function QuestionVisual({ type, className = '' }) {
           <path d="M78 34C80 34 82 36 82 39V43C82 46 80 48 78 48" stroke="#E76F51" strokeWidth="2" strokeLinecap="round" />
           {/* Blinking 0% Warning */}
           <line x1="26" y1="30" x2="36" y2="52" stroke="#E76F51" strokeWidth="2" />
-          <text x="52" y="46" textAnchor="middle" fill="#E76F51" fontSize="12" fontWeight="bold">EMPTY</text>
-          <text x="50" y="70" textAnchor="middle" fill="#55685E" fontSize="8">Drained after work</text>
+          <text x="52" y="46" textAnchor="middle" fill="#E76F51" fontSize="12" fontWeight="bold">{t('EMPTY')}</text>
+          <text x="50" y="70" textAnchor="middle" fill="#55685E" fontSize="8">{t('Drained after work')}</text>
         </svg>
       );
 
@@ -293,7 +295,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Reduced absorption arrows */}
           <path d="M50 32V42M50 42L46 38M50 42L54 38" stroke="#E76F51" strokeWidth="2" strokeLinecap="round" />
           <circle cx="50" cy="50" r="3" fill="#D99B26" />
-          <text x="50" y="72" textAnchor="middle" fill="#2E7D4E" fontSize="8">Reduced Uptake with Age</text>
+          <text x="50" y="72" textAnchor="middle" fill="#2E7D4E" fontSize="8">{t('Reduced Uptake with Age')}</text>
         </svg>
       );
 
@@ -306,7 +308,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <circle cx="48" cy="34" r="4" stroke="#D99B26" strokeWidth="1.5" fill="none" />
           <circle cx="58" cy="38" r="5" stroke="#D99B26" strokeWidth="1.5" fill="none" />
           <circle cx="44" cy="44" r="3" stroke="#D99B26" strokeWidth="1.5" fill="none" />
-          <text x="50" y="68" textAnchor="middle" fill="#D99B26" fontSize="8">Bloating / Indigestion</text>
+          <text x="50" y="68" textAnchor="middle" fill="#D99B26" fontSize="8">{t('Bloating / Indigestion')}</text>
         </svg>
       );
 
@@ -319,7 +321,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <ellipse cx="64" cy="28" rx="5" ry="8" fill="#4A8FA3" opacity="0.6" transform="rotate(-20 64 28)" />
           {/* Wavering balance trajectory */}
           <path d="M32 58Q56 50 50 44T64 28" stroke="#D99B26" strokeWidth="1.5" strokeDasharray="3 3" />
-          <text x="50" y="74" textAnchor="middle" fill="#E76F51" fontSize="8">Unsteady gait</text>
+          <text x="50" y="74" textAnchor="middle" fill="#E76F51" fontSize="8">{t('Unsteady gait')}</text>
         </svg>
       );
 
@@ -333,7 +335,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Tingling waves below */}
           <path d="M42 54Q48 50 54 54" stroke="#D99B26" strokeWidth="1.5" strokeLinecap="round" />
           <path d="M44 60Q50 56 56 60" stroke="#D99B26" strokeWidth="1.5" strokeLinecap="round" />
-          <text x="50" y="75" textAnchor="middle" fill="#E76F51" fontSize="8">Loss of sensation</text>
+          <text x="50" y="75" textAnchor="middle" fill="#E76F51" fontSize="8">{t('Loss of sensation')}</text>
         </svg>
       );
 
@@ -345,8 +347,8 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Depletion indicator */}
           <path d="M68 28V54" stroke="#4A8FA3" strokeWidth="2" strokeLinecap="round" />
           <path d="M64 48L68 54L72 48" stroke="#4A8FA3" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="68" y="24" textAnchor="middle" fill="#2E7D4E" fontSize="8">Iron & B12</text>
-          <text x="40" y="75" textAnchor="middle" fill="#55685E" fontSize="8">High Blood Loss</text>
+          <text x="68" y="24" textAnchor="middle" fill="#2E7D4E" fontSize="8">{t('Iron & B12')}</text>
+          <text x="40" y="75" textAnchor="middle" fill="#55685E" fontSize="8">{t('High Blood Loss')}</text>
         </svg>
       );
 
@@ -364,7 +366,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <circle cx="48" cy="54" r="4" fill="#B4BDB6" />
           {/* Battery drain mini */}
           <path d="M48 10L44 16H52L46 22" stroke="#D99B26" strokeWidth="1.5" />
-          <text x="50" y="72" textAnchor="middle" fill="#E76F51" fontSize="8">Cycle Fatigue</text>
+          <text x="50" y="72" textAnchor="middle" fill="#E76F51" fontSize="8">{t('Cycle Fatigue')}</text>
         </svg>
       );
 
@@ -377,7 +379,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <circle cx="32" cy="42" r="4" fill="#E76F51" />
           <text x="50" y="45" textAnchor="middle" fill="#D99B26" fontSize="11" fontWeight="bold">?</text>
           <circle cx="68" cy="54" r="4" fill="#E76F51" />
-          <text x="50" y="73" textAnchor="middle" fill="#55685E" fontSize="8">Irregular Dates</text>
+          <text x="50" y="73" textAnchor="middle" fill="#55685E" fontSize="8">{t('Irregular Dates')}</text>
         </svg>
       );
 
@@ -389,7 +391,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <path d="M48 40V62M48 52L62 62" stroke="#2E7D4E" strokeWidth="2" strokeLinecap="round" />
           {/* Orbit rings around head */}
           <ellipse cx="48" cy="24" rx="18" ry="6" stroke="#D99B26" strokeWidth="1.5" strokeDasharray="3 2" transform="rotate(-15 48 24)" />
-          <text x="50" y="74" textAnchor="middle" fill="#E76F51" fontSize="8">Low blood oxygen</text>
+          <text x="50" y="74" textAnchor="middle" fill="#E76F51" fontSize="8">{t('Low blood oxygen')}</text>
         </svg>
       );
 
@@ -404,7 +406,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* 2x Nutrient requirement tag */}
           <rect x="58" y="24" width="28" height="18" rx="4" fill="#F4EFE6" stroke="#2E7D4E" strokeWidth="1" />
           <text x="72" y="36" textAnchor="middle" fill="#2E7D4E" fontSize="9" fontWeight="bold">2x B12</text>
-          <text x="50" y="72" textAnchor="middle" fill="#55685E" fontSize="8">Higher Demand</text>
+          <text x="50" y="72" textAnchor="middle" fill="#55685E" fontSize="8">{t('Higher Demand')}</text>
         </svg>
       );
 
@@ -417,7 +419,7 @@ export default function QuestionVisual({ type, className = '' }) {
           {/* Needle pointing low */}
           <circle cx="50" cy="54" r="5" fill="#2E7D4E" />
           <line x1="50" y1="54" x2="34" y2="34" stroke="#E76F51" strokeWidth="2.5" strokeLinecap="round" />
-          <text x="50" y="70" textAnchor="middle" fill="#E76F51" fontSize="8" fontWeight="bold">Low Physical Stamina</text>
+          <text x="50" y="70" textAnchor="middle" fill="#E76F51" fontSize="8" fontWeight="bold">{t('Low Physical Stamina')}</text>
         </svg>
       );
 
@@ -428,7 +430,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <path d="M24 56C24 46 28 38 38 34C44 30 52 30 58 38L70 48C74 52 74 58 68 60H34C28 60 24 58 24 56Z" stroke="#2E7D4E" strokeWidth="2" fill="#FFFFFF" />
           {/* Weakness downward arrow */}
           <path d="M46 20V36M46 36L41 31M46 36L51 31" stroke="#E76F51" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="50" y="72" textAnchor="middle" fill="#E76F51" fontSize="8">Reduced Muscle Force</text>
+          <text x="50" y="72" textAnchor="middle" fill="#E76F51" fontSize="8">{t('Reduced Muscle Force')}</text>
         </svg>
       );
 
@@ -441,7 +443,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <circle cx="74" cy="24" r="9" fill="#FDF1D8" stroke="#D99B26" strokeWidth="2" />
           <text x="74" y="27.5" textAnchor="middle" fill="#B07A12" fontSize="8" fontWeight="bold" fontFamily="sans-serif">B12</text>
           <path d="M70 52L74 56L82 47" stroke="#2E7D4E" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="50" y="74" textAnchor="middle" fill="#55685E" fontSize="7" fontFamily="sans-serif">Daily top-up</text>
+          <text x="50" y="74" textAnchor="middle" fill="#55685E" fontSize="7" fontFamily="sans-serif">{t('Daily top-up')}</text>
         </svg>
       );
 
@@ -458,7 +460,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <text x="83" y="43" textAnchor="middle" fill="#E76F51" fontSize="7" fontWeight="bold" fontFamily="sans-serif">B12</text>
           <path d="M80 54L86 54" stroke="#E76F51" strokeWidth="2" strokeLinecap="round" />
           <path d="M83 51L83 60L80 57M83 60L86 57" stroke="#E76F51" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-          <text x="50" y="74" textAnchor="middle" fill="#55685E" fontSize="7" fontFamily="sans-serif">Absorption drops over time</text>
+          <text x="50" y="74" textAnchor="middle" fill="#55685E" fontSize="7" fontFamily="sans-serif">{t('Absorption drops over time')}</text>
         </svg>
       );
 
@@ -471,7 +473,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <circle cx="40" cy="44" r="2" fill="#E76F51" opacity="0.5" />
           <circle cx="60" cy="46" r="2" fill="#E76F51" opacity="0.5" />
           <path d="M82 46L86 42M84 52L89 51M80 56L84 60" stroke="#D99B26" strokeWidth="2" strokeLinecap="round" />
-          <text x="50" y="76" textAnchor="middle" fill="#55685E" fontSize="7" fontFamily="sans-serif">Smooth, sore, red</text>
+          <text x="50" y="76" textAnchor="middle" fill="#55685E" fontSize="7" fontFamily="sans-serif">{t('Smooth, sore, red')}</text>
         </svg>
       );
 
@@ -484,7 +486,7 @@ export default function QuestionVisual({ type, className = '' }) {
           <line x1="33" y1="63" x2="51" y2="63" stroke="#4A8FA3" strokeWidth="2" strokeLinecap="round" />
           <ellipse cx="74" cy="38" rx="12" ry="14" fill="#FDF1D8" stroke="#D99B26" strokeWidth="2" />
           <path d="M68 34L80 42M80 34L68 42" stroke="#E76F51" strokeWidth="2" strokeLinecap="round" />
-          <text x="74" y="62" textAnchor="middle" fill="#55685E" fontSize="7" fontFamily="sans-serif">Liver store</text>
+          <text x="74" y="62" textAnchor="middle" fill="#55685E" fontSize="7" fontFamily="sans-serif">{t('Liver store')}</text>
         </svg>
       );
 

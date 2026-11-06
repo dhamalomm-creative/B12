@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
+import { useI18n } from '@/i18n/LanguageProvider';
 import { toast } from '@/components/UI';
 import { usersAPI } from '@/services/api';
 import { BMI_TIP_FOODS, calculateBMI, getBMICategory } from '@/data/b12Foods';
@@ -11,6 +12,7 @@ import AuthGuard from '@/components/auth/AuthGuard';
 import styles from './page.module.css';
 
 export default function BMIPage() {
+  const { t, formatDate } = useI18n();
   const { dispatch } = useApp();
   const { isAuthenticated, user } = useAuth();
   const tipFoods = BMI_TIP_FOODS[user?.dietType];
@@ -45,7 +47,7 @@ export default function BMIPage() {
           if (latest?.height_cm) setHeight(String(latest.height_cm));
           if (latest?.weight_kg) setWeight(String(latest.weight_kg));
           const list = d.history.map(item => ({
-            date: new Date(item.measured_at || item.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+            date: formatDate(item.measured_at || item.created_at, { day: 'numeric', month: 'short' }),
             bmi: String(item.bmi),
             category: (item.bmi_category ? item.bmi_category.charAt(0).toUpperCase() + item.bmi_category.slice(1) : 'Normal'),
           }));
@@ -60,7 +62,7 @@ export default function BMIPage() {
       .finally(() => {
         setLoadingHistory(false);
       });
-  }, [isAuthenticated]);
+  }, [isAuthenticated, formatDate]);
 
   const handleSave = async () => {
     setError('');
@@ -80,13 +82,13 @@ export default function BMIPage() {
       });
       setHistory((prev) => [
         {
-          date: new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }),
+          date: formatDate(new Date(), { day: 'numeric', month: 'short' }),
           bmi: String(calculated),
           category: cat.charAt(0).toUpperCase() + cat.slice(1),
         },
         ...prev.slice(0, 4),
       ]);
-      toast('Measurement saved', 'success');
+      toast(t('Measurement saved'), 'success');
     } catch (err) {
       setError(err.message || 'Could not save your measurement.');
     } finally {
@@ -102,8 +104,8 @@ export default function BMIPage() {
         <div className={styles.bmiPage}>
           {/* Header */}
           <header className={styles.header}>
-            <h1 className={styles.title}>BMI calculator</h1>
-            <p className={styles.subtitle}>Used to tailor your food suggestions and metabolic health.</p>
+            <h1 className={styles.title}>{t('BMI calculator')}</h1>
+            <p className={styles.subtitle}>{t('Used to tailor your food suggestions and metabolic health.')}</p>
           </header>
 
           {/* 2-Column Grid */}
@@ -112,7 +114,7 @@ export default function BMIPage() {
             <div className={styles.leftCol}>
               <div className={styles.inputCard}>
                 <div className={styles.fieldGroup}>
-                  <label htmlFor="bmi-height" className={styles.fieldLabel}>Height (cm)</label>
+                  <label htmlFor="bmi-height" className={styles.fieldLabel}>{t('Height (cm)')}</label>
                   <input
                     id="bmi-height"
                     type="number"
@@ -127,7 +129,7 @@ export default function BMIPage() {
                 </div>
 
                 <div className={styles.fieldGroup}>
-                  <label htmlFor="bmi-weight" className={styles.fieldLabel}>Weight (kg)</label>
+                  <label htmlFor="bmi-weight" className={styles.fieldLabel}>{t('Weight (kg)')}</label>
                   <input
                     id="bmi-weight"
                     type="number"
@@ -141,14 +143,14 @@ export default function BMIPage() {
                   />
                 </div>
 
-                {error && <p className={styles.error} role="alert">{error}</p>}
+                {error && <p className={styles.error} role="alert">{t(error)}</p>}
                 <button
                   type="button"
                   className={styles.saveBtn}
                   onClick={handleSave}
                   disabled={saving}
                 >
-                  {saving ? 'Saving…' : 'Save measurement'}
+                  {t(saving ? 'Saving…' : 'Save measurement')}
                 </button>
               </div>
             </div>
@@ -157,54 +159,57 @@ export default function BMIPage() {
             <div className={styles.rightCol}>
               {/* Top BMI Gauge Card */}
               <div className={styles.resultCard}>
-                <p className={styles.resultKicker}>Your BMI</p>
+                <p className={styles.resultKicker}>{t('Your BMI')}</p>
                 <h2 className={styles.resultValue}>{bmi}</h2>
-                <p className={styles.resultCategory}>{category.charAt(0).toUpperCase() + category.slice(1)}</p>
+                <p className={styles.resultCategory}>{t(category.charAt(0).toUpperCase() + category.slice(1))}</p>
 
                 {/* Segmented scale bar */}
                 <div className={styles.scaleBar}>
                   <div className={`${styles.scaleSegment} ${catLower.includes('under') ? styles.segmentHighlight : ''}`}>
-                    Under
+                    {t('Under')}
                   </div>
                   <div className={`${styles.scaleSegment} ${catLower.includes('normal') ? styles.segmentHighlight : ''}`}>
-                    Normal
+                    {t('Normal')}
                   </div>
                   <div className={`${styles.scaleSegment} ${catLower.includes('over') ? styles.segmentHighlight : ''}`}>
-                    Over
+                    {t('Over')}
                   </div>
                   <div className={`${styles.scaleSegment} ${catLower.includes('obese') ? styles.segmentHighlight : ''}`}>
-                    Obese
+                    {t('Obese')}
                   </div>
                 </div>
 
                 <p className={styles.resultTip}>
                   {catLower.includes('normal')
-                    ? 'A healthy range. Keep a balanced diet with regular B12 sources.'
+                    ? t('A healthy range. Keep a balanced diet with regular B12 sources.')
                     : catLower.includes('under')
-                      ? `Below the healthy range. Energy-dense B12 foods ${tipFoods ? `like ${tipFoods.energy}` : 'that fit your diet'} can help — and consider speaking to a doctor.`
-                      : `Above the healthy range. Lean, low-calorie B12 sources ${tipFoods ? `such as ${tipFoods.light}` : 'that fit your diet'} work well.`}{' '}
-                  <Link href="/foods">See foods for you →</Link>
+                      ? (tipFoods
+                        ? t('Below the healthy range. Energy-dense B12 foods like {foods} can help — and consider speaking to a doctor.', { foods: t(tipFoods.energy) })
+                        : t('Below the healthy range. Energy-dense B12 foods that fit your diet can help — and consider speaking to a doctor.'))
+                      : (tipFoods
+                        ? t('Above the healthy range. Lean, low-calorie B12 sources such as {foods} work well.', { foods: t(tipFoods.light) })
+                        : t('Above the healthy range. Lean, low-calorie B12 sources that fit your diet work well.'))}{' '}
+                  <Link href="/foods">{t('See foods for you →')}</Link>
                 </p>
                 <p className={styles.bmiNote}>
-                  BMI is a rough screening measure — it doesn&apos;t account for muscle, age or ethnicity. Some Asian health
-                  bodies use a lower healthy cut-off (23).
+                  {t("BMI is a rough screening measure — it doesn't account for muscle, age or ethnicity. Some Asian health bodies use a lower healthy cut-off (23).")}
                 </p>
               </div>
 
               {/* Bottom History Card */}
               <div className={styles.historyCard}>
-                <h3 className={styles.historyTitle}>History</h3>
+                <h3 className={styles.historyTitle}>{t('History')}</h3>
                 <div className={styles.historyList}>
                   {history.length > 0 ? (
                     history.map((item, idx) => (
                       <div key={idx} className={styles.historyRow}>
                         <span className={styles.historyDate}>{item.date}</span>
-                        <span className={styles.historyVal}>{item.bmi} ({item.category})</span>
+                        <span className={styles.historyVal}>{item.bmi} ({t(item.category)})</span>
                       </div>
                     ))
                   ) : (
                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', padding: '12px 0' }}>
-                      {loadingHistory ? 'Loading history…' : 'No measurements recorded yet.'}
+                      {t(loadingHistory ? 'Loading history…' : 'No measurements recorded yet.')}
                     </p>
                   )}
                 </div>

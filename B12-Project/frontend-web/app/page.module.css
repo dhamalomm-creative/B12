@@ -473,3 +473,127 @@
   from { opacity: 0; transform: translateY(-4px); }
   to { opacity: 1; transform: none; }
 }
+
+/* ── Trust points ── */
+.trustSection {
+  max-width: 1200px;
+  margin: 0 auto 40px;
+  padding: 0 48px;
+  width: 100%;
+}
+
+.trustList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px 24px;
+  padding: 16px 24px;
+  margin: 0;
+  list-style: none;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.trustItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.trustItem svg {
+  flex-shrink: 0;
+  color: #2E7D4E;
+}
+
+/* ── B12 facts ── */
+.factsSection {
+  max-width: 1200px;
+  margin: 0 auto 56px;
+  padding: 0 48px;
+  width: 100%;
+}
+
+.sectionHeading {
+  font-family: var(--font-headline);
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+}
+
+.factsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.factItem {
+  padding: 22px 24px;
+  border-left: 1px solid var(--border);
+}
+
+.factItem:first-child {
+  padding-left: 0;
+  border-left: none;
+}
+
+.factValue {
+  font-family: var(--font-headline);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--primary);
+  margin-bottom: 6px;
+}
+
+.factLabel {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.factsSource {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.factsSource a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+@media (max-width: 900px) {
+  .trustSection,
+  .factsSection { padding-left: 32px; padding-right: 32px; }
+  .factsGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .factItem { border-left: none; padding-left: 0; }
+}
+
+@media (max-width: 600px) {
+  .trustSection,
+  .factsSection { padding-left: 18px; padding-right: 18px; }
+  .trustList { flex-direction: column; }
+  .sectionHeading { font-size: 25px; }
+  .factsGrid { grid-template-columns: 1fr; }
+  .factItem { padding: 16px 0; }
+  .factItem + .factItem { border-top: 1px solid var(--border); }
+}
+
+/* Translations carry line breaks in the text itself */
+.heroHeading { white-space: pre-line; }
+
+/* Longer Hindi and Marathi labels plus the language picker need a second header row on phones */
+.navLink,
+.startBtn { white-space: nowrap; }
+
+@media (max-width: 600px) {
+  .header { flex-wrap: wrap; gap: 10px; }
+  .navLinks { width: 100%; justify-content: space-between; }
+}

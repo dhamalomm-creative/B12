@@ -4,8 +4,10 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useApp } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/i18n/LanguageProvider';
 import { B12_FOODS, DAILY_B12_MCG, getBMICategory, BMI_INFO } from '@/data/b12Foods';
 import AppShell from '@/components/layout/AppShell';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import styles from './page.module.css';
 
 const DIET_FILTERS = [
@@ -37,6 +39,7 @@ const SORTS = [
 ];
 
 export default function FoodsPage() {
+  const { t, rich } = useI18n();
   const { state } = useApp();
   const { isAuthenticated, user } = useAuth();
 
@@ -56,22 +59,23 @@ export default function FoodsPage() {
     const q = query.trim().toLowerCase();
     return B12_FOODS
       .filter((f) => diet === 'all' || f.dietTags.includes(diet))
-      .filter((f) => !q || f.name.toLowerCase().includes(q) || f.type.toLowerCase().includes(q))
+      .filter((f) => !q || [f.name, f.type, t(f.name), t(f.type)].some((s) => s.toLowerCase().includes(q)))
       .sort((a, b) => (sort === 'cal' ? a.calories - b.calories : b.b12mcg - a.b12mcg));
-  }, [diet, query, sort]);
+  }, [diet, query, sort, t]);
 
   const content = (
     <div className={styles.page}>
       <header className={styles.header}>
-        <h1 className={styles.title}>B12 food guide</h1>
+        <h1 className={styles.title}>{t('B12 food guide')}</h1>
         <p className={styles.subtitle}>
-          Adults need about <strong>{`${DAILY_B12_MCG} mcg`}</strong>{' '}of vitamin B12 a day (2.6 in pregnancy, 2.8 when breastfeeding).
-          Here&apos;s how much a typical serving gives you.
+          {rich("Adults need about {amount} of vitamin B12 a day (2.6 in pregnancy, 2.8 when breastfeeding). Here's how much a typical serving gives you.", {
+            amount: <strong>{`${DAILY_B12_MCG} mcg`}</strong>,
+          })}
         </p>
       </header>
 
       <div className={styles.controls}>
-        <div className={styles.filterRow} role="tablist" aria-label="Filter by diet">
+        <div className={styles.filterRow} role="tablist" aria-label={t('Filter by diet')}>
           {DIET_FILTERS.map((f) => (
             <button
               key={f.id}
@@ -81,7 +85,7 @@ export default function FoodsPage() {
               className={`${styles.filterPill} ${diet === f.id ? styles.filterPillActive : ''}`}
               onClick={() => setDiet(f.id)}
             >
-              {f.label}
+              {t(f.label)}
             </button>
           ))}
         </div>
@@ -89,21 +93,21 @@ export default function FoodsPage() {
           <input
             type="search"
             className={styles.search}
-            placeholder="Search foods (e.g. eggs, fish, milk)"
+            placeholder={t('Search foods (e.g. eggs, fish, milk)')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            aria-label="Search foods"
+            aria-label={t('Search foods')}
           />
-          <select className={styles.sort} value={sort} onChange={(e) => setSort(e.target.value)} aria-label="Sort foods">
-            {SORTS.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
+          <select className={styles.sort} value={sort} onChange={(e) => setSort(e.target.value)} aria-label={t('Sort foods')}>
+            {SORTS.map((s) => <option key={s.id} value={s.id}>{t(s.label)}</option>)}
           </select>
         </div>
       </div>
 
       {diet === 'vegan' && (
         <div className={styles.callout}>
-          <strong>Vegan tip:</strong> plants don&apos;t naturally provide reliable B12. Fortified foods or a regular
-          supplement are essential — mushrooms, seaweed and tempeh are not dependable sources.
+          <strong>{t('Vegan tip:')}</strong>{' '}
+          {t("plants don't naturally provide reliable B12. Fortified foods or a regular supplement are essential — mushrooms, seaweed and tempeh are not dependable sources.")}
         </div>
       )}
 
@@ -111,15 +115,15 @@ export default function FoodsPage() {
         <div className={styles.bmiRow}>
           <p>
             {bmiCat
-              ? `${BMI_INFO[bmiCat].tip} (BMI ${bmi})`
-              : 'Add your BMI to get calorie-aware suggestions.'}
+              ? `${t(BMI_INFO[bmiCat].tip)} (BMI ${bmi})`
+              : t('Add your BMI to get calorie-aware suggestions.')}
           </p>
-          <Link href="/bmi" className={styles.bmiLink}>{bmiCat ? 'Update BMI' : 'Calculate BMI'} →</Link>
+          <Link href="/bmi" className={styles.bmiLink}>{t(bmiCat ? 'Update BMI' : 'Calculate BMI')} →</Link>
         </div>
       )}
 
       {foods.length === 0 ? (
-        <p className={styles.empty}>No foods match “{query}”.</p>
+        <p className={styles.empty}>{t('No foods match “{query}”.', { query })}</p>
       ) : (
         <ul className={styles.grid} onPointerMove={trackSpotlight}>
           {foods.map((f) => {
@@ -132,27 +136,27 @@ export default function FoodsPage() {
                   {f.image && !brokenImages.has(f.name) && (
                     <Image
                       src={f.image}
-                      alt={`Photo of ${f.name}`}
+                      alt={t('Photo of {food}', { food: t(f.name) })}
                       fill
                       sizes="(max-width: 600px) 100vw, (max-width: 1100px) 50vw, 320px"
                       className={styles.photoImg}
                       onError={() => setBrokenImages((s) => new Set(s).add(f.name))}
                     />
                   )}
-                  <span className={styles.typeBadge}>{f.type}</span>
+                  <span className={styles.typeBadge}>{t(f.type)}</span>
                 </div>
                 <div className={styles.cardBody}>
-                  <h2 className={styles.foodName}>{f.name}</h2>
-                  <p className={styles.serving}>{f.serving}</p>
+                  <h2 className={styles.foodName}>{t(f.name)}</h2>
+                  <p className={styles.serving}>{t(f.serving)}</p>
                   <div className={styles.amountRow}>
                     <span className={styles.amount}>{f.b12mcg} mcg</span>
-                    <span className={styles.dv}>{pctDV >= 1000 ? '1000%+' : `${pctDV}%`} of daily need</span>
+                    <span className={styles.dv}>{t('{pct} of daily need', { pct: pctDV >= 1000 ? '1000%+' : `${pctDV}%` })}</span>
                   </div>
                   <div className={styles.dvTrack} aria-hidden="true">
                     <div className={styles.dvFill} style={{ width: `${Math.min(100, pctDV)}%` }} />
                   </div>
-                  <p className={styles.desc}>{f.desc}</p>
-                  {f.calories > 0 && <p className={styles.kcal}>≈ {f.calories} kcal per serving</p>}
+                  <p className={styles.desc}>{t(f.desc)}</p>
+                  {f.calories > 0 && <p className={styles.kcal}>≈ {t('{n} kcal per serving', { n: f.calories })}</p>}
                 </div>
               </li>
             );
@@ -161,9 +165,7 @@ export default function FoodsPage() {
       )}
 
       <p className={styles.disclaimer}>
-        Values are approximate and vary by brand and preparation. Sources: NIH Office of Dietary Supplements, USDA FoodData Central.
-        Food photos from Unsplash and Wikimedia Commons.
-        People with absorption problems may not get enough B12 from food alone — ask your doctor.
+        {t('Values are approximate and vary by brand and preparation. Sources: NIH Office of Dietary Supplements, USDA FoodData Central. Food photos from Unsplash and Wikimedia Commons. People with absorption problems may not get enough B12 from food alone — ask your doctor.')}
       </p>
     </div>
   );
@@ -175,9 +177,10 @@ export default function FoodsPage() {
       <header className={styles.publicHeader}>
         <Link href="/" className={styles.publicBrand}>B12 Health Tracker</Link>
         <nav className={styles.publicNav}>
-          <Link href="/onboarding">Take the assessment</Link>
-          <Link href="/auth?mode=login">Log in</Link>
-          <Link href="/auth?mode=register" className={styles.publicCta}>Start free</Link>
+          <LanguageSwitcher />
+          <Link href="/onboarding">{t('Take the assessment')}</Link>
+          <Link href="/auth?mode=login">{t('Log in')}</Link>
+          <Link href="/auth?mode=register" className={styles.publicCta}>{t('Start free')}</Link>
         </nav>
       </header>
       <main className={styles.publicMain}>{content}</main>

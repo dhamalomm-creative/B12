@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
+import { useI18n } from '@/i18n/LanguageProvider';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import styles from './TabBar.module.css';
 
 const NAV_ITEMS = [
@@ -67,6 +69,7 @@ export default function TabBar() {
   const router   = useRouter();
   const { isAuthenticated, logout } = useAuth();
   const { dispatch } = useApp();
+  const { t } = useI18n();
 
 
   const handleSignOut = async () => {
@@ -93,11 +96,11 @@ export default function TabBar() {
                 key={item.path}
                 className={`${styles.navItem} ${active ? styles.navActive : ''}`}
                 onClick={() => router.push(item.path)}
-                aria-label={item.label}
+                aria-label={t(item.label)}
                 aria-current={active ? 'page' : undefined}
               >
                 <span className={styles.navIcon}>{item.altIcon || item.icon}</span>
-                <span className={styles.navLabel}>{item.label}</span>
+                <span className={styles.navLabel}>{t(item.label)}</span>
               </button>
             );
           })}
@@ -105,23 +108,24 @@ export default function TabBar() {
 
         {/* Bottom Section */}
         <div className={styles.sidebarFooter}>
+          <LanguageSwitcher />
           {isAuthenticated && (
             <button
               type="button"
               className={styles.signOutBtn}
               onClick={handleSignOut}
-              aria-label="Sign out"
+              aria-label={t('Sign out')}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                 <polyline points="16 17 21 12 16 7" />
                 <line x1="21" y1="12" x2="9" y2="12" />
               </svg>
-              <span>Sign out</span>
+              <span>{t('Sign out')}</span>
             </button>
           )}
           <p className={styles.footerNote}>
-            Educational tool, not a medical diagnosis.
+            {t('Educational tool, not a medical diagnosis.')}
           </p>
         </div>
       </aside>
@@ -135,10 +139,10 @@ export default function TabBar() {
               key={item.path}
               className={`${styles.mobileTab} ${active ? styles.mobileTabActive : ''}`}
               onClick={() => router.push(item.path)}
-              aria-label={item.label}
+              aria-label={t(item.label)}
             >
               <span className={styles.mobileIcon}>{item.altIcon || item.icon}</span>
-              <span className={styles.mobileLabel}>{item.label}</span>
+              <span className={styles.mobileLabel}>{t(item.label)}</span>
             </button>
           );
         })}

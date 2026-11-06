@@ -4,8 +4,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useApp, setUser, setGuestName, completeOnboarding } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/i18n/LanguageProvider';
 import { toast } from '@/components/UI';
 import AmbientBackground from '@/components/AmbientBackground';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import styles from './page.module.css';
 
 const AGE_RANGES = [
@@ -36,6 +38,7 @@ const rangeForAge = (age) => {
 };
 
 function OnboardingForm() {
+  const { t } = useI18n();
   const { state, dispatch } = useApp();
   const { isAuthenticated, user: authUser, updateProfile } = useAuth();
   const router = useRouter();
@@ -85,7 +88,7 @@ function OnboardingForm() {
         });
       } catch (err) {
         setSaving(false);
-        toast(err.message || 'Could not save your profile. Please try again.', 'error');
+        toast(t(err.message || 'Could not save your profile. Please try again.'), 'error');
         return;
       }
     }
@@ -99,26 +102,26 @@ function OnboardingForm() {
       <AmbientBackground fixed />
       <header className={styles.topHeader}>
         <Link href={isAuthenticated ? '/dashboard' : '/'} className={styles.brandTitle}>B12 Health Tracker</Link>
+        <LanguageSwitcher />
       </header>
 
       <main className={styles.contentWrap}>
-        <p className={styles.stepCount}>Step 1 of 2 · About you</p>
-        <h1 className={styles.mainTitle}>Let&apos;s tailor your check-up</h1>
+        <p className={styles.stepCount}>{t('Step 1 of 2 · About you')}</p>
+        <h1 className={styles.mainTitle}>{t("Let's tailor your check-up")}</h1>
         <p className={styles.subtitle}>
-          Your age, gender and diet change how much B12 you need and how well you absorb it — so we ask
-          about 20 questions picked for you. Takes about 4 minutes.
+          {t('Your age, gender and diet change how much B12 you need and how well you absorb it — so we ask about 20 questions picked for you. Takes about 4 minutes.')}
         </p>
 
         <div className={styles.formCard}>
           <div className={styles.inputGroup}>
             <label className={styles.groupLabel} htmlFor="name">
-              What should we call you? <span className={styles.optional}>(optional)</span>
+              {t('What should we call you?')} <span className={styles.optional}>({t('optional')})</span>
             </label>
             <input
               id="name"
               type="text"
               className={styles.nameInput}
-              placeholder="First name"
+              placeholder={t('First name')}
               value={name}
               maxLength={80}
               autoComplete="given-name"
@@ -127,7 +130,7 @@ function OnboardingForm() {
           </div>
 
           <fieldset className={styles.inputGroup}>
-            <legend className={styles.groupLabel}>Age range</legend>
+            <legend className={styles.groupLabel}>{t('Age range')}</legend>
             <div className={styles.pillRow}>
               {AGE_RANGES.map((a) => (
                 <button
@@ -137,14 +140,14 @@ function OnboardingForm() {
                   className={`${styles.choicePill} ${age === a.id ? styles.choicePillActive : ''}`}
                   onClick={() => setAge(a.id)}
                 >
-                  {a.label}
+                  {t(a.label)}
                 </button>
               ))}
             </div>
           </fieldset>
 
           <fieldset className={styles.inputGroup}>
-            <legend className={styles.groupLabel}>Gender</legend>
+            <legend className={styles.groupLabel}>{t('Gender')}</legend>
             <div className={styles.pillRow}>
               {GENDERS.map((g) => (
                 <button
@@ -154,17 +157,17 @@ function OnboardingForm() {
                   className={`${styles.choicePill} ${gender === g.id ? styles.choicePillActive : ''}`}
                   onClick={() => setGender(g.id)}
                 >
-                  {g.label}
+                  {t(g.label)}
                 </button>
               ))}
             </div>
             {gender && GENDERS.find((g) => g.id === gender)?.hint && (
-              <p className={styles.hint}>{GENDERS.find((g) => g.id === gender).hint}</p>
+              <p className={styles.hint}>{t(GENDERS.find((g) => g.id === gender).hint)}</p>
             )}
           </fieldset>
 
           <fieldset className={styles.inputGroup}>
-            <legend className={styles.groupLabel}>Your usual diet</legend>
+            <legend className={styles.groupLabel}>{t('Your usual diet')}</legend>
             <div className={styles.dietGrid}>
               {DIETS.map((d) => (
                 <button
@@ -175,19 +178,19 @@ function OnboardingForm() {
                   onClick={() => setDietType(d.id)}
                 >
                   <span className={styles.dietIcon} aria-hidden="true">{d.icon}</span>
-                  <span className={styles.dietLabel}>{d.label}</span>
-                  <span className={styles.dietHint}>{d.hint}</span>
+                  <span className={styles.dietLabel}>{t(d.label)}</span>
+                  <span className={styles.dietHint}>{t(d.hint)}</span>
                 </button>
               ))}
             </div>
           </fieldset>
 
-          {error && <p className={styles.errorText} role="alert">{error}</p>}
+          {error && <p className={styles.errorText} role="alert">{t(error)}</p>}
         </div>
 
         <div className={styles.actionsRow}>
           <button type="button" className={styles.backBtn} onClick={() => router.back()}>
-            Back
+            {t('Back')}
           </button>
           <button
             type="button"
@@ -195,11 +198,11 @@ function OnboardingForm() {
             onClick={handleContinue}
             disabled={saving}
           >
-            {saving ? 'Saving…' : 'Start my assessment →'}
+            {t(saving ? 'Saving…' : 'Start my assessment →')}
           </button>
         </div>
         <p className={styles.privacyNote}>
-          🔒 No account needed to see your score. We never sell your data.
+          🔒 {t('No account needed to see your score. We never sell your data.')}
         </p>
       </main>
     </div>

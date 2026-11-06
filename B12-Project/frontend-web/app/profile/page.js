@@ -4,9 +4,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useApp, setStreak, setRiskResult } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/i18n/LanguageProvider';
 import { usersAPI, checkinAPI, questionnaireAPI, setToken } from '@/services/api';
 import { normalizeServerResult } from '@/utils/riskCalculator';
 import AppShell from '@/components/layout/AppShell';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import AuthGuard from '@/components/auth/AuthGuard';
 import { toast } from '@/components/UI';
 import styles from './page.module.css';
@@ -32,6 +34,7 @@ const passwordProblems = (pw) => {
 };
 
 export default function ProfilePage() {
+  const { t, rich, formatDate } = useI18n();
   const { state, dispatch } = useApp();
   const { user, logout, updateProfile } = useAuth();
   const router = useRouter();
@@ -70,7 +73,7 @@ export default function ProfilePage() {
     }).catch(() => {});
   }, [dispatch]);
 
-  const displayName = user?.name || user?.email?.split('@')[0] || 'Your profile';
+  const displayName = user?.name || user?.email?.split('@')[0] || t('Your profile');
   const streak = state.serverStreak?.current_streak ?? 0;
   const risk = state.riskResult;
 
@@ -90,7 +93,7 @@ export default function ProfilePage() {
         ...(form.gender ? { gender: form.gender } : {}),
         ...(form.dietType ? { dietType: form.dietType } : {}),
       });
-      toast('Profile updated', 'success');
+      toast(t('Profile updated'), 'success');
       setEditing(false);
     } catch (err) {
       setFormError(err.message || 'Could not save your profile.');
@@ -111,7 +114,7 @@ export default function ProfilePage() {
       await usersAPI.changePassword(pw.current, pw.next);
       setPw({ current: '', next: '', confirm: '' });
       setPwOpen(false);
-      toast('Password updated', 'success');
+      toast(t('Password updated'), 'success');
     } catch (err) {
       setPwMsg({ type: 'error', text: err.message || 'Could not update password.' });
     } finally {
@@ -162,17 +165,17 @@ export default function ProfilePage() {
 
           <div className={styles.stats}>
             <div className={`${styles.stat} ${styles.statGreen}`}>
-              <p className={styles.statLabel}>Streak</p>
-              <p className={styles.statValue}>{streak} {streak === 1 ? 'day' : 'days'}</p>
+              <p className={styles.statLabel}>{t('Streak')}</p>
+              <p className={styles.statValue}>{t(streak === 1 ? '{n} day' : '{n} days', { n: streak })}</p>
             </div>
             <div className={`${styles.stat} ${styles.statBlue}`}>
-              <p className={styles.statLabel}>Latest B12 risk</p>
+              <p className={styles.statLabel}>{t('Latest B12 risk')}</p>
               <p className={styles.statValue}>{risk ? `${risk.percentage}%` : '—'}</p>
             </div>
             <div className={`${styles.stat} ${styles.statYellow}`}>
-              <p className={styles.statLabel}>Member since</p>
+              <p className={styles.statLabel}>{t('Member since')}</p>
               <p className={styles.statValue}>
-                {user?.createdAt ? new Date(user.createdAt).toLocaleDateString(undefined, { month: 'short', year: 'numeric' }) : '—'}
+                {user?.createdAt ? formatDate(user.createdAt, { month: 'short', year: 'numeric' }) : '—'}
               </p>
             </div>
           </div>
@@ -180,116 +183,127 @@ export default function ProfilePage() {
           {/* Profile details */}
           <section className={styles.card} aria-labelledby="details-h">
             <div className={styles.cardHead}>
-              <h2 id="details-h" className={styles.cardTitle}>Profile details</h2>
+              <h2 id="details-h" className={styles.cardTitle}>{t('Profile details')}</h2>
               {!editing && (
-                <button type="button" className={styles.linkBtn} onClick={() => setEditing(true)}>Edit</button>
+                <button type="button" className={styles.linkBtn} onClick={() => setEditing(true)}>{t('Edit')}</button>
               )}
             </div>
-            <p className={styles.cardSub}>Used to personalise your questions and food suggestions.</p>
+            <p className={styles.cardSub}>{t('Used to personalise your questions and food suggestions.')}</p>
 
             {editing ? (
               <form className={styles.form} onSubmit={saveProfile}>
                 <label className={styles.field}>
-                  <span>Name</span>
+                  <span>{t('Name')}</span>
                   <input value={form.name} maxLength={80} onChange={(e) => setForm({ ...form, name: e.target.value })} />
                 </label>
                 <label className={styles.field}>
-                  <span>Age</span>
+                  <span>{t('Age')}</span>
                   <input type="number" inputMode="numeric" min={1} max={120} value={form.age} onChange={(e) => setForm({ ...form, age: e.target.value })} />
                 </label>
                 <label className={styles.field}>
-                  <span>Gender</span>
+                  <span>{t('Gender')}</span>
                   <select value={form.gender} onChange={(e) => setForm({ ...form, gender: e.target.value })}>
-                    <option value="">Select…</option>
-                    {GENDERS.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+                    <option value="">{t('Select…')}</option>
+                    {GENDERS.map((g) => <option key={g.id} value={g.id}>{t(g.label)}</option>)}
                   </select>
                 </label>
                 <label className={styles.field}>
-                  <span>Diet</span>
+                  <span>{t('Diet')}</span>
                   <select value={form.dietType} onChange={(e) => setForm({ ...form, dietType: e.target.value })}>
-                    <option value="">Select…</option>
-                    {DIETS.map((d) => <option key={d.id} value={d.id}>{d.label}</option>)}
+                    <option value="">{t('Select…')}</option>
+                    {DIETS.map((d) => <option key={d.id} value={d.id}>{t(d.label)}</option>)}
                   </select>
                 </label>
-                {formError && <p className={styles.error} role="alert">{formError}</p>}
+                {formError && <p className={styles.error} role="alert">{t(formError)}</p>}
                 <div className={styles.formActions}>
-                  <button type="submit" className={styles.primaryBtn} disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
-                  <button type="button" className={styles.ghostBtn} onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
+                  <button type="submit" className={styles.primaryBtn} disabled={saving}>{t(saving ? 'Saving…' : 'Save changes')}</button>
+                  <button type="button" className={styles.ghostBtn} onClick={() => setEditing(false)} disabled={saving}>{t('Cancel')}</button>
                 </div>
-                <p className={styles.hint}>Changing age, gender or diet updates the questions in your next assessment.</p>
+                <p className={styles.hint}>{t('Changing age, gender or diet updates the questions in your next assessment.')}</p>
               </form>
             ) : (
               <dl className={styles.details}>
-                <div><dt>Name</dt><dd>{user?.name || 'Not set'}</dd></div>
-                <div><dt>Email</dt><dd>{user?.email}</dd></div>
-                <div><dt>Age</dt><dd>{user?.age || 'Not set'}</dd></div>
-                <div><dt>Gender</dt><dd>{labelOf(GENDERS, user?.gender)}</dd></div>
-                <div><dt>Diet</dt><dd>{labelOf(DIETS, user?.dietType)}</dd></div>
+                <div><dt>{t('Name')}</dt><dd>{user?.name || t('Not set')}</dd></div>
+                <div><dt>{t('Email')}</dt><dd>{user?.email}</dd></div>
+                <div><dt>{t('Age')}</dt><dd>{user?.age || t('Not set')}</dd></div>
+                <div><dt>{t('Gender')}</dt><dd>{t(labelOf(GENDERS, user?.gender))}</dd></div>
+                <div><dt>{t('Diet')}</dt><dd>{t(labelOf(DIETS, user?.dietType))}</dd></div>
               </dl>
             )}
+          </section>
+
+          {/* Language */}
+          <section className={styles.card} aria-labelledby="language-h">
+            <div className={styles.cardHead}>
+              <h2 id="language-h" className={styles.cardTitle}>{t('Language')}</h2>
+              <LanguageSwitcher />
+            </div>
+            <p className={styles.cardSub}>{t('Choose the language for this app. It is saved on this device.')}</p>
           </section>
 
           {/* Security */}
           <section className={styles.card} aria-labelledby="security-h">
             <div className={styles.cardHead}>
-              <h2 id="security-h" className={styles.cardTitle}>Password & security</h2>
+              <h2 id="security-h" className={styles.cardTitle}>{t('Password & security')}</h2>
               {!pwOpen && (
-                <button type="button" className={styles.linkBtn} onClick={() => setPwOpen(true)}>Change password</button>
+                <button type="button" className={styles.linkBtn} onClick={() => setPwOpen(true)}>{t('Change password')}</button>
               )}
             </div>
             {pwOpen && (
               <form className={styles.form} onSubmit={changePassword}>
                 <label className={styles.field}>
-                  <span>Current password</span>
+                  <span>{t('Current password')}</span>
                   <input type="password" autoComplete="current-password" value={pw.current} onChange={(e) => setPw({ ...pw, current: e.target.value })} />
                 </label>
                 <label className={styles.field}>
-                  <span>New password</span>
+                  <span>{t('New password')}</span>
                   <input type="password" autoComplete="new-password" maxLength={128} value={pw.next} onChange={(e) => setPw({ ...pw, next: e.target.value })} />
-                  <small>8+ characters with an uppercase letter and a number.</small>
+                  <small>{t('8+ characters with an uppercase letter and a number.')}</small>
                 </label>
                 <label className={styles.field}>
-                  <span>Confirm new password</span>
+                  <span>{t('Confirm new password')}</span>
                   <input type="password" autoComplete="new-password" maxLength={128} value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} />
                 </label>
-                {pwMsg.text && <p className={pwMsg.type === 'error' ? styles.error : styles.success} role="alert">{pwMsg.text}</p>}
+                {pwMsg.text && <p className={pwMsg.type === 'error' ? styles.error : styles.success} role="alert">{t(pwMsg.text)}</p>}
                 <div className={styles.formActions}>
-                  <button type="submit" className={styles.primaryBtn} disabled={pwSaving}>{pwSaving ? 'Updating…' : 'Update password'}</button>
-                  <button type="button" className={styles.ghostBtn} onClick={() => { setPwOpen(false); setPwMsg({ type: '', text: '' }); }}>Cancel</button>
+                  <button type="submit" className={styles.primaryBtn} disabled={pwSaving}>{t(pwSaving ? 'Updating…' : 'Update password')}</button>
+                  <button type="button" className={styles.ghostBtn} onClick={() => { setPwOpen(false); setPwMsg({ type: '', text: '' }); }}>{t('Cancel')}</button>
                 </div>
               </form>
             )}
-            <button type="button" className={styles.signOut} onClick={signOut}>Sign out</button>
+            <button type="button" className={styles.signOut} onClick={signOut}>{t('Sign out')}</button>
           </section>
 
           {/* Privacy */}
           <section className={styles.card} aria-labelledby="privacy-h">
-            <h2 id="privacy-h" className={styles.cardTitle}>Your data & privacy</h2>
+            <h2 id="privacy-h" className={styles.cardTitle}>{t('Your data & privacy')}</h2>
             <p className={styles.cardSub}>
-              Your health answers are private to your account and never sold. Read our{' '}
-              <Link href="/privacy">Privacy Policy</Link> and <Link href="/terms">Terms</Link>.
+              {rich('Your health answers are private to your account and never sold. Read our {privacy} and {terms}.', {
+                privacy: <Link href="/privacy">{t('Privacy Policy')}</Link>,
+                terms: <Link href="/terms">{t('Terms')}</Link>,
+              })}
             </p>
             {!deleteOpen ? (
               <button type="button" className={styles.dangerLink} onClick={() => setDeleteOpen(true)}>
-                Delete my account and data
+                {t('Delete my account and data')}
               </button>
             ) : (
               <form className={styles.dangerZone} onSubmit={deleteAccount}>
                 <p>
-                  This permanently deletes your account, assessments, check-ins and BMI history. This can&apos;t be undone.
+                  {t("This permanently deletes your account, assessments, check-ins and BMI history. This can't be undone.")}
                 </p>
                 <label className={styles.field}>
-                  <span>Your password</span>
+                  <span>{t('Your password')}</span>
                   <input type="password" autoComplete="current-password" value={deletePw} onChange={(e) => setDeletePw(e.target.value)} required />
                 </label>
                 <label className={styles.field}>
-                  <span>Type DELETE to confirm</span>
+                  <span>{t('Type DELETE to confirm')}</span>
                   <input value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} autoComplete="off" />
                 </label>
-                {deleteError && <p className={styles.error} role="alert">{deleteError}</p>}
+                {deleteError && <p className={styles.error} role="alert">{t(deleteError)}</p>}
                 <div className={styles.formActions}>
-                  <button type="submit" className={styles.dangerBtn} disabled={deleting}>{deleting ? 'Deleting…' : 'Permanently delete'}</button>
-                  <button type="button" className={styles.ghostBtn} onClick={() => { setDeleteOpen(false); setDeleteError(''); }}>Cancel</button>
+                  <button type="submit" className={styles.dangerBtn} disabled={deleting}>{t(deleting ? 'Deleting…' : 'Permanently delete')}</button>
+                  <button type="button" className={styles.ghostBtn} onClick={() => { setDeleteOpen(false); setDeleteError(''); }}>{t('Cancel')}</button>
                 </div>
               </form>
             )}

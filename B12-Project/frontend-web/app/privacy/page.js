@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import LegalLanguageNotice from '@/components/LegalLanguageNotice';
 import styles from './page.module.css';
 
 const CONTACT = process.env.NEXT_PUBLIC_CONTACT_EMAIL || '';
@@ -89,6 +90,7 @@ export default function PrivacyPage() {
       {/* ── Main Content ── */}
       <main className={styles.container}>
         <h1 className={styles.title}>Privacy Policy</h1>
+        <LegalLanguageNotice />
         <p className={styles.subtitle}>
           Last updated: November 2026. Plain-language summary of how your data is handled.
         </p>

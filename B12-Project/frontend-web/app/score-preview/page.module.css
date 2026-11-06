@@ -313,3 +313,12 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+.headerActions { display: flex; align-items: center; gap: 12px; }
+
+.loginBtn { white-space: nowrap; }
+
+@media (max-width: 480px) {
+  .header { flex-wrap: wrap; gap: 10px; }
+  .headerActions { width: 100%; justify-content: space-between; }
+}

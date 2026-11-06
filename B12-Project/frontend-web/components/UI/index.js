@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { motion, useReducedMotionConfig } from 'framer-motion';
+import { useI18n } from '@/i18n/LanguageProvider';
 import styles from './Toast.module.css';
 
 let addToastGlobal = null;
@@ -89,6 +90,7 @@ export function ProgressBar({ progress = 0, total = 1, color }) {
  * (transform only); omit for a static gauge. Reduced motion always renders it static.
  */
 export function RiskGauge({ percentage = 0, className = '', animateIn, delay = 0, duration = 0.8 }) {
+  const { t } = useI18n();
   const reduce = useReducedMotionConfig();
   const num = Number(percentage);
   const safePct = isNaN(num) ? 0 : Math.min(100, Math.max(0, num));
@@ -107,7 +109,7 @@ export function RiskGauge({ percentage = 0, className = '', animateIn, delay = 0
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(safePct)}
-      aria-label="B12 risk score"
+      aria-label={t('B12 risk score')}
       initial={animated ? 'hidden' : false}
       {...(animated ? trigger : { animate: 'show' })}
     >
@@ -191,6 +193,7 @@ export function DisclaimerStrip() {
 }
 
 export function LoadingScreen() {
+  const { t } = useI18n();
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -198,7 +201,7 @@ export function LoadingScreen() {
       background: 'var(--bg)',
     }}>
       <span className="spinner" style={{ width: 32, height: 32 }} aria-hidden="true" />
-      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', fontFamily: 'var(--font)' }} role="status">Loading…</p>
+      <p style={{ color: 'var(--text-secondary)', fontSize: '14px', fontFamily: 'var(--font)' }} role="status">{t('Loading…')}</p>
     </div>
   );
 }

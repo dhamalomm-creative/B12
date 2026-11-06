@@ -653,3 +653,7 @@
   .factTitle { font-size: 22px; }
   .progressTime { font-size: 12px; }
 }
+
+.headerActions { display: flex; align-items: center; gap: 12px; }
+
+.exitBtn { white-space: nowrap; }

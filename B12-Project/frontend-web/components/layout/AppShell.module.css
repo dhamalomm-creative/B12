@@ -24,3 +24,19 @@
 @media print {
   .content { margin-left: 0; padding: 0; }
 }
+
+.mobileLanguage {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobileLanguage {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+  }
+}
+
+@media print {
+  .mobileLanguage { display: none; }
+}

@@ -301,3 +301,5 @@
 .pwOk { color: var(--risk-low); font-weight: 600; }
 
 .submitBtn:disabled { opacity: 0.65; cursor: wait; }
+
+.topToggleWrap { gap: 12px; align-items: center; flex-wrap: wrap; }
