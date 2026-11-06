@@ -329,6 +329,14 @@ export const getRecommendedFoods = (dietType, bmiCategory) => {
 };
 
 // ── BMI UI helpers ────────────────────────────────────────────────────────────
+// Foods named in the BMI tip. Every item must be allowed by that diet's dietTags above.
+export const BMI_TIP_FOODS = {
+  vegan:       { energy: 'fortified soy milk and cereals', light: 'fortified plant milks and nutritional yeast' },
+  vegetarian:  { energy: 'milk, paneer and cheese',        light: 'yogurt, cottage cheese and fortified cereals' },
+  pescatarian: { energy: 'dairy, eggs and fish',           light: 'fish, yogurt and fortified cereals' },
+  omnivore:    { energy: 'dairy, eggs and fish',           light: 'fish, yogurt and fortified cereals' },
+};
+
 export const BMI_INFO = {
   underweight: {
     label: 'Underweight',

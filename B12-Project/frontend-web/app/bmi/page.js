@@ -5,14 +5,15 @@ import { useAuth } from '@/context/AuthContext';
 import { useApp } from '@/context/AppContext';
 import { toast } from '@/components/UI';
 import { usersAPI } from '@/services/api';
-import { calculateBMI, getBMICategory } from '@/data/b12Foods';
+import { BMI_TIP_FOODS, calculateBMI, getBMICategory } from '@/data/b12Foods';
 import AppShell from '@/components/layout/AppShell';
 import AuthGuard from '@/components/auth/AuthGuard';
 import styles from './page.module.css';
 
 export default function BMIPage() {
   const { dispatch } = useApp();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
+  const tipFoods = BMI_TIP_FOODS[user?.dietType];
 
   const [height, setHeight] = useState('170');
   const [weight, setWeight] = useState('65');
@@ -180,8 +181,8 @@ export default function BMIPage() {
                   {catLower.includes('normal')
                     ? 'A healthy range. Keep a balanced diet with regular B12 sources.'
                     : catLower.includes('under')
-                      ? 'Below the healthy range. Energy-dense B12 foods like dairy, eggs and fish can help — and consider speaking to a doctor.'
-                      : 'Above the healthy range. Lean, low-calorie B12 sources such as fish, yogurt and fortified cereals fit well.'}{' '}
+                      ? `Below the healthy range. Energy-dense B12 foods ${tipFoods ? `like ${tipFoods.energy}` : 'that fit your diet'} can help — and consider speaking to a doctor.`
+                      : `Above the healthy range. Lean, low-calorie B12 sources ${tipFoods ? `such as ${tipFoods.light}` : 'that fit your diet'} work well.`}{' '}
                   <Link href="/foods">See foods for you →</Link>
                 </p>
                 <p className={styles.bmiNote}>
