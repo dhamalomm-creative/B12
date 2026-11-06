@@ -241,7 +241,7 @@
   "b12_food_intake": {
     "category": "Diet",
     "weight": 4,
-    "question": "How often do you eat B12-rich foods? (meat, fish, eggs, dairy, fortified cereals)",
+    "question": "How often do you eat B12 sources that fit your diet?",
     "options": {
       "daily": {
         "score": 0,
@@ -653,10 +653,29 @@
       }
     }
   },
+  "period_status": {
+    "category": "Female Health",
+    "weight": 1,
+    "question": "Do you currently have periods?",
+    "options": {
+      "yes": {
+        "score": 0,
+        "label": "Yes"
+      },
+      "menopause": {
+        "score": 0,
+        "label": "No, I've gone through menopause"
+      },
+      "other": {
+        "score": 0,
+        "label": "No, for another reason (such as pregnancy, contraception, surgery or a medical condition)"
+      }
+    }
+  },
   "heavy_bleeding": {
     "category": "Female Health",
     "weight": 3,
-    "question": "How often do you experience heavy menstrual bleeding?",
+    "question": "How often are your periods very heavy?",
     "options": {
       "never": {
         "score": 0,
@@ -679,7 +698,7 @@
   "period_fatigue": {
     "category": "Female Health",
     "weight": 2,
-    "question": "How often do you feel significantly more fatigued during your periods?",
+    "question": "How often do you feel much more tired during your periods?",
     "options": {
       "never": {
         "score": 0,
@@ -748,7 +767,7 @@
   "pregnant_postpartum": {
     "category": "Female Health",
     "weight": 4,
-    "question": "Are you currently pregnant or in the postpartum period?",
+    "question": "Are you pregnant, breastfeeding, or have you had a baby in the past year?",
     "options": {
       "yes": {
         "score": 3,

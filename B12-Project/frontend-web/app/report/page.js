@@ -32,11 +32,11 @@ const fmtDate = (d) => {
 };
 
 // Answers that pushed the score up the most (weighted), with the question as it was asked.
-const keyFindings = (answers) => answers
+const keyFindings = (answers, dietType) => answers
   .map((a) => {
     const snap = a.question_text_snapshot || '';
     const key = (snap.match(/^\[([^\]]+)\]/) || [])[1];
-    const q = key ? QUESTION_BY_KEY[key] : null;
+    const q = (key === 'b12_food_intake' && DIET_B12_QUESTIONS[dietType]) || (key ? QUESTION_BY_KEY[key] : null);
     const max = q ? Math.max(...q.options.map((o) => o.score)) : 4;
     const score = Number(a.answer_score) || 0;
     return {
@@ -155,7 +155,7 @@ export default function ReportPage() {
     .filter(([k, v]) => GROUP_INFO[k] && typeof v === 'number')
     .map(([k, v]) => ({ key: k, label: GROUP_INFO[k].label, pct: Math.round(v) }))
     .sort((x, y) => y.pct - x.pct);
-  const findings = keyFindings(data?.answers || []);
+  const findings = keyFindings(data?.answers || [], data?.assessment?.diet_type || data?.profile?.diet_type);
   const history = historyItems(p);
   const labPmol = a?.lab_b12_value_pmol != null ? Number(a.lab_b12_value_pmol) : null;
   const lab = labPmol != null ? LAB_STATUS[a.ml_label] : null;

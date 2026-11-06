@@ -17,14 +17,14 @@ const AGE_RANGES = [
 ];
 
 const GENDERS = [
-  { id: 'female', label: 'Female', hint: 'Adds questions about periods & pregnancy' },
+  { id: 'female', label: 'Female', hint: 'May add questions about periods & pregnancy' },
   { id: 'male', label: 'Male', hint: '' },
   { id: 'other', label: 'Prefer not to say', hint: '' },
 ];
 
 const DIETS = [
   { id: 'vegan', label: 'Vegan', icon: '🌱', hint: 'No animal products' },
-  { id: 'vegetarian', label: 'Vegetarian', icon: '🥛', hint: 'Dairy / eggs, no meat or fish' },
+  { id: 'vegetarian', label: 'Vegetarian', icon: '🥛', hint: 'Dairy, no meat or fish' },
   { id: 'pescatarian', label: 'Pescatarian', icon: '🐟', hint: 'Fish, no meat' },
   { id: 'omnivore', label: 'Non-vegetarian', icon: '🍗', hint: 'Meat, fish, eggs, dairy' },
 ];

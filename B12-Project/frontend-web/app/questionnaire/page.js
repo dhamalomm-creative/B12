@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence, useReducedMotionConfig } from 'framer-motion';
 import { useApp, setRiskResult, setPendingAnswers } from '@/context/AppContext';
 import { useAuth } from '@/context/AuthContext';
-import { buildQuestionSet, getAgeGroup } from '@/data/questions';
+import { buildQuestionSet, dropHiddenAnswers, getAgeGroup, getVisibleQuestions } from '@/data/questions';
 import { SECTIONS, SECTION_FACTS, getSectionId } from '@/data/questionnaireSections';
 import { calculateRisk, toServerAnswers, normalizeServerResult } from '@/utils/riskCalculator';
 import { questionnaireAPI } from '@/services/api';
@@ -67,7 +67,7 @@ export default function QuestionnairePage() {
     if (ready && !profileComplete) router.replace('/onboarding?next=questionnaire');
   }, [ready, profileComplete, router]);
 
-  const questions = useMemo(
+  const allQuestions = useMemo(
     () => (profileComplete ? buildQuestionSet(profile.age, profile.gender, profile.dietType) : []),
     [profileComplete, profile.age, profile.gender, profile.dietType],
   );
@@ -84,29 +84,33 @@ export default function QuestionnairePage() {
   const [whyClosing, setWhyClosing] = useState(false);
   const submittingRef = useRef(false);
 
+  // Some answers rule later questions out, so everything below works from the visible set
+  const questions = useMemo(() => getVisibleQuestions(allQuestions, answers), [allQuestions, answers]);
+
   // Restore saved progress once the question set is known
   useEffect(() => {
-    if (!questions.length || phase !== 'loading') return;
+    if (!allQuestions.length || phase !== 'loading') return;
     const saved = readProgress();
     if (saved && saved.setKey === setKey && Date.now() - (saved.updatedAt || 0) < PROGRESS_TTL_MS) {
-      const restored = {};
+      const savedAnswers = {};
       Object.entries(saved.answers || {}).forEach(([qid, optId]) => {
-        const q = questions.find((x) => x.id === qid);
+        const q = allQuestions.find((x) => x.id === qid);
         const opt = q?.options.find((o) => o.id === optId);
-        if (opt) restored[qid] = opt;
+        if (opt) savedAnswers[qid] = opt;
       });
-      const count = Object.keys(restored).length;
-      if (count > 0 && count < questions.length) {
+      const restored = dropHiddenAnswers(allQuestions, savedAnswers);
+      if (Object.keys(restored).length > 0) {
+        const visible = getVisibleQuestions(allQuestions, restored);
         setAnswers(restored);
         // Resume at the first question that hasn't been answered yet
-        const firstOpen = questions.findIndex((x) => !restored[x.id]);
-        setIdx(firstOpen === -1 ? questions.length - 1 : firstOpen);
+        const firstOpen = visible.findIndex((x) => !restored[x.id]);
+        setIdx(firstOpen === -1 ? visible.length - 1 : firstOpen);
         setSeenBreaks(saved.seenBreaks || []);
         setResumed(true);
       }
     }
     setPhase('asking');
-  }, [questions, setKey, phase]);
+  }, [allQuestions, setKey, phase]);
 
   // Persist progress as the user goes
   useEffect(() => {
@@ -181,7 +185,9 @@ export default function QuestionnairePage() {
       return;
     }
     setDirection(1);
-    setIdx((i) => i + 1);
+    // Absolute, not i + 1: the outgoing card is still clickable while it animates out, and a
+    // second click there must not skip the next question.
+    setIdx(idx + 1);
     setShowWhyMobile(false);
     setWhyClosing(false);
   }, [q, answers, idx, total, questions, currentSection, seenBreaks, finish]);
@@ -189,16 +195,16 @@ export default function QuestionnairePage() {
   const continueFromBreak = useCallback(() => {
     setBreakFor(null);
     setDirection(1);
-    setIdx((i) => Math.min(i + 1, total - 1));
+    setIdx(Math.min(idx + 1, total - 1));
     setShowWhyMobile(false);
     setWhyClosing(false);
-  }, [total]);
+  }, [idx, total]);
 
   const goBack = useCallback(() => {
     if (breakFor) { setBreakFor(null); return; }
     if (idx === 0) { router.push(isAuthenticated ? '/dashboard' : '/onboarding'); return; }
     setDirection(-1);
-    setIdx((i) => i - 1);
+    setIdx(idx - 1);
     setShowWhyMobile(false);
     setWhyClosing(false);
   }, [breakFor, idx, router, isAuthenticated]);
@@ -217,8 +223,9 @@ export default function QuestionnairePage() {
 
   const choose = useCallback((opt) => {
     if (!q) return;
-    setAnswers((prev) => ({ ...prev, [q.id]: opt }));
-  }, [q]);
+    // Changing an answer can hide later questions; their answers must not survive to scoring
+    setAnswers((prev) => dropHiddenAnswers(allQuestions, { ...prev, [q.id]: opt }));
+  }, [q, allQuestions]);
 
   const startOver = () => {
     clearProgress();

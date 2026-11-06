@@ -13,7 +13,7 @@ import styles from './page.module.css';
 const T = { score: 0.15, count: 0.8, level: 0.75, next: 1.0 };
 
 const DEFAULT_SUGGESTIONS = [
-  'Include B12 sources such as eggs, dairy, or fortified foods daily.',
+  'Include B12 sources that fit your diet every day, such as fortified foods.',
   'Repeat this assessment every few weeks to monitor changes.',
   'Consult a doctor if fatigue or tingling sensations persist.',
 ];

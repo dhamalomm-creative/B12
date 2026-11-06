@@ -10,6 +10,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - **Shared rate limiting:** set `REDIS_URL` to keep rate-limit counters in Redis across all API instances (fails open if Redis is down). Rate-limit keys now hash the email.
 - Full project documentation in `docs/`: setup, configuration, architecture, API reference, OpenAPI spec, database, scoring, frontend, security, deployment, testing and troubleshooting.
 - `CONTRIBUTING.md`, `SECURITY.md`, `CHANGELOG.md` and `LICENSE`.
+- **Periods screening question:** women are asked "Do you currently have periods?" before any period questions. Answering no skips them, and the pregnancy question is also skipped after menopause. It's never asked at 60+. The new `period_status` question scores 0, and answers to questions it hides are dropped. Existing answers score the same, so `SCORING_VERSION` stays `2.0`.
 - Migration `007_launch_hardening.sql`: Row Level Security on every table, privileges revoked from Supabase `anon`/`authenticated`, duplicate indexes removed, nightly `cleanup_security_tables()` via `pg_cron`.
 
 ### Changed
@@ -18,8 +19,11 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - `*.vercel.app` origins are no longer allowed by default in production (`ALLOW_VERCEL_PREVIEWS`).
 - Smaller DB pool and statement timeouts for serverless deployments.
 - `DEPLOYMENT_GUIDE.md` moved to `docs/DEPLOYMENT.md`; sub-folder READMEs now point to `docs/`.
+- Plainer wording for the diet, period and pregnancy questions.
 
 ### Fixed
+- **Diet questions now match the diet chosen.** The vegetarian path no longer mentions eggs anywhere (question, "Good to know", "Why we ask", suggestion, onboarding hint, picture). Removed plant-based text from the non-vegetarian path, and fish, eggs and dairy pictures or text from the vegan path. The doctor report now shows the food question as the user's own diet saw it.
+- Double-clicking Continue in the questionnaire could skip the next question while the card animated out.
 - `scripts/check-scoring-parity.mjs` crashing on Windows (`ERR_UNSUPPORTED_ESM_URL_SCHEME`) — dynamic imports now use `file://` URLs.
 
 ## [2026-11] — Launch readiness

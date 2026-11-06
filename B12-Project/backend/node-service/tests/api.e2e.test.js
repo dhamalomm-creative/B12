@@ -62,6 +62,18 @@ describe('questionnaire', () => {
     expect(res.body.breakdown.diet).toBeGreaterThan(0);
   });
 
+  it('accepts the unscored period screening question', async () => {
+    const res = await request(app).post('/api/questionnaire/submit').set(auth()).send({
+      answers: [
+        { questionKey: 'fatigue_frequency', answerValue: 'often' },
+        { questionKey: 'period_status', answerValue: 'menopause' },
+      ],
+    });
+    expect(res.status).toBe(200);
+    expect(res.body.percentage).toBeGreaterThan(0);
+    expect(res.body.breakdown).not.toHaveProperty('female_health');
+  });
+
   it('rejects unknown v2 answers', async () => {
     const res = await request(app).post('/api/questionnaire/submit').set(auth()).send({
       answers: [{ questionKey: 'fatigue_frequency', answerValue: 'hacked' }],
@@ -91,7 +103,7 @@ describe('questionnaire', () => {
     const latest = await request(app).get('/api/questionnaire/latest').set(auth());
     expect(latest.body.assessment).toBeTruthy();
     const hist = await request(app).get('/api/questionnaire/history').set(auth());
-    expect(hist.body.assessments.length).toBe(2);
+    expect(hist.body.assessments.length).toBe(3);
   });
 });
 

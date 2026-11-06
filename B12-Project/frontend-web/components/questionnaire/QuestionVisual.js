@@ -139,6 +139,37 @@ export default function QuestionVisual({ type, className = '' }) {
         </svg>
       );
 
+    case 'b12_sources_vegetarian':
+      return (
+        <svg viewBox="0 0 100 80" className={className} role="img" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="40" r="32" stroke="#2E7D4E" strokeWidth="2" fill="#FFFFFF" />
+          <circle cx="50" cy="40" r="24" stroke="#4A8FA3" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
+          {/* Milk glass */}
+          <path d="M36 40H46L44.5 58H37.5L36 40Z" fill="#2E7D4E" />
+          {/* Cheese / paneer wedge */}
+          <path d="M53 54L69 46V54H53Z" fill="#D99B26" />
+          <circle cx="62" cy="51" r="1.4" fill="#FFFFFF" />
+          {/* B12 Label Badge */}
+          <rect x="36" y="20" width="28" height="12" rx="4" fill="#F4EFE6" stroke="#2E7D4E" strokeWidth="1" />
+          <text x="50" y="29" textAnchor="middle" fill="#2E7D4E" fontSize="8" fontWeight="bold">B-12</text>
+        </svg>
+      );
+
+    case 'b12_sources_vegan':
+      return (
+        <svg viewBox="0 0 100 80" className={className} role="img" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="50" cy="40" r="32" stroke="#2E7D4E" strokeWidth="2" fill="#FFFFFF" />
+          <circle cx="50" cy="40" r="24" stroke="#4A8FA3" strokeWidth="1" strokeDasharray="3 3" opacity="0.5" />
+          {/* Leaf */}
+          <path d="M34 56C34 46 40 40 48 40C48 50 44 56 34 56Z" fill="#2E7D4E" />
+          {/* Supplement capsule */}
+          <rect x="54" y="42" width="16" height="8" rx="4" transform="rotate(-25 62 46)" fill="#D99B26" />
+          {/* B12 Label Badge */}
+          <rect x="36" y="20" width="28" height="12" rx="4" fill="#F4EFE6" stroke="#2E7D4E" strokeWidth="1" />
+          <text x="50" y="29" textAnchor="middle" fill="#2E7D4E" fontSize="8" fontWeight="bold">B-12</text>
+        </svg>
+      );
+
     case 'sleep_quality':
       return (
         <svg viewBox="0 0 100 80" className={className} role="img" aria-hidden="true" fill="none" xmlns="http://www.w3.org/2000/svg">

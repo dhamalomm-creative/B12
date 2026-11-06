@@ -68,6 +68,7 @@ export const scoreItems = (items, dietType) => {
     const w = Number(it.weight) || 1;
     const got = (Number(it.score) || 0) * w;
     const top = (Number(it.maxScore) || 0) * w;
+    if (top === 0) return; // screening questions never create an empty group
     raw += got;
     max += top;
     const g = CATEGORY_GROUPS[it.category] || 'lifestyle';
@@ -119,7 +120,7 @@ export const buildSuggestions = (level, breakdown, dietType, answers = {}) => {
   if (dietType === 'vegan' && answers.supplement_use !== 'yes_regular') {
     out.push('On a vegan diet, a regular B12 supplement or B12-fortified foods every day is essential.');
   } else if (dietType === 'vegetarian' && answers.supplement_use === 'no') {
-    out.push('Include dairy, eggs or fortified foods daily, or consider a B12 supplement.');
+    out.push('Have dairy or fortified foods every day, or consider a B12 supplement.');
   }
   if (b('diet') >= 40) {
     out.push('Add B12-rich foods to most meals — the Foods tab lists options that fit your diet.');

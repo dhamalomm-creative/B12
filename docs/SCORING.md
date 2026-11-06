@@ -23,9 +23,29 @@ The web app builds a personalised set with `buildQuestionSet(age, gender, dietTy
 1. **Common questions** — energy, neurological, mood, sleep and other symptoms. The generic food question is replaced by a **diet-specific B12 food question** plus a **supplement question**.
 2. **Clinical questions** — absorption conditions / stomach surgery, metformin and acid reducers, sore tongue, breathlessness / paleness, alcohol.
 3. **Age-group questions** — one set for `15-24`, `25-40`, `41-60` or `60+`.
-4. **Gender questions** — `female` (periods, pregnancy) or `male`.
+4. **Gender questions** — `female` (a periods screening question, then periods and pregnancy, see [Branching](#branching)) or `male`.
+
+The food question depends on the diet. **Vegetarian means dairy and fortified foods:** Indian vegetarian diets commonly exclude eggs, so the vegetarian path does not mention eggs. There is no separate egg-eating vegetarian diet. `scripts/check-scoring-parity.mjs` fails if a question in a diet's set mentions food that diet doesn't include.
 
 In the UI the questions are grouped into six sections: Energy, Brain & mood, Diet, Body signs, Health history, Just for you (`data/questionnaireSections.js`).
+
+### Branching
+
+A question with `showIf: { question, anyOf }` is hidden once the controlling question has an answer outside `anyOf`. Until then it counts as visible, so the question total can only go down when an answer rules questions out. The controlling question must come earlier in the set.
+
+`period_status` ("Do you currently have periods?") is asked first in the female set:
+
+| Answer | Period questions (4) | Pregnancy question |
+|---|---|---|
+| `yes` | Asked | Asked |
+| `menopause` | Skipped | Skipped |
+| `other` | Skipped | Asked |
+
+- `period_status` is never hidden by age. The pregnancy question is left out at `60+` whatever the answer.
+- `period_status` scores 0 on every option, so it has no effect on the score, and groups with nothing to score are left out of the breakdown.
+- When an answer changes, `dropHiddenAnswers()` removes answers to questions it hides, so they are not saved, scored or submitted.
+- The server has no branching of its own: it scores the answers it receives, and an assessment without `period_status` stays valid.
+- Skipping questions shrinks `max`, so a woman past menopause is scored on fewer questions than the full set. The formula and option scores are unchanged, so `SCORING_VERSION` stays `2.0`.
 
 ### Formula
 
@@ -96,7 +116,7 @@ If you change questions, options, weights, categories or the formula:
    node scripts/check-scoring-parity.mjs
    ```
 
-   It checks the two question banks are identical and that both engines give the same result for 2,000 random assessments.
+   It checks the two question banks match (the shared `b12_food_intake` entry has neutral wording), that both engines give the same result for 2,000 random assessments that follow the branching, and the branching and diet wording rules.
 
 ## v1 (Android)
 

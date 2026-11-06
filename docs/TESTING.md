@@ -70,6 +70,7 @@ Then go through this manual checklist against a local or staging API:
 
 - [ ] Guest: onboarding → questionnaire → score preview
 - [ ] Questionnaire: "Save and exit", reload, resume where you left off
+- [ ] Questionnaire as a woman: answer "Do you currently have periods?" with each option, go back and change it; the question count and later questions update
 - [ ] Register from the score preview; the guest result appears on the dashboard
 - [ ] Log out and log back in
 - [ ] Daily check-in; check in again the same day (updates, streak unchanged)

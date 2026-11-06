@@ -49,21 +49,28 @@ export const B12_FOOD_OPTIONS = [
   { id: 'rarely',  label: 'Rarely/Never',  score: 3 },
 ];
 
+// Screening only: decides which questions follow, so every option scores 0.
+export const PERIOD_STATUS_OPTIONS = [
+  { id: 'yes',       label: 'Yes', score: 0 },
+  { id: 'menopause', label: "No, I've gone through menopause", score: 0 },
+  { id: 'other',     label: 'No, for another reason (such as pregnancy, contraception, surgery or a medical condition)', score: 0 },
+];
+
 // ─── Diet-Specific B12 Food Intake Questions ──────────────────────────────────
 export const DIET_B12_QUESTIONS = {
   vegan: {
     id: 'b12_food_intake',
     category: 'Diet',
     categoryIcon: '🌱',
-    question: 'How often do you consume B12-fortified foods or supplements? (plant milks, nutritional yeast, cereals, or B12 tablets)',
+    question: 'How often do you have B12-fortified foods or supplements? (plant milks, nutritional yeast, cereals or B12 tablets)',
     insight: 'Plant foods do not naturally produce B12. Fortified foods and regular supplements are the essential sources for vegans.',
     explanation: {
-      simpleText: 'How regularly you consume fortified items (plant milks, breakfast cereals, nutritional yeast) or B12 supplements/drops to maintain healthy levels.',
-      whyItMatters: 'Vitamin B12 is synthesized by micro-organisms and is absent in unfortified plant foods. Vegan diets require fortified foods or supplements to protect nerves and red blood cells.',
-      visualType: 'b12_sources',
+      simpleText: 'How regularly you have fortified foods (plant milks, breakfast cereals, nutritional yeast) or B12 supplements and drops.',
+      whyItMatters: 'Vitamin B12 is made by micro-organisms and is missing from unfortified plant foods. On a vegan diet, you need fortified foods or supplements to protect your nerves and red blood cells.',
+      visualType: 'b12_sources_vegan',
       keySigns: [
-        'Pure plant-based diets supply zero natural B12 without fortified foods or vitamins',
-        'Irregular intake of fortified items or supplements leads to progressive depletion',
+        'Plant foods alone do not give you reliable B12, so fortified foods or supplements matter',
+        'Having fortified foods or supplements only now and then slowly runs down your B12 stores',
       ],
     },
     type: 'custom',
@@ -74,15 +81,15 @@ export const DIET_B12_QUESTIONS = {
     id: 'b12_food_intake',
     category: 'Diet',
     categoryIcon: '🥦',
-    question: 'How often do you eat vegetarian B12 sources? (milk, curd/yogurt, cheese, paneer, eggs, or fortified foods)',
-    insight: 'Dairy products and eggs contain B12, but intake levels depend heavily on consistent daily portions.',
+    question: 'How often do you have milk, curd/yogurt, cheese, paneer or B12-fortified foods?',
+    insight: 'Dairy foods contain B12, but how much you get depends on having them regularly.',
     explanation: {
-      simpleText: 'How regularly your diet contains dairy foods (milk, curd, yogurt, paneer, cheese), eggs, or B12-fortified breakfast cereals.',
-      whyItMatters: 'Vegetarians obtain B12 almost exclusively from dairy and eggs. Small or irregular portions frequently fall below daily metabolic requirements.',
-      visualType: 'b12_sources',
+      simpleText: 'How regularly you have dairy foods (milk, curd, yogurt, paneer, cheese) or B12-fortified foods such as breakfast cereals.',
+      whyItMatters: 'On a vegetarian diet, dairy and fortified foods are the main sources of B12. Small or irregular portions often fall short of what your body needs each day.',
+      visualType: 'b12_sources_vegetarian',
       keySigns: [
-        'Eating low or sporadic amounts of dairy leaves daily B12 requirements unmet',
-        'Egg and dairy intake that skips days in a row raises deficiency risk',
+        'Having only small amounts of dairy now and then can leave you short of B12',
+        'Going several days in a row without dairy or fortified foods raises deficiency risk',
       ],
     },
     type: 'custom',
@@ -113,14 +120,14 @@ export const DIET_B12_QUESTIONS = {
     category: 'Diet',
     categoryIcon: '🍖',
     question: 'How often do you eat B12-rich foods? (meat, fish, eggs, dairy, fortified cereals)',
-    insight: 'Low dietary B12 intake is the most preventable cause of deficiency, especially in plant-based diets.',
+    insight: 'Low dietary B12 intake is one of the most preventable causes of deficiency.',
     explanation: {
       simpleText: 'How regularly your diet contains foods naturally high in Vitamin B12: red meat, poultry, fish, eggs, milk, curd/yogurt, cheese, or B12-fortified foods.',
-      whyItMatters: 'The human body cannot manufacture B12. It must come from animal products, fortified items, or supplements.',
+      whyItMatters: 'The human body cannot make B12. It must come from animal foods, fortified foods or supplements.',
       visualType: 'b12_sources',
       keySigns: [
-        'Strict vegetarian or vegan diets provide virtually no B12 without supplementation',
-        'Infrequent intake of eggs, meat, or dairy raises deficiency risk',
+        'Eating meat, fish, eggs or dairy only rarely raises deficiency risk',
+        'Small portions of these foods may not cover what your body needs each day',
       ],
     },
     type: 'custom',
@@ -264,25 +271,7 @@ export const COMMON_QUESTIONS = [
     options: FREQUENCY_OPTIONS,
     weight: 2,
   },
-  {
-    id: 'b12_food_intake',
-    category: 'Diet',
-    categoryIcon: '🥩',
-    question: 'How often do you eat B12-rich foods? (meat, fish, eggs, dairy, fortified cereals)',
-    insight: 'Low dietary B12 intake is the most preventable cause of deficiency, especially in plant-based diets.',
-    explanation: {
-      simpleText: 'How regularly your diet contains foods naturally high in Vitamin B12: red meat, poultry, fish, eggs, milk, curd/yogurt, cheese, or B12-fortified foods.',
-      whyItMatters: 'The human body cannot manufacture B12. It must come from animal products, fortified items, or supplements.',
-      visualType: 'b12_sources',
-      keySigns: [
-        'Strict vegetarian or vegan diets provide virtually no B12 without supplementation',
-        'Infrequent intake of eggs, meat, or dairy raises deficiency risk',
-      ],
-    },
-    type: 'custom',
-    options: B12_FOOD_OPTIONS,
-    weight: 4,
-  },
+  DIET_B12_QUESTIONS.omnivore, // buildQuestionSet swaps this for the user's diet
   {
     id: 'sleep_quality',
     category: 'Lifestyle',
@@ -357,7 +346,7 @@ export const AGE_QUESTIONS = {
         visualType: 'fast_food',
         keySigns: [
           'Eating fast food or instant takeout 4 or more times per week',
-          'Very rare intake of fresh fruits, leafy greens, dairy, or clean protein',
+          'Very rare intake of fresh fruit, leafy greens or protein-rich foods',
         ],
       },
       type: 'gradient',
@@ -526,13 +515,39 @@ export const AGE_QUESTIONS = {
 };
 
 // ─── GENDER-BASED QUESTIONS ───────────────────────────────────────────────────
+// `showIf` hides a question based on the answer to an earlier one. The controlling
+// question must come first in the set, so hiding never moves the user's position.
+const PERIOD_SCREEN_ID = 'period_status';
+const HAS_PERIODS = { question: PERIOD_SCREEN_ID, anyOf: ['yes'] };
+const NOT_PAST_MENOPAUSE = { question: PERIOD_SCREEN_ID, anyOf: ['yes', 'other'] };
+
 export const GENDER_QUESTIONS = {
   female: [
     {
+      id: PERIOD_SCREEN_ID,
+      category: 'Female Health',
+      categoryIcon: '🗓️',
+      question: 'Do you currently have periods?',
+      insight: "This helps us skip questions that don't apply to you. It doesn't add to your score.",
+      explanation: {
+        simpleText: 'Choose Yes if you still get periods, even if they are irregular or only come now and then. Choose No if they have stopped.',
+        whyItMatters: 'Periods and pregnancy change how much B12 and iron your body uses, so we only ask about the ones that apply to you.',
+        visualType: 'cycle_calendar',
+        keySigns: [
+          'Menopause usually means no period for 12 months in a row',
+          'Periods can also stop with pregnancy, breastfeeding, some contraception or surgery',
+        ],
+      },
+      type: 'custom',
+      options: PERIOD_STATUS_OPTIONS,
+      weight: 1,
+    },
+    {
       id: 'heavy_bleeding',
+      showIf: HAS_PERIODS,
       category: 'Female Health',
       categoryIcon: '🩸',
-      question: 'How often do you experience heavy menstrual bleeding?',
+      question: 'How often are your periods very heavy?',
       insight: 'Heavy bleeding leads to significant iron and B12 loss, increasing deficiency risk.',
       explanation: {
         simpleText: 'Periods with unusually heavy flow, such as having to change pads/tampons every 1–2 hours, passing clots, or bleeding longer than 7 days.',
@@ -549,9 +564,10 @@ export const GENDER_QUESTIONS = {
     },
     {
       id: 'period_fatigue',
+      showIf: HAS_PERIODS,
       category: 'Female Health',
       categoryIcon: '🔋',
-      question: 'How often do you feel significantly more fatigued during your periods?',
+      question: 'How often do you feel much more tired during your periods?',
       insight: 'Cycle-related fatigue can be both a symptom and amplifier of nutritional deficiencies.',
       explanation: {
         simpleText: 'Experiencing intense fatigue, heavy limbs, or deep sluggishness right before or during your menstrual period.',
@@ -568,6 +584,7 @@ export const GENDER_QUESTIONS = {
     },
     {
       id: 'irregular_periods',
+      showIf: HAS_PERIODS,
       category: 'Female Health',
       categoryIcon: '📅',
       question: 'How often are your periods irregular?',
@@ -587,6 +604,7 @@ export const GENDER_QUESTIONS = {
     },
     {
       id: 'period_dizziness',
+      showIf: HAS_PERIODS,
       category: 'Female Health',
       categoryIcon: '💫',
       question: 'How often do you feel dizzy during or after your period?',
@@ -606,13 +624,14 @@ export const GENDER_QUESTIONS = {
     },
     {
       id: 'pregnant_postpartum',
+      showIf: NOT_PAST_MENOPAUSE,
       category: 'Female Health',
       categoryIcon: '🤰',
-      question: 'Are you currently pregnant or in the postpartum period?',
-      insight: 'Pregnancy and breastfeeding dramatically increase B12 requirements.',
+      question: 'Are you pregnant, breastfeeding, or have you had a baby in the past year?',
+      insight: 'Pregnancy and breastfeeding increase how much B12 you need each day.',
       explanation: {
-        simpleText: 'Currently expecting a baby, or within the first year after childbirth and/or nursing your infant.',
-        whyItMatters: 'Fetal neurological development and breast milk production consume large amounts of maternal B12 stores, doubling daily demand.',
+        simpleText: 'You are expecting a baby, are breastfeeding, or gave birth within the last 12 months.',
+        whyItMatters: "Your baby's developing brain and nerves, and making breast milk, draw on your own B12, so you need more of it each day.",
         visualType: 'pregnancy_care',
         keySigns: [
           'Increased maternal fatigue and brain fog while breastfeeding',
@@ -704,7 +723,7 @@ export const SUPPLEMENT_QUESTION = {
   category: 'Diet',
   categoryIcon: '💊',
   question: 'Do you take a vitamin B12 supplement (tablet, drops, spray or injection)?',
-  insight: 'A regular B12 supplement is the most reliable way to stay topped up — especially on a plant-based diet or after 50.',
+  insight: 'A regular B12 supplement is a reliable way to keep your levels up, whatever your diet.',
   explanation: {
     simpleText: 'Any product that lists vitamin B12 (cyanocobalamin, methylcobalamin) on the label — including B-complex tablets, sublingual drops, sprays or doctor-given injections.',
     whyItMatters: 'Supplements bypass many of the dietary gaps that cause deficiency. Even people with absorption problems can maintain levels with high-dose or injected B12.',
@@ -897,7 +916,9 @@ export const getAgeGroup = (age) => {
 export const buildQuestionSet = (age, gender, dietType = 'omnivore') => {
   const ageGroup  = getAgeGroup(age);
   const ageQs     = AGE_QUESTIONS[ageGroup]    || [];
-  const genderQs  = GENDER_QUESTIONS[gender]   || [];
+  // Period questions depend on the screening answer; pregnancy is also never asked at 60+.
+  const genderQs  = (GENDER_QUESTIONS[gender] || [])
+    .filter((q) => !(ageGroup === '60+' && q.id === 'pregnant_postpartum'));
 
   const dietKey   = (dietType || 'omnivore').toLowerCase();
   const dietFoodQ = DIET_B12_QUESTIONS[dietKey] || DIET_B12_QUESTIONS.omnivore;
@@ -912,4 +933,22 @@ export const buildQuestionSet = (age, gender, dietType = 'omnivore') => {
   });
 
   return [...customizedCommon, ...CLINICAL_QUESTIONS, ...ageQs, ...genderQs];
+};
+
+// ─── Branching ───────────────────────────────────────────────────────────────
+// A question stays visible until its controlling question has been answered, so the
+// count only ever shrinks when an answer rules questions out. `answers` is { questionId: option }.
+export const isQuestionVisible = (q, answers) => {
+  const chosen = q.showIf && answers[q.showIf.question]?.id;
+  return !chosen || q.showIf.anyOf.includes(chosen);
+};
+
+export const getVisibleQuestions = (questions, answers) =>
+  questions.filter((q) => isQuestionVisible(q, answers));
+
+/** Answers without those to questions now hidden, so they are never scored or submitted. */
+export const dropHiddenAnswers = (questions, answers) => {
+  const next = { ...answers };
+  questions.forEach((q) => { if (!isQuestionVisible(q, answers)) delete next[q.id]; });
+  return next;
 };
